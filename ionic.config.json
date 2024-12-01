@@ -1,0 +1,7 @@
+{
+  "name": "CalculadoraLuz",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
