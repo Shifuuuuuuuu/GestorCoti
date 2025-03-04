@@ -1,0 +1,150 @@
+/* Contenedor principal */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Formulario */
+.form-container {
+  background-color: rgb(22, 22, 22);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones juntos */
+.botones-flex {
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 10px;
+}
+
+
+/* Sección de Imagen */
+.image-container {
+  text-align: center;
+}
+
+.uploaded-image {
+  width: 100%;
+  margin-top: 10px;
+  border-radius: 10px;
+}
+
+/* Botón de chat flotante */
+.chat-icon {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+}
+
+/* Estilos de ion-card */
+ion-card {
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  padding: 15px;
+}
+
+/* Encabezado de ion-card */
+ion-card-header {
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Texto de prioridad */
+.prioridad {
+  font-weight: bold;
+}
+
+.prioridad.baja {
+  color: #FF9800;
+}
+
+.prioridad.media {
+  color: #FFEB3B;
+}
+
+.prioridad.alta {
+  color: #F44336;
+}
+
+/* Alineación y márgenes para los botones */
+.footer-buttons ion-button {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+/* Espaciado entre los elementos de la tabla */
+ion-grid ion-row {
+  margin-top: 10px;
+}
+
+ion-col {
+  text-align: left; /* Alinear todo el texto a la izquierda */
+}
+
+/* Colores de los botones de acción */
+ion-button.success {
+  background-color: #4CAF50;
+}
+
+ion-button.danger {
+  background-color: #F44336;
+}
+
+ion-button.success:hover {
+  background-color: #388E3C;
+}
+
+ion-button.danger:hover {
+  background-color: #D32F2F;
+}
+/* Estilos de la tabla */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid white; /* Bordes blancos en la tabla */
+}
+
+.styled-table th, .styled-table td {
+  padding: 15px;
+  text-align: left;
+  border: 2px solid rgb(182, 180, 180); /* Bordes blancos en cada celda */
+  font-size: 1rem;
+}
+
+.styled-table th {
+  background-color: royalblue;
+  color: white;
+  font-size: 1.1rem;
+}
+
+/* Destacar el precio más bajo */
+.economico {
+  background-color: #c8e6c9 !important; /* Fondo verde claro */
+  font-weight: bold;
+  color: #388E3C !important; /* Texto verde oscuro */
+  border: 2px solid #2E7D32 !important; /* Borde verde oscuro */
+}
+
+/* Asegurar que la tabla ocupe más espacio en pantallas grandes */
+@media (min-width: 768px) {
+  .styled-table {
+    font-size: 1.2rem; /* Aumentamos el tamaño de la fuente en pantallas grandes */
+  }
+}
+
+@media (max-width: 768px) {
+  .styled-table {
+    font-size: 1rem; /* Ajustamos el tamaño en dispositivos más pequeños */
+  }
+}
+

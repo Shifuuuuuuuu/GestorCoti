@@ -1,0 +1,122 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" style="color: white;"></ion-back-button>
+    </ion-buttons>
+    <ion-title style="color: white;">Cotizaciones y Comparaciones Aprobadas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Cotizaciones Aprobadas -->
+  <h2 class="section-title">Cotizaciones Aceptadas</h2>
+  <ion-list *ngIf="cotizacionesAprobadas.length > 0; else noCotizaciones" class="rounded-list">
+    <ion-card *ngFor="let cotizacion of cotizacionesAprobadas" class="rounded-card">
+      <ion-card-header>
+        <ion-card-title>{{ cotizacion.nombre }}</ion-card-title>
+        <ion-card-subtitle>Código: {{ cotizacion.codigo }}</ion-card-subtitle>
+        <ion-card-subtitle>Solicitante: {{ cotizacion.solicitante }}</ion-card-subtitle>
+        <ion-button fill="clear" color="danger" class="archivar-btn" (click)="archivarCotizacion(cotizacion)">
+          <ion-icon name="archive-outline"></ion-icon>
+        </ion-button>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6"><strong>Obra:</strong> {{ cotizacion.obra }}</ion-col>
+            <ion-col size="6"><strong>Prioridad:</strong> {{ cotizacion.prioridad }}</ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="6"><strong>Número de Contrato:</strong> {{ cotizacion.numero_contrato }}</ion-col>
+            <ion-col size="6"><strong>Fecha:</strong> {{ cotizacion.fecha | date }}</ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col><strong>Estado:</strong> {{ cotizacion.estado }}</ion-col>
+            <ion-col><strong>Insumos:</strong>
+              <ul>
+                <li *ngFor="let insumo of cotizacion.insumos">
+                  {{ insumo.nombre }} ({{ insumo.cantidad }} x {{ insumo.precio | currency }})
+                </li>
+              </ul>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
+  </ion-list>
+
+  <!-- Comparaciones Aprobadas -->
+  <h2 class="section-title">Comparaciones Aprobadas</h2>
+  <ion-list *ngIf="comparacionesAprobadas.length > 0; else noComparaciones" class="rounded-list">
+    <ion-card *ngFor="let comparacion of comparacionesAprobadas" class="rounded-card">
+      <ion-card-header>
+        <ion-card-title>{{ comparacion.nombre }}</ion-card-title>
+        <ion-card-subtitle>Comparación: {{ comparacion.codigo }}</ion-card-subtitle>
+        <ion-card-subtitle>Solicitante: {{ comparacion.solicitante }}</ion-card-subtitle>
+        <ion-button fill="clear" color="danger" class="archivar-btn" (click)="archivarComparacion(comparacion)">
+          <ion-icon name="archive-outline"></ion-icon>
+        </ion-button>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="6"><strong>Obra:</strong> {{ comparacion.obra }}</ion-col>
+            <ion-col size="6"><strong>Prioridad:</strong> {{ comparacion.prioridad }}</ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="6"><strong>Fecha de Solicitud:</strong> {{ comparacion.fecha_solicitud | date }}</ion-col>
+            <ion-col size="6"><strong>Estado:</strong> {{ comparacion.estado }}</ion-col>
+          </ion-row>
+        </ion-grid>
+
+        <h3 class="sub-section-title">Precios Comparados</h3>
+        <table class="insumos-table">
+          <thead>
+            <tr>
+              <th>Empresa</th>
+              <th>Insumo</th>
+              <th>Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cotizacionPrecio of comparacion.cotizacionesPrecios">
+              <td>{{ cotizacionPrecio.empresa }}</td>
+              <td>{{ cotizacionPrecio.insumo }}</td>
+              <td [class.economico]="cotizacionPrecio.precio === obtenerMenorPrecio(cotizacionPrecio.insumo)">
+                {{ cotizacionPrecio.precio | currency }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </ion-card-content>
+    </ion-card>
+  </ion-list>
+  <!-- Imágenes Aprobadas -->
+  <ion-list *ngIf="imagenesAprobadas.length > 0" class="rounded-list">
+    <ion-card *ngFor="let imagen of imagenesAprobadas" class="rounded-card">
+      <h3 class="sub-section-title">Imágenes Aprobadas</h3>
+      <ion-card-header>
+        <ion-card-title>{{ imagen.nombre }}</ion-card-title> <!-- Mostrar el nombre de la imagen -->
+      </ion-card-header>
+      <ion-img [src]="imagen.imagenUrl"></ion-img>
+
+      <!-- Aquí pasa correctamente el objeto imagen al hacer clic -->
+      <ion-button fill="clear" color="danger" class="archivar-btn" (click)="archivarImagen(imagen)">
+        <ion-icon name="archive-outline"></ion-icon>
+      </ion-button>
+    </ion-card>
+  </ion-list>
+  <!-- Mensajes si no hay datos -->
+  <ng-template #noCotizaciones>
+    <p class="message">No hay cotizaciones aprobadas.</p>
+  </ng-template>
+  <ng-template #noComparaciones>
+    <p class="message">No hay comparaciones aprobadas.</p>
+  </ng-template>
+
+  <!-- Chat -->
+  <ion-button fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">
+    <ion-icon name="chatbubbles-outline"></ion-icon>
+  </ion-button>
+</ion-content>

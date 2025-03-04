@@ -1,0 +1,141 @@
+/* Configuración general del contenido */
+ion-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Esto asegura que el contenido esté centrado vertical y horizontalmente */
+  padding: 0;
+}
+
+/* Estilos para el formulario */
+.form-control {
+  background-color: #ffffff;
+  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+  width: 80%; /* Ancho del formulario */
+  max-width: 400px; /* Limita el ancho máximo para pantallas grandes */
+  display: flex;
+  flex-direction: column;
+  padding: 25px;
+  border-radius: 8px;
+  margin-top: 5%; /* Margen superior para alejar del borde superior */
+  margin-left: auto;
+  margin-right: auto; /* Centramos el formulario */
+}
+
+/* Título */
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #000000;
+  text-align: center;
+}
+
+/* Estilos de los campos de entrada */
+.input-field {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  margin-top: 15px;
+  width: 100%;
+  outline: none;
+  border-radius: 8px;
+  height: 45px;
+  border: 1.5px solid #ecedec;
+  background: transparent;
+  padding-left: 10px;
+  color: #000000;
+}
+
+.input:focus {
+  border: 1.5px solid #2d79f3;
+}
+
+/* Estilo de la etiqueta */
+.input-field .label {
+  position: absolute;
+  top: 25px;
+  left: 15px;
+  color: #ccc;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.input-field .input:focus ~ .label,
+.input-field .input:valid ~ .label {
+  top: 5px;
+  left: 5px;
+  font-size: 12px;
+  color: #2d79f3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+/* Estilo del botón */
+.submit-btn {
+  margin-top: 30px;
+  height: 55px;
+  background: #f2f2f2;
+  border-radius: 11px;
+  border: 0;
+  outline: none;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(180deg, #363636 0%, #1b1b1b 50%, #000000 100%);
+  box-shadow: 0px 0px 0px 0px #ffffff, 0px 0px 0px 0px #000000;
+  transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
+  cursor: pointer;
+  width: 100%;
+}
+
+.submit-btn:hover {
+  box-shadow: 0px 0px 0px 2px #ffffff, 0px 0px 0px 4px #0000003a;
+}
+
+/* Media Query para pantallas más pequeñas (móviles) */
+@media (max-width: 600px) {
+  .form-control {
+    width: 90%; /* Asegura que el formulario ocupe el 90% del ancho en dispositivos móviles */
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 1.5rem; /* Ajuste del tamaño de la fuente para dispositivos móviles */
+  }
+
+  .submit-btn {
+    font-size: 16px; /* Ajuste del tamaño del botón */
+    height: 50px; /* Ajuste de la altura del botón */
+  }
+}
+
+/* Estilo para pantallas grandes */
+@media (min-width: 601px) {
+  .form-control {
+    width: 400px; /* Ancho fijo para pantallas grandes */
+    padding: 25px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+}
+
+/* Mejorando la apariencia de los enlaces */
+.redirect-register a {
+  color: var(--ion-color-primary);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.redirect-register a:hover {
+  text-decoration: underline;
+}
+/* Centrar y aplicar estilo al enlace y texto de registro */
+.redirect-register {
+  text-align: center; /* Centra el contenido dentro del contenedor */
+  margin-top: 10px; /* Espaciado entre el formulario y el enlace */
+}

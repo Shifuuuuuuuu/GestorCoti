@@ -1,0 +1,55 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/iniciar-sesion" style="color: white;"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Registrar Usuario</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form class="form-control">
+    <p class="title">Regístrate</p>
+
+    <!-- Nombre Completo -->
+    <div class="input-field">
+      <input required class="input" type="text" id="fullName" />
+      <label class="label" for="fullName">Escribe tu Nombre</label>
+    </div>
+
+    <!-- RUT -->
+    <div class="input-field">
+      <input required class="input" type="text" id="rut" pattern="^\d{1,2}\.\d{3}\.\d{3}[-][0-9kK]{1}$" />
+      <label class="label" for="rut">Escribe tu RUT (XX.XXX.XXX-X)</label>
+    </div>
+
+    <!-- Correo (solo dominio xtrememining.cl) -->
+    <div class="input-field">
+      <input required class="input" type="email" id="email" />
+      <label class="label" for="email">Escribe tu email (solamente xtrememining.cl)</label>
+    </div>
+
+    <!-- Teléfono -->
+    <div class="input-field">
+      <input required class="input" type="tel" id="phone" pattern="^\+?(\d{1,3})?(\d{9})$" />
+      <label class="label" for="phone">Escribe tu número</label>
+    </div>
+
+    <!-- Rol (Cotizador o Admin) -->
+    <div class="input-field">
+      <select id="role" class="input">
+        <option value="cotizador">Cotizador</option>
+        <option value="admin">Admin</option>
+      </select>
+      <label class="label" for="role">Selecciona tu Rol</label>
+    </div>
+
+    <!-- Contraseña -->
+    <div class="input-field">
+      <input required class="input" type="password" id="password" />
+      <label class="label" for="password">Escribe tu Contraseña</label>
+    </div>
+
+    <button class="submit-btn" (click)="register()">Registrar</button>
+  </form>
+</ion-content>

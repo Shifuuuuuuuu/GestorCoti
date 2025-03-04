@@ -1,0 +1,115 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" style="color: white;"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Comparación de Cotizaciones</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-segment [(ngModel)]="segment" color="primary">
+    <ion-segment-button value="comparaciones">
+      Comparaciones
+    </ion-segment-button>
+    <ion-segment-button value="imagenes-pendientes">
+      Imágenes Pendientes
+    </ion-segment-button>
+  </ion-segment>
+
+  <!-- Comparaciones -->
+  <ion-grid *ngIf="segment === 'comparaciones'">
+    <ion-row *ngFor="let comparacion of comparaciones; trackBy: trackByComparacion">
+      <ion-col size="12" *ngIf="comparacion.estado !== 'Aceptada'">
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>
+              Cotización: {{ comparacion.nombre }}
+            </ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            <p><strong>Codigo:</strong> {{ comparacion.codigo }}</p>
+            <p><strong>Solicitante:</strong> {{ comparacion.solicitante }}</p>
+            <p><strong>Obra:</strong> {{ comparacion.obra }}</p>
+            <p><strong>Prioridad:</strong> <span [ngClass]="'prioridad ' + comparacion.prioridad.toLowerCase()">
+              {{ comparacion.prioridad }}
+            </span></p>
+          </ion-card-content>
+
+          <ion-card-content >
+            <h4>Insumos</h4>
+            <table class="styled-table">
+              <thead style="background-color: royalblue; color: white;">
+                <tr>
+                  <th>Empresa</th>
+                  <th>Insumo</th>
+                  <th>Precio</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cotizacion of comparacion.cotizacionesPrecios; trackBy: trackByCotizacion" [ngClass]="{'highlight': esCotizacionConveniente(comparacion)}">
+                  <td>{{ cotizacion.empresa }}</td>
+                  <td>{{ cotizacion.insumo }}</td>
+                  <td [ngClass]="{'economico': cotizacion.precio === getMinPrice(comparacion.cotizacionesPrecios)}">
+                    {{ cotizacion.precio | currency }}
+                  </td>
+
+                  <td>
+                    <ion-checkbox [(ngModel)]="cotizacion.selected" (change)="seleccionarInsumo(comparacion.id!, cotizacion)">
+                    </ion-checkbox>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </ion-card-content>
+
+          <ion-card-footer class="ion-text-center footer-buttons">
+            <ion-row>
+              <ion-col size="6">
+                <ion-button expand="full" color="success" (click)="aceptarCotizacion(comparacion)">
+                  Aceptar
+                </ion-button>
+              </ion-col>
+              <ion-col size="6">
+                <ion-button expand="full" color="danger" (click)="rechazarCotizacion(comparacion)">
+                  Rechazar
+                </ion-button>
+              </ion-col>
+            </ion-row>
+            <p *ngIf="comparacion.estado">Estado: {{ comparacion.estado }}</p>
+          </ion-card-footer>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- Imágenes Pendientes -->
+  <ion-grid *ngIf="segment === 'imagenes-pendientes'" class="imagenes-grid">
+    <ion-row *ngFor="let imagen of imagenesPendientes" class="imagenes-row">
+      <ion-col size="12">
+        <ion-card class="imagen-card">
+          <ion-card-header>
+            <ion-card-title>Imagen: {{ imagen.nombre }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+
+            <div class="imagen-container">
+              <img [src]="imagen.imagen" alt="Imagen Pendiente" />
+            </div>
+          </ion-card-content>
+
+          <ion-card-footer class="ion-text-center footer-buttons">
+            <ion-button color="success" (click)="aceptarImagen(imagen.id)">Aceptar</ion-button>
+            <ion-button color="danger" (click)="rechazarImagen(imagen.id)">Rechazar</ion-button>
+          </ion-card-footer>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ion-button fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">
+    <ion-icon name="chatbubbles-outline"></ion-icon>
+  </ion-button>
+</ion-content>

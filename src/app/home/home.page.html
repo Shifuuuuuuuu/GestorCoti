@@ -1,20 +1,34 @@
-<ion-header [translucent]="true">
+<ion-header>
   <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+    <ion-buttons slot="start">
+      <ion-menu-button></ion-menu-button> <!-- Botón que abre el menú -->
+    </ion-buttons>
+    <ion-title>Menú Principal</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content id="main-content" class="main-content">
+  <div class="menu-grid">
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <div class="menu-item" (click)="navigateTo('vista-cotizaciones')">
+      <ion-icon name="eye-outline" class="menu-icon"></ion-icon>
+      <p>Visualiza las cotizaciones</p>
+      <ion-badge color="danger">{{ cotizacionesPendientesCount }}</ion-badge>
+      <br>
+      <span>Podrás ver las cotizaciones que debes Aceptar o Rechazar</span>
+    </div>
+
+    <div class="menu-item" (click)="navigateTo('comparaciones')">
+      <ion-icon name="eye-outline" class="menu-icon"></ion-icon>
+      <p>Visualiza las cotizaciones comparativas</p>
+      <ion-badge color="danger">{{ comparacionesPendientesCount }}</ion-badge>
+      <br>
+      <span>Podrás ver las cotizaciones comparativas que debes Aceptar o Rechazar</span>
+    </div>
+
   </div>
+
+  <ion-button fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">
+    <ion-icon name="chatbubbles-outline"></ion-icon>
+  </ion-button>
 </ion-content>

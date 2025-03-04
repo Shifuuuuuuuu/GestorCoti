@@ -1,0 +1,246 @@
+/* Contenedor de usuarios */
+.usuarios-container {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 15px; /* Mayor separación entre usuarios */
+
+  border-radius: 10px;
+}
+
+/* Usuario */
+.usuario {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  background-color: #333; /* Fondo blanco */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0 2px 5px rgba(85, 82, 82, 0.1); /* Sombra sutil */
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.usuario:hover {
+  background-color: #888; /* Color suave al pasar el mouse */
+  transform: scale(1.02); /* Efecto de agrandar ligeramente */
+}
+
+.usuario ion-avatar,
+.usuario ion-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%; /* Avatar redondeado */
+  margin-right: 15px; /* Separación */
+}
+
+.usuario-info {
+  display: flex;
+  flex-direction: column;
+  color: #fff; /* Color de texto más oscuro */
+}
+
+.nombre {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.email {
+  font-size: 12px;
+  color: #ccc; /* Color más suave para el correo */
+  margin: 0;
+}
+
+/* Contenedor de chat */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background-color: #333; /* Fondo claro */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+/* Mensajes */
+.mensaje-propio,
+.mensaje-ajeno {
+  border-radius: 20px; /* Bordes redondeados */
+  padding: 12px;
+  margin: 10px 0;
+  max-width: 70%;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  display: inline-block;
+  word-wrap: break-word; /* Para que el texto no se salga del contenedor */
+}
+
+/* Mensaje propio (alineado a la derecha) */
+.mensaje-propio {
+  background-color: #d4f7d4; /* Verde suave para el mensaje propio */
+  text-align: right;
+  color: #333; /* Texto oscuro */
+  align-self: flex-end; /* Alinea el mensaje a la derecha */
+  margin-left: auto; /* Empuja el mensaje hacia la derecha */
+}
+
+/* Mensaje ajeno (alineado a la izquierda) */
+.mensaje-ajeno {
+  background-color: #f1f1f1; /* Gris claro para el mensaje ajeno */
+  text-align: left;
+  color: #333;
+  align-self: flex-start; /* Alinea el mensaje a la izquierda */
+  margin-right: auto; /* Empuja el mensaje hacia la izquierda */
+}
+
+
+/* Asegura que el botón esté alineado a la derecha */
+.cerrar-btn {
+  margin-left: auto;  /* Empuja el botón hacia la derecha */
+  padding: 0;
+  font-size: 24px;  /* Ajusta el tamaño de la X o el icono */
+}
+
+
+
+
+ion-icon[name="checkmark"],
+ion-icon[name="checkmark-done"] {
+  font-size: 18px;
+  margin-left: 8px; /* Separación más amplia */
+}
+
+ion-icon[color="success"] {
+  color: #28a745 !important; /* Color verde */
+}
+
+ion-icon[color="dark"] {
+  color: #888 !important; /* Color gris */
+}
+
+/* Barra de entrada de mensaje */
+ion-footer {
+  display: flex;
+  padding: 10px;
+  width: 100%;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Sombra sutil en la parte inferior */
+}
+
+
+.title {
+  display: flex;
+  align-items: center;
+  width: 50%;
+}
+.chats{
+  display: flex;
+  align-items: center;
+  width: 70%;
+}
+.paper{
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+/* Estilo para el input (más redondeado) */
+ion-col:first-child {
+  flex: 1;
+  padding-right: 10px;
+}
+
+ion-input {
+  border-radius: 25px; /* Bordes muy redondeados */
+  padding-left: 15px; /* Espacio adicional dentro del input */
+  font-size: 14px;
+}
+
+ion-input:focus {
+  border-color: #007bff; /* Borde azul cuando está enfocado */
+}
+
+ion-col:last-child {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Ajustes para el botón de Volver */
+ion-title ion-row {
+  display: flex;
+}
+
+ion-title ion-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ajuste del botón de Volver */
+ion-title ion-col:first-child {
+  padding-right: 10px; /* Ajusta la separación entre el botón y el texto */
+}
+
+ion-button {
+  color: white !important; /* Asegura que el texto/ícono sea visible */
+}
+
+ion-icon {
+  font-size: 10px;
+  color: white; /* Color blanco para íconos */
+}
+
+/* Asegura que el texto esté alineado con el botón */
+ion-col:last-child {
+  font-size: 16px;
+  font-weight: bold;
+  color: white; /* Color blanco para el texto */
+}
+
+
+/* Asegura visibilidad del icono */
+ion-icon {
+  font-size: 20px;
+  color: white; /* Color blanco para íconos */
+}
+
+/* Ajuste del botón de enviar */
+ion-footer ion-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  background: #007bff !important; /* Azul para resaltar */
+  color: white !important;
+}
+
+ion-footer ion-icon[name="paper-plane-outline"] {
+  font-size: 22px;
+  color: white;
+}
+
+/* Indicador de escritura con animación */
+.escribiendo {
+  font-size: 14px;
+  color: #888; /* Gris suave */
+  font-style: italic;
+  opacity: 0;
+  animation: aparecerDesaparecer 1.5s ease-in-out infinite;
+  position: relative;
+  left: -1px;
+}
+
+/* Animación de aparecer/desaparecer */
+@keyframes aparecerDesaparecer {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+}
