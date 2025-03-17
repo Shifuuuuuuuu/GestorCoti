@@ -1,0 +1,49 @@
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 16px;
+}
+
+.menu-item {
+  background-color: var(--ion-color-light);
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  ion-icon {
+    font-size: 40px;
+    color: var(--ion-color-primary);
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+    color: var(--ion-color-dark);
+  }
+
+  span {
+    font-size: 14px;
+    color: var(--ion-color-medium);
+  }
+}
+.chat-icon {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;  /* Cambiar de left a right para que esté a la derecha */
+  z-index: 1000;  /* Asegúrate de que el ícono esté encima de otros elementos */
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 20px;  /* Hacer el ícono más grande */
+}

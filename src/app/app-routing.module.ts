@@ -50,7 +50,23 @@ const routes: Routes = [
   {
     path: 'chat',
     loadChildren: () => import('./chat/chat.module').then( m => m.ChatPageModule)
+  },  {
+    path: 'certificados-mantenciones',
+    loadChildren: () => import('./certificados-mantenciones/certificados-mantenciones.module').then( m => m.CertificadosMantencionesPageModule)
   },
+  {
+    path: 'solpe',
+    loadChildren: () => import('./solpe/solpe.module').then( m => m.SolpePageModule)
+  },
+  {
+    path: 'historial-solpe',
+    loadChildren: () => import('./historial-solpe/historial-solpe.module').then( m => m.HistorialSolpePageModule)
+  },
+  {
+    path: 'menu-solpe',
+    loadChildren: () => import('./menu-solpe/menu-solpe.module').then( m => m.MenuSolpePageModule)
+  },
+
 
 ];
 

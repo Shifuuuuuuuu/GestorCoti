@@ -1,0 +1,128 @@
+/* Contenedor principal */
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Formulario */
+.form-container {
+  background-color: rgb(22, 22, 22);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones juntos */
+.botones-flex {
+  display: flex;
+  justify-content: space-evenly;
+  margin-top: 10px;
+}
+
+/* Estilos de la tabla */
+.table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.styled-table th, .styled-table td {
+  padding: 12px;
+  text-align: left;
+}
+
+.styled-table th {
+  background-color: royalblue;
+  color: white;
+}
+
+
+/* Estilo general para centrar */
+.image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* Mejor estilo para la tarjeta */
+.image-card {
+  background-color: #1e1e1e;
+  padding: 30px; /* Aumentado para más espacio interno */
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 2000px; /* Aumentado para mayor tamaño */
+  height: auto; /* O puedes especificar una altura fija si lo deseas */
+  min-height: 400px; /* Puedes ajustar según sea necesario */
+}
+
+/* Input de subir imagen estilo más grande */
+.custom-file-upload {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #2c2c2c;
+  padding: 20px; /* Aumentado para más espacio */
+  border-radius: 10px;
+  border: 2px dashed #888;
+  margin-top: 15px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.custom-file-upload input {
+  display: none;
+}
+
+/* Imagen subida ahora se mostrará correctamente */
+.uploaded-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 10px;
+  image-rendering: auto; /* Establece la renderización de la imagen para mayor nitidez */
+}
+
+/* Alternativa si las imágenes son pixeladas y quieres que se vean más nítidas */
+.uploaded-image.pixelated {
+  image-rendering: pixelated; /* Para imágenes pixeladas o más nítidas */
+}
+
+
+/* Botón más grande */
+ion-button {
+  margin-top: 15px;
+  font-size: 15px; /* Aumentado tamaño del texto */
+  padding: 10px; /* Aumentado tamaño del botón */
+}
+
+/* Botón de chat flotante */
+.chat-icon {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: transparent;
+  border: none;
+  font-size: 16px; /* Reducir tamaño de icono */
+  width: 40px;
+  height: 40px;
+}
+/* CSS personalizado para toasts */
+.custom-toast {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  font-weight: bold;
+  font-size: 16px;
+}
