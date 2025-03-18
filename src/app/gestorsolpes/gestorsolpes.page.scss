@@ -1,0 +1,43 @@
+/* Estilos de la tabla */
+.table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.styled-table th, .styled-table td {
+  padding: 12px;
+  text-align: left;
+}
+
+.styled-table th {
+  background-color: royalblue;
+  color: white;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+.styled-table, .precios-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.styled-table th, .styled-table td,
+.precios-table th, .precios-table td {
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+}
+
+.precios-card {
+  margin-top: 10px;
+}
+
+.precios-table {
+  font-size: 12px;
+}

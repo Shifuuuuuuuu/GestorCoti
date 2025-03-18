@@ -1,0 +1,35 @@
+/* Estilos de la tabla */
+.table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.styled-table th, .styled-table td {
+  padding: 12px;
+  text-align: left;
+}
+
+.styled-table th {
+  background-color: royalblue;
+  color: white;
+}
+
+.card-header h3 {
+  font-size: 1.5em;
+  color: #333;
+  font-weight: bold;
+}
+
+.search-btn {
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 10px;
+}
+
+

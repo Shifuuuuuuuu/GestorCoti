@@ -9,27 +9,26 @@
 
 <ion-content id="main-content" class="main-content">
   <div class="menu-grid">
-    <div class="menu-item" (click)="navigateTo('cotizacion-comparativa')">
-      <ion-icon name="file-tray-stacked-outline" class="menu-icon"></ion-icon>
-      <p>Comparativas de precios de las cotizaciones</p>
-      <span>Crea tus comparativas de precios</span>
+
+    <div class="menu-item" (click)="navigateTo('gestorsolpes')">
+      <ion-icon name="book-outline" class="menu-icon"></ion-icon>
+      <p>Comparativa de precios</p>
+      <span>Comparativa de precios de item de solpes</span>
     </div>
 
-    <div class="menu-item" (click)="navigateTo('cotizaciones')">
+    <div class="menu-item" (click)="navigateTo('historial-solpe')">
       <ion-icon name="file-tray-outline" class="menu-icon"></ion-icon>
-      <p>Cotizaciones</p>
-      <span>Crea tus cotizaciones</span>
+      <p>Historial solpe</p>
+      <span>Revisa el estado en que esta la solpe</span>
     </div>
-
-
-    <!-- Total General Aceptadas -->
-    <div class="menu-item" (click)="navigateTo('cotiaziones-aprobadas')">
-      <ion-icon name="checkmark-circle-outline" class="menu-icon"></ion-icon>
-      <p>Cotizaciones Aceptadas</p>
-      <ion-badge color="primary">{{ totalAceptadas }}</ion-badge>
-      <br>
-      <span>El total de cotizaciones y comparaciones aceptadas</span>
-    </div>
+        <!-- Total General Aceptadas -->
+        <div class="menu-item" (click)="navigateTo('cotiaziones-aprobadas')">
+          <ion-icon name="checkmark-circle-outline" class="menu-icon"></ion-icon>
+          <p>Cotizaciones Aceptadas</p>
+          <ion-badge color="primary">{{ totalAceptadas }}</ion-badge>
+          <br>
+          <span>El total de cotizaciones y comparaciones aceptadas</span>
+        </div>
   </div>
 
   <ion-button fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">

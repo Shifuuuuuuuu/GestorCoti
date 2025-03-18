@@ -3,110 +3,88 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/menu-solpe" style="color: white;"></ion-back-button>
     </ion-buttons>
-    <ion-title>Generar solpe</ion-title>
-    <ion-buttons slot="end">
-      <ion-button fill="clear" color="warning" (click)="guardarBorrador()">
-        <ion-icon name="save-outline"></ion-icon>
-      </ion-button>
-      <ion-button fill="clear" color="secondary" (click)="cargarBorrador()">
-        <ion-icon name="cloud-download-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
+    <ion-title>Creación de SOLPES</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
   <div class="container">
-
-    <!-- Segmento para cambiar entre Formulario e Imagen -->
     <ion-segment [(ngModel)]="modoSeleccionado">
-      <ion-segment-button value="formulario">Formulario de solpe</ion-segment-button>
+      <ion-segment-button value="formulario">Formulario de SOLPE</ion-segment-button>
     </ion-segment>
 
-    <!-- Sección de Formulario -->
     <div *ngIf="modoSeleccionado === 'formulario'" class="form-container">
       <ion-item>
-        <ion-label position="floating">Solpe N</ion-label>
-        <ion-input [(ngModel)]="cotizacion.nombre"placeholder="Solped Neumático"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="floating">Fecha</ion-label>
-        <ion-input [(ngModel)]="cotizacion.codigo"></ion-input>
+        <ion-label position="floating">Número de SOLPE</ion-label>
+        <ion-input [(ngModel)]="solpe.numero_solpe" type="number"></ion-input>
       </ion-item>
 
       <ion-item>
-        <ion-label position="floating">Numero de Contrato</ion-label>
-          <ion-select [(ngModel)]="cotizacion.prioridad">
-            <ion-select-option value="alta">30-10-42</ion-select-option>
-            <ion-select-option value="normal">30-10-52</ion-select-option>
-            <ion-select-option value="alta">30-10-43</ion-select-option>
-            <ion-select-option value="normal">30-10-58</ion-select-option>
-            <ion-select-option value="alta">30-10-07</ion-select-option>
-            <ion-select-option value="normal">30-10-54</ion-select-option>
-            <ion-select-option value="alta">30-10-57</ion-select-option>
-            <ion-select-option value="normal">30-10-01</ion-select-option>
-          </ion-select>
+        <ion-label position="floating">Fecha</ion-label>
+        <ion-input [(ngModel)]="solpe.fecha" type="date" readonly></ion-input>
+      </ion-item>
+
+      <ion-item>
+        <ion-label position="floating">Responsable Correctivo</ion-label>
+        <ion-select [(ngModel)]="solpe.numero_contrato">
+          <ion-select-option value="30-10-42">Raul Alfaro 30-10-42</ion-select-option>
+          <ion-select-option value="30-10-52">Luis Cabrera 30-10-52</ion-select-option>
+          <ion-select-option value="30-10-43">Taller caneche 30-10-43</ion-select-option>
+        </ion-select>
       </ion-item>
 
       <ion-item>
         <ion-label position="floating">Usuario</ion-label>
-        <ion-input [(ngModel)]="cotizacion.obra"></ion-input>
-      </ion-item>
-      <h5>Agregar Item</h5>
-      <ion-item>
-        <ion-label position="floating">Item</ion-label>
-        <ion-input [(ngModel)]="nuevoInsumo.nombre"></ion-input>
-      </ion-item>
-      <ion-item>
-        <ion-label position="floating">Descripción</ion-label>
-        <ion-input [(ngModel)]="nuevoInsumo.nombre"></ion-input>
+        <ion-input [(ngModel)]="solpe.usuario"></ion-input>
       </ion-item>
 
-      <ion-item>
-        <ion-label position="floating">Codigo referente</ion-label>
-        <ion-input [(ngModel)]="nuevoInsumo.cantidad" type="number"></ion-input>
-      </ion-item>
+      <h5>Tabla de Items</h5>
 
-      <ion-item>
-        <ion-label position="floating">Cantidad</ion-label>
-        <ion-input [(ngModel)]="nuevoInsumo.precio" type="number"></ion-input>
-      </ion-item>
-
-      <!-- Botones juntos -->
-      <div class="botones-flex">
-        <ion-button fill="clear" color="primary" (click)="agregarInsumo()">
-          <ion-icon name="add-circle-outline"></ion-icon> Agregar
-        </ion-button>
-        <ion-button fill="solid" color="success" (click)="enviarCotizacion()">
-          <ion-icon name="send-outline"></ion-icon> Enviar
-        </ion-button>
-      </div>
-
-      <!-- Tabla de insumos -->
       <div class="table-container">
         <table class="styled-table">
           <thead>
             <tr>
               <th>Item</th>
               <th>Descripción</th>
-              <th>Codigo referente</th>
+              <th>Código Referencial</th>
               <th>Cantidad</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let insumo of cotizacion.insumos; let i = index">
-              <td>{{ insumo.nombre }}</td>
-              <td>{{ insumo.cantidad }}</td>
-              <td>{{ insumo.cantidad }}</td>
-              <td>${{ insumo.precio }}</td>
+            <tr *ngFor="let item of solpe.items; let i = index">
+              <td>{{ i + 1 }}</td> <!-- Item Autoincremental -->
               <td>
-                <ion-button fill="clear" color="danger" (click)="eliminarInsumo(i)">
+                <ion-input [(ngModel)]="item.descripcion" [readonly]="!item.editando"></ion-input>
+              </td>
+              <td>
+                <ion-input [(ngModel)]="item.codigo_referencial" [readonly]="!item.editando"></ion-input>
+              </td>
+              <td>
+                <ion-input type="number" [(ngModel)]="item.cantidad" [readonly]="!item.editando"></ion-input>
+              </td>
+              <td>
+                <ion-button fill="clear" color="primary" *ngIf="!item.editando" (click)="editarItem(i)">
+                  <ion-icon name="create-outline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" color="success" *ngIf="item.editando" (click)="guardarEdicion(i)">
+                  <ion-icon name="save-outline"></ion-icon>
+                </ion-button>
+                <ion-button fill="clear" color="danger" (click)="eliminarItem(i)">
                   <ion-icon name="trash-outline"></ion-icon>
                 </ion-button>
+
               </td>
             </tr>
           </tbody>
         </table>
+        <ion-buttons class="botones-flex">
+          <ion-button expand="full" (click)="agregarFila()">
+            <ion-icon name="add-outline"></ion-icon> Agregar Fila</ion-button>
+          <ion-button expand="block" color="success" (click)="guardarSolpe()">
+            <ion-icon name="send-outline"></ion-icon> Enviar
+          </ion-button>
+        </ion-buttons>
       </div>
     </div>
   </div>

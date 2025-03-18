@@ -1,139 +1,118 @@
 import { Component, OnInit } from '@angular/core';
 import { CotizacionService } from '../services/cotizacion.service';
 import { ModalController, ToastController } from '@ionic/angular';
+import { SolpeService } from '../services/solpe.service';
+import { Item } from '../Interface/IItem';
 
 @Component({
   selector: 'app-solpe',
   templateUrl: './solpe.page.html',
   styleUrls: ['./solpe.page.scss'],
 })
-export class SolpePage implements OnInit {
+export class SolpePage implements OnInit  {
   modoSeleccionado: string = 'formulario';
-  cotizacion: any = {
-    nombre: '',
-    codigo: '',
-    solicitante: '',
-    obra: '',
-    numero_correlativo: '',
+
+  solpe: any = {
+    numero_solpe: null,
     fecha: '',
-    prioridad: '',
-    nombre_local: '',
     numero_contrato: '',
-    insumos: [],
-    estado: 'Pendiente',
+    usuario: '',
+    items: [],
+    estatus: 'Solicitado',
   };
-  usuario = {};
-
-  cotizaciones: any[] = []; // Lista de cotizaciones previas
-  nuevoInsumo = { nombre: '', cantidad: null, precio: null };
-
-  tipoEntrada: string = 'formulario'; // Determina si el usuario sube imagen o usa el formulario
 
   constructor(
-    private cotizacionesService: CotizacionService,
-    private toastController: ToastController,
+    private solpeService: SolpeService,
+    private toastController: ToastController
   ) {}
 
   ngOnInit() {
-    this.cargarCotizacionesPrevias();
+    const hoy = new Date();
+    this.solpe.fecha = hoy.toISOString().split('T')[0];
+    this.obtenerUltimoNumeroSolpe();
   }
 
-  agregarInsumo() {
-    if (!this.nuevoInsumo.nombre || !this.nuevoInsumo.cantidad || !this.nuevoInsumo.precio) {
-      this.mostrarToast('Todos los campos del insumo son obligatorios', 'warning');
+  obtenerUltimoNumeroSolpe() {
+    this.solpeService.obtenerUltimaSolpe().subscribe((solpes: any[]) => {
+      if (solpes.length > 0) {
+        const ultimoNumero = solpes[0].numero_solpe;
+        this.solpe.numero_solpe = ultimoNumero + 1;
+      } else {
+        this.solpe.numero_solpe = 1;
+      }
+    });
+  }
+
+  agregarFila() {
+    this.solpe.items.push({
+      descripcion: '',
+      codigo_referencial: '',
+      cantidad: null,
+      editando: true,  // La fila inicia en edición
+    });
+  }
+
+  eliminarItem(index: number) {
+    this.solpe.items.splice(index, 1);
+    this.mostrarToast('Item eliminado', 'danger');
+  }
+
+  editarItem(index: number) {
+    this.solpe.items[index].editando = true;
+  }
+
+  guardarEdicion(index: number) {
+    this.solpe.items[index].editando = false;
+    this.mostrarToast('Item actualizado', 'success');
+  }
+
+  guardarSolpe() {
+    if (this.solpe.items.length === 0) {
+      this.mostrarToast('Debes agregar al menos un item', 'warning');
       return;
     }
 
-    this.cotizacion.insumos.push({ ...this.nuevoInsumo });
-    this.nuevoInsumo = { nombre: '', cantidad: null, precio: null };
-    this.mostrarToast('Insumo agregado con éxito', 'success');
-  }
-
-  eliminarInsumo(index: number) {
-    this.cotizacion.insumos.splice(index, 1);
-    this.mostrarToast('Insumo eliminado', 'warning');
-  }
-
-  enviarCotizacion() {
-    if (this.cotizacion.insumos.length === 0) {
-      this.mostrarToast('Debes agregar al menos un insumo antes de enviar', 'warning');
-      return;
-    }
-
-    this.cotizacion.estado = 'Pendiente';
-    this.cotizacionesService.guardarCotizacion(this.cotizacion)
-      .then(() => {
-        this.mostrarToast('Cotización enviada con éxito', 'success');
-        this.resetearFormulario();
-      })
-      .catch((error) => {
-        console.error('Error al enviar la cotización:', error);
-        this.mostrarToast('Error al enviar la cotización', 'danger');
-      });
-  }
+    // Asignar el número de item autoincremental antes de guardar
+    this.solpe.items = this.solpe.items.map((item: Item, index: number) => ({
+      item: index + 1,
+      descripcion: item.descripcion,
+      codigo_referencial: item.codigo_referencial,
+      cantidad: item.cantidad
+    }));
 
 
+    // Formatear la fecha
+    const hoy = new Date();
+    this.solpe.fecha = `${hoy.getDate().toString().padStart(2, '0')}/${(hoy.getMonth() + 1).toString().padStart(2, '0')}/${hoy.getFullYear()}`;
 
-  cargarCotizacionesPrevias() {
-    this.cotizacionesService.obtenerCotizaciones()
-      .then((data) => {
-        this.cotizaciones = data;
-      })
-      .catch((error) => {
-        console.error('Error al obtener cotizaciones:', error);
-      });
-  }
-
-  // Guardar como borrador
-  guardarBorrador() {
-    const borrador = { ...this.cotizacion, estado: 'Borrador' };
-    this.cotizacionesService.guardarCotizacion(borrador)
-      .then(() => {
-        this.mostrarToast('Borrador guardado con éxito', 'success');
-      })
-      .catch((error) => {
-        console.error('Error al guardar borrador:', error);
-        this.mostrarToast('Error al guardar borrador', 'danger');
-      });
-  }
-
-  // Cargar borrador
-  cargarBorrador() {
-    const borrador = this.cotizaciones.find(cot => cot.estado === 'Borrador');
-    if (borrador) {
-      this.cotizacion = { ...borrador };
-    } else {
-      this.mostrarToast('No hay borradores disponibles', 'warning');
-    }
+    // Guardar en la base de datos
+    this.solpeService.guardarSolpe(this.solpe).then(() => {
+      this.mostrarToast('SOLPE guardada con éxito', 'success');
+      this.resetearFormulario();
+    }).catch(err => {
+      console.error(err);
+      this.mostrarToast('Error al guardar la SOLPE', 'danger');
+    });
   }
 
   resetearFormulario() {
-    this.cotizacion = {
-      nombre: '',
-      codigo: '',
-      solicitante: '',
-      obra: '',
-      numero_correlativo: '',
+    this.solpe = {
+      numero_solpe: null,
       fecha: '',
-      prioridad: '',
-      nombre_local: '',
       numero_contrato: '',
-      insumos: [],
-      estado: 'Pendiente',
+      usuario: '',
+      items: [],
+      estatus: 'Solicitado',
     };
-    this.nuevoInsumo = { nombre: '', cantidad: null, precio: null };
+    this.obtenerUltimoNumeroSolpe();
   }
 
-  // Función para mostrar Toast con diferentes colores según el tipo de mensaje
-  async mostrarToast(mensaje: string, tipo: 'success' | 'danger' | 'warning' = 'success') {
+  async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
     const toast = await this.toastController.create({
       message: mensaje,
       duration: 2000,
-      position: 'bottom',
-      color: tipo,  // Cambiar color según el tipo de mensaje
-      cssClass: 'custom-toast'  // Clase CSS para personalizar el estilo
+      color: color
     });
     toast.present();
   }
-
 }

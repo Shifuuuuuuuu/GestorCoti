@@ -66,6 +66,10 @@ const routes: Routes = [
     path: 'menu-solpe',
     loadChildren: () => import('./menu-solpe/menu-solpe.module').then( m => m.MenuSolpePageModule)
   },
+  {
+    path: 'gestorsolpes',
+    loadChildren: () => import('./gestorsolpes/gestorsolpes.module').then( m => m.GestorsolpesPageModule)
+  },
 
 
 ];
