@@ -34,6 +34,7 @@
     "gapi-client": "^0.0.3",
     "ionicons": "^7.0.0",
     "jspdf": "^2.5.2",
+    "jspdf-autotable": "^5.0.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.2"
