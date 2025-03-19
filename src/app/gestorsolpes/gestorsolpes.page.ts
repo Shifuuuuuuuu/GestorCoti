@@ -44,14 +44,31 @@ export class GestorsolpesPage implements OnInit {
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
-          text: 'Actualizar',
-          handler: (estatusSeleccionado) => {
+          text: 'Siguiente',
+          handler: async (estatusSeleccionado) => {
             if (estatusSeleccionado) {
-              this.firestore.collection('solpes').doc(solpe.id).update({
-                estatus: estatusSeleccionado,
-              }).then(() => {
-                solpe.estatus = estatusSeleccionado; // Refleja el cambio en la UI
+              const commentAlert = await this.alertController.create({
+                header: 'Agregar Comentario',
+                inputs: [
+                  { name: 'comentario', type: 'text', placeholder: 'Escribe un comentario' }
+                ],
+                buttons: [
+                  { text: 'Cancelar', role: 'cancel' },
+                  {
+                    text: 'Guardar',
+                    handler: (data) => {
+                      this.firestore.collection('solpes').doc(solpe.id).update({
+                        estatus: estatusSeleccionado,
+                        comentario: data.comentario || ''
+                      }).then(() => {
+                        solpe.estatus = estatusSeleccionado;
+                        solpe.comentario = data.comentario || '';
+                      });
+                    }
+                  }
+                ]
               });
+              await commentAlert.present();
             }
           },
         },
@@ -60,7 +77,8 @@ export class GestorsolpesPage implements OnInit {
     await alert.present();
   }
 
-  async abrirComparacion(item: any, solpeId: string) {
+
+  async abrirComparacion(item: any) {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
       inputs: [
@@ -74,7 +92,6 @@ export class GestorsolpesPage implements OnInit {
           handler: (data) => {
             if (data.empresa && data.precio) {
               item.comparaciones.push({ empresa: data.empresa, precio: Number(data.precio) });
-              this.guardarComparacion(item, solpeId);
             }
           },
         },
@@ -83,6 +100,7 @@ export class GestorsolpesPage implements OnInit {
     await alert.present();
   }
 
+
   guardarComparacion(item: any, solpeId: string) {
     const solpeRef = this.firestore.collection('solpes').doc(solpeId);
     const itemRef = solpeRef.collection('items').doc(item.id);
@@ -90,21 +108,27 @@ export class GestorsolpesPage implements OnInit {
     itemRef.update({ comparaciones: item.comparaciones });
   }
 
-  subirComparaciones(item: any, solpe: any) {
-    const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
-    const updatedItems = solpe.items.map((it: any) => {
-      if (it.item === item.item) {
-        return { ...it, comparaciones: item.comparaciones };
+// Ahora este método sube las comparaciones de todos los ítems de la SOLPE
+async subirComparaciones(solpe: any) {
+  const confirm = await this.alertController.create({
+    header: 'Confirmar',
+    message: '¿Estás seguro de subir las comparaciones a Firestore?',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Sí, subir',
+        handler: () => {
+          this.firestore.collection('solpes').doc(solpe.id).update({
+            items: solpe.items
+          }).then(() => {
+            console.log('Comparaciones subidas a Firestore');
+          }).catch(err => {
+            console.error('Error al subir comparaciones:', err);
+          });
+        }
       }
-      return it;
-    });
-
-    solpeRef.update({
-      items: updatedItems
-    }).then(() => {
-      console.log('Comparaciones actualizadas en Firestore');
-    }).catch(err => {
-      console.error('Error al subir comparaciones:', err);
-    });
-  }
+    ]
+  });
+  await confirm.present();
+}
 }

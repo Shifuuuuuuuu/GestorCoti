@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-historial-solpe',
@@ -11,7 +12,7 @@ export class HistorialSolpePage  {
   solpeEncontrada: any = null;
   buscado: boolean = false;
 
-  constructor(private firestore: AngularFirestore) {}
+  constructor(private firestore: AngularFirestore, private alertController: AlertController) {}
 
   buscarSolpe() {
     this.firestore
@@ -26,4 +27,5 @@ export class HistorialSolpePage  {
         this.buscado = true;
       });
   }
+
 }

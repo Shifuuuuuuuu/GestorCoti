@@ -17,16 +17,18 @@
         </ion-item>
       </ion-col>
       <ion-col size="2">
-        <ion-button expand="block" color="primary" (click)="buscarSolpe()">
-          <ion-icon name="search-outline"></ion-icon> Buscar
+        <ion-button expand="block" color="primary" (click)="buscarSolpe()" class="search-btn">
+          <ion-icon name="search-outline"></ion-icon>
         </ion-button>
       </ion-col>
     </ion-row>
   </ion-grid>
-<ion-card>
-  <div class="table-container" *ngIf="solpeEncontrada">
-    <ion-card-header>
+
+  <ion-card *ngIf="solpeEncontrada">
+    <ion-card-header class="card-header">
       <h3>Detalle de la SOLPE</h3>
+    </ion-card-header>
+    <ion-card-content>
       <table class="styled-table">
         <thead>
           <tr>
@@ -43,35 +45,34 @@
             <td>{{ solpeEncontrada.fecha }}</td>
             <td>{{ solpeEncontrada.numero_contrato }}</td>
             <td>{{ solpeEncontrada.usuario }}</td>
-            <td>{{ solpeEncontrada.estatus}}</td>
+            <td>{{ solpeEncontrada.estatus }}</td>
           </tr>
         </tbody>
       </table>
-    </ion-card-header>
-    <ion-card-content>
-      <h4>Items</h4>
-    <table class="styled-table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Descripción</th>
-          <th>Código Referencial</th>
-          <th>Cantidad</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of solpeEncontrada.items">
-          <td>{{ item.item }}</td>
-          <td>{{ item.descripcion }}</td>
-          <td>{{ item.codigo_referencial }}</td>
-          <td>{{ item.cantidad }}</td>
-        </tr>
-      </tbody>
-    </table>
-    </ion-card-content>
-  </div>
-</ion-card>
 
+      <h4>Items</h4>
+      <table class="styled-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Descripción</th>
+            <th>Código Referencial</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of solpeEncontrada.items">
+            <td>{{ item.item }}</td>
+            <td>{{ item.descripcion }}</td>
+            <td>{{ item.codigo_referencial }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </ion-card-content>
+  </ion-card>
 
   <div *ngIf="buscado && !solpeEncontrada">
     <ion-text color="danger"><p>No se encontró la SOLPE con ese número.</p></ion-text>

@@ -8,82 +8,90 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <div *ngFor="let solpe of solpes" class="table-container">
-    <h3>SOLPE N° {{ solpe.numero_solpe }}</h3>
+  <ion-card class="main-card">
+    <div *ngFor="let solpe of solpes" class="solpe-container">
+      <h3 style="margin-left: 1%;">SOLPE N° {{ solpe.numero_solpe }}</h3>
 
-    <!-- Tabla principal de SOLPE -->
-    <ion-card>
-      <table class="styled-table">
-        <thead>
-          <tr>
-            <th>Fecha</th>
-            <th>Contrato</th>
-            <th>Usuario</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{{ solpe.fecha }}</td>
-            <td>{{ solpe.numero_contrato }}</td>
-            <td>{{ solpe.usuario }}</td>
-            <td>{{ solpe.estatus }}</td>
-            <td>
-              <ion-button size="small" (click)="cambiarEstatus(solpe)">
-                Cambiar Estatus
-              </ion-button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </ion-card>
-    <br>
-    <ion-card>
-      <table class="styled-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Descripción</th>
-            <th>Código</th>
-            <th>Cantidad</th>
-            <th>Comparación Precios</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of solpe.items">
-            <td>{{ item.item }}</td>
-            <td>{{ item.descripcion }}</td>
-            <td>{{ item.codigo_referencial }}</td>
-            <td>{{ item.cantidad }}</td>
-            <td>
-              <div *ngIf="item.comparaciones && item.comparaciones.length">
-                <h5>Comparaciones:</h5>
-                <table class="styled-table">
-                  <thead>
-                    <tr>
-                      <th>Empresa</th>
-                      <th>Precio</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let comp of item.comparaciones">
-                      <td>{{ comp.empresa }}</td>
-                      <td>{{ comp.precio | currency }}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <br>
-              <ion-button size="small" (click)="abrirComparacion(item, solpe.id)">
-                <ion-icon name="add-circle-outline"></ion-icon>
-              </ion-button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </ion-card>
-  </div>
+      <ion-card class="inner-card">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Contrato</th>
+              <th>Usuario</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ solpe.fecha }}</td>
+              <td>{{ solpe.numero_contrato }}</td>
+              <td>{{ solpe.usuario }}</td>
+              <td>{{ solpe.estatus }}</td>
+              <td>
+                <ion-button size="small" (click)="cambiarEstatus(solpe)">
+                  Cambiar Estatus
+                </ion-button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </ion-card>
+
+      <ion-card class="inner-card">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Descripción</th>
+              <th>Código</th>
+              <th>Cantidad</th>
+              <th>Comparación Precios</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of solpe.items">
+              <td>{{ item.item }}</td>
+              <td>{{ item.descripcion }}</td>
+              <td>{{ item.codigo_referencial }}</td>
+              <td>{{ item.cantidad }}</td>
+              <td>
+                <div *ngIf="item.comparaciones?.length">
+                  <h5>Comparaciones:</h5>
+                  <table class="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Empresa</th>
+                        <th>Precio</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let comp of item.comparaciones">
+                        <td>{{ comp.empresa }}</td>
+                        <td>{{ comp.precio | currency }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <br>
+                <ion-buttons>
+                  <ion-button size="small" (click)="abrirComparacion(item)">
+                    <ion-icon name="add-circle-outline"></ion-icon>
+                  </ion-button>
+                  <ion-button color="success" size="small" (click)="subirComparaciones(solpe)">
+                    <ion-icon name="send-outline"></ion-icon>
+                  </ion-button>
+                </ion-buttons>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </ion-card>
+    </div>
+  </ion-card>
 </ion-content>
+
+
 
 
