@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Equipos } from '../Interface/IEquipo';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+
 // ✅ Extiende el tipo de jsPDF para que TypeScript reconozca autoTable
 declare module 'jspdf' {
   interface jsPDF {
@@ -38,7 +39,7 @@ export class CertificadosMantencionesPage  {
   generarPDF() {
     const doc = new jsPDF();
 
-    // Título y encabezado
+    // ✅ Título y encabezado
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('Xtreme Mining Ltda.', 105, 20, { align: 'center' });
@@ -50,23 +51,25 @@ export class CertificadosMantencionesPage  {
     doc.setFontSize(14);
     doc.text('CERTIFICADO DE MANTENCIÓN', 105, 45, { align: 'center' });
 
-    // Cuerpo del certificado
     const texto = `
-Xtreme Mining Ltda. certifica que el equipo identificado con la placa ${this.equipo.patente},
-Código Interno ${this.equipo.codigo}, se encuentra con sus mantenciones y revisiones al día
-según la pauta del fabricante, encontrándose en condiciones para operar con normalidad en minería.
+    Xtreme Mining Ltda. certifica que el equipo identificado con la placa ${this.equipo.patente},
+    Código Interno ${this.equipo.codigo}, se encuentra con sus mantenciones y revisiones al día
+    según la pauta del fabricante, encontrándose en condiciones para operar con normalidad en minería.
 
-Su última mantención se realizó el ${this.equipo.fecha_ultima_ot} a los ${this.equipo.km_hrs_ot} km/hrs,
-registrada en la orden de trabajo N° ${this.equipo.ultima_ot}.
+    Su última mantención se realizó el ${this.equipo.fecha_ultima_ot} a los ${this.equipo.km_hrs_ot} km/hrs,
+    registrada en la orden de trabajo N° ${this.equipo.ultima_ot}.
 
-La unidad se encuentra en condiciones estándar tanto en su parte mecánica, hidráulica y estructural.
+    La unidad se encuentra en condiciones estándar tanto en su parte mecánica, hidráulica y estructural.
     `;
+
+    // ✅ Aplicar división de texto para el ancho máximo
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(texto, 15, 55, { maxWidth: 180 });
+    const textLines = doc.splitTextToSize(texto, 180);
+    doc.text(textLines, 15, 55);
 
     // ✅ Tabla de datos técnicos con autoTable
-    doc.autoTable({
+    (doc as any).autoTable({
       startY: 120,
       theme: 'grid',
       head: [['Marca', 'Modelo', 'Tipo', 'Chasis', 'Motor', 'Interno', 'Lectura Actual', 'Próxima Mantención']],
@@ -82,13 +85,13 @@ La unidad se encuentra en condiciones estándar tanto en su parte mecánica, hid
       ]],
     });
 
-    // Firma
+    // ✅ Firma
     doc.setFontSize(12);
     doc.text('_____________________________', 15, 180);
     doc.text('Juan Cubillos Polloni', 15, 185);
     doc.text('Jefe Mantención Flota', 15, 190);
 
-    // Guardar PDF
+    // ✅ Guardar PDF
     doc.save(`C.MANTENCIONES_${this.equipo.patente}.pdf`);
   }
 }
