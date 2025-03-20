@@ -1,6 +1,6 @@
 export interface Solpes {
   numero_solpe: number;
-  fecha: Date;
+  fecha: any;
   numero_contrato: string;
   usuario: string;
   item: string;

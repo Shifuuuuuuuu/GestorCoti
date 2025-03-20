@@ -8,6 +8,17 @@
 </ion-header>
 
 <ion-content class="ion-padding">
+  <ion-segment [(ngModel)]="segmentoSeleccionado">
+    <ion-segment-button value="historial">
+      <ion-label>Historial de SOLPES</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="buscar">
+      <ion-label>Buscar por número</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+
+<!-- Buscar por número con tabla -->
+<div *ngIf="segmentoSeleccionado === 'buscar'">
   <ion-grid>
     <ion-row>
       <ion-col size="10">
@@ -17,64 +28,129 @@
         </ion-item>
       </ion-col>
       <ion-col size="2">
-        <ion-button expand="block" color="primary" (click)="buscarSolpe()" class="search-btn">
+        <ion-button expand="block" color="primary" (click)="buscarSolpe()">
           <ion-icon name="search-outline"></ion-icon>
         </ion-button>
       </ion-col>
     </ion-row>
   </ion-grid>
 
-  <ion-card *ngIf="solpeEncontrada">
-    <ion-card-header class="card-header">
-      <h3>Detalle de la SOLPE</h3>
-    </ion-card-header>
-    <ion-card-content>
-      <table class="styled-table">
-        <thead>
-          <tr>
-            <th>Número SOLPE</th>
-            <th>Fecha</th>
-            <th>Número de Contrato</th>
-            <th>Usuario</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{{ solpeEncontrada.numero_solpe }}</td>
-            <td>{{ solpeEncontrada.fecha }}</td>
-            <td>{{ solpeEncontrada.numero_contrato }}</td>
-            <td>{{ solpeEncontrada.usuario }}</td>
-            <td>{{ solpeEncontrada.estatus }}</td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- Tabla con resultados -->
+  <ion-grid *ngIf="solpeEncontrada">
+    <ion-row class="header-row">
+      <ion-col><b>N° SOLPE</b></ion-col>
+      <ion-col><b>Fecha</b></ion-col>
+      <ion-col><b>Usuario</b></ion-col>
+      <ion-col><b>Estatus</b></ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>{{ solpeEncontrada.numero_solpe }}</ion-col>
+      <ion-col>{{ solpeEncontrada.fecha }}</ion-col>
+      <ion-col>{{ solpeEncontrada.usuario }}</ion-col>
+      <ion-col>{{ solpeEncontrada.estatus }}</ion-col>
+    </ion-row>
+  </ion-grid>
 
-      <h4>Items</h4>
-      <table class="styled-table">
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Descripción</th>
-            <th>Código Referencial</th>
-            <th>Cantidad</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of solpeEncontrada.items">
-            <td>{{ item.item }}</td>
-            <td>{{ item.descripcion }}</td>
-            <td>{{ item.codigo_referencial }}</td>
-            <td>{{ item.cantidad }}</td>
-            <td>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </ion-card-content>
-  </ion-card>
+  <!-- Tabla con detalles de los items -->
+  <ion-grid *ngIf="solpeEncontrada?.items?.length">
+    <ion-row class="header-row">
+      <ion-col><b>Item</b></ion-col>
+      <ion-col><b>Descripción</b></ion-col>
+      <ion-col><b>Código</b></ion-col>
+      <ion-col><b>Cantidad</b></ion-col>
+    </ion-row>
+    <ion-row *ngFor="let item of solpeEncontrada.items">
+      <ion-col>{{ item.item }}</ion-col>
+      <ion-col>{{ item.descripcion }}</ion-col>
+      <ion-col>{{ item.codigo_referencial }}</ion-col>
+      <ion-col>{{ item.cantidad }}</ion-col>
+    </ion-row>
+  </ion-grid>
 
   <div *ngIf="buscado && !solpeEncontrada">
     <ion-text color="danger"><p>No se encontró la SOLPE con ese número.</p></ion-text>
+  </div>
+</div>
+  <!-- Historial con filtros colapsables -->
+  <div *ngIf="segmentoSeleccionado === 'historial'">
+    <ion-button size="small" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
+      <ion-icon name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
+    </ion-button>
+
+    <div *ngIf="mostrarFiltros">
+      <ion-card>
+        <ion-grid>
+          <ion-row class="ion-align-items-center">
+            <!-- Filtro de Fecha -->
+            <ion-col size="12" size-md="3">
+              <ion-item>
+                <ion-label position="floating">Fecha</ion-label>
+                <ion-input [(ngModel)]="filtroFecha" type="date"></ion-input>
+              </ion-item>
+            </ion-col>
+
+            <!-- Filtro por Estatus -->
+            <ion-col size="12" size-md="3">
+              <ion-item>
+                <ion-label position="floating">Filtrar por Estatus</ion-label>
+                <ion-input [(ngModel)]="filtroEstatus"></ion-input>
+              </ion-item>
+            </ion-col>
+
+            <!-- Filtro por Responsable Correctivo -->
+            <ion-col size="12" size-md="3">
+              <ion-item>
+                <ion-label position="floating">Filtrar por Responsable Correctivo</ion-label>
+                <ion-input [(ngModel)]="filtroResponsable"></ion-input>
+              </ion-item>
+            </ion-col>
+
+            <!-- Filtro por Usuario -->
+            <ion-col size="12" size-md="3">
+              <ion-item>
+                <ion-label position="floating">Filtrar por Usuario</ion-label>
+                <ion-input [(ngModel)]="filtroUsuario"></ion-input>
+              </ion-item>
+            </ion-col>
+          </ion-row>
+
+          <!-- Botones de acción -->
+          <ion-row>
+            <ion-col size="6">
+              <ion-button expand="block" color="primary" (click)="filtrarSolpes()">
+                Aplicar Filtros
+              </ion-button>
+            </ion-col>
+            <ion-col size="6">
+              <ion-button expand="block" color="medium" (click)="limpiarFiltros()">
+                Limpiar Filtros
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card>
+    </div>
+
+
+      <!-- Tabla con resultados -->
+  <ion-grid *ngFor="let solpe of solpesFiltradas">
+    <ion-row class="header-row">
+      <ion-col><b>N° SOLPE</b></ion-col>
+      <ion-col><b>Fecha</b></ion-col>
+      <ion-col><b>Usuario</b></ion-col>
+      <ion-col><b>Estatus</b></ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col>{{ solpe.numero_solpe }}</ion-col>
+      <ion-col>{{ solpe.fecha }}</ion-col>
+      <ion-col>{{ solpe.usuario }}</ion-col>
+      <ion-col>{{ solpe.estatus }}</ion-col>
+    </ion-row>
+  </ion-grid>
+  <br><br><br><br>
+
+    <ion-text *ngIf="solpesFiltradas.length === 0">
+      <p>No hay SOLPES que coincidan con los filtros.</p>
+    </ion-text>
   </div>
 </ion-content>
