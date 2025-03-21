@@ -134,31 +134,31 @@
           <div class="form-container">
             <ion-item>
               <ion-label>Sub grupo</ion-label>
-              <ion-input></ion-input>
+              <ion-input [(ngModel)]="codigoSubGrupo" (ionChange)="actualizarSubGrupo()"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label>Nombre producto</ion-label>
-              <ion-input></ion-input>
+              <ion-input [(ngModel)]="descripcion" (ionChange)="actualizarNombreProducto()"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label>Nombre continuo</ion-label>
-              <ion-input></ion-input>
+              <ion-input [(ngModel)]="nombreContinuo" readonly></ion-input>
             </ion-item>
             <ion-item>
-              <ion-label>Numero</ion-label>
-              <ion-input></ion-input>
+              <ion-label>Número</ion-label>
+              <ion-input [(ngModel)]="numero" readonly></ion-input>
             </ion-item>
             <ion-item>
-              <ion-label>Codigo de producto</ion-label>
-              <ion-input></ion-input>
+              <ion-label>Código de producto</ion-label>
+              <ion-input [(ngModel)]="codigoProducto" readonly></ion-input>
             </ion-item>
             <ion-item>
               <ion-label>Descripción</ion-label>
-              <ion-input></ion-input>
+              <ion-input [(ngModel)]="descripcion"></ion-input>
             </ion-item>
             <ion-item>
               <ion-label>Codigo de grupo</ion-label>
-              <ion-select >
+              <ion-select [(ngModel)]="codigoGrupo">
                 <ion-select-option value="1">OTROS</ion-select-option>
                 <ion-select-option value="1000000000">LUBRICANTES Y ADITIVOS</ion-select-option>
                 <ion-select-option value="2000000000">NEUMATICOS</ion-select-option>
@@ -178,7 +178,7 @@
             </ion-item>
             <ion-item>
               <ion-label>Codigo de sub grupo</ion-label>
-              <ion-select>
+              <ion-select [(ngModel)]="codigoSubGrupo" (ionChange)="actualizarSubGrupo()">
                 <ion-select-option value="1">OTROS</ion-select-option>
                 <ion-select-option value="1100000000">ACEITE</ion-select-option>
                 <ion-select-option value="1200000000">ADITIVOS</ion-select-option>
@@ -264,7 +264,7 @@
               </ion-select>
             </ion-item>
             <div class="botones-flex">
-              <ion-button expand="full" color="success" shape="round">
+              <ion-button expand="full" color="success" shape="round" (click)="crearProducto()">
                 <ion-icon name="document-text-outline"></ion-icon> Crear producto
               </ion-button>
             </div>
