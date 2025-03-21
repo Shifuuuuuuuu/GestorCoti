@@ -70,6 +70,10 @@ const routes: Routes = [
     path: 'gestorsolpes',
     loadChildren: () => import('./gestorsolpes/gestorsolpes.module').then( m => m.GestorsolpesPageModule)
   },
+  {
+    path: 'creacion-oc',
+    loadChildren: () => import('./creacion-oc/creacion-oc.module').then( m => m.CreacionOcPageModule)
+  },
 
 
 ];

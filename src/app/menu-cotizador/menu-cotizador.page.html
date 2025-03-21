@@ -21,14 +21,11 @@
       <p>Historial solpe</p>
       <span>Revisa el estado en que esta la solpe</span>
     </div>
-        <!-- Total General Aceptadas -->
-        <div class="menu-item" (click)="navigateTo('cotiaziones-aprobadas')">
-          <ion-icon name="checkmark-circle-outline" class="menu-icon"></ion-icon>
-          <p>Cotizaciones Aceptadas</p>
-          <ion-badge color="primary">{{ totalAceptadas }}</ion-badge>
-          <br>
-          <span>El total de cotizaciones y comparaciones aceptadas</span>
-        </div>
+    <div class="menu-item" (click)="navigateTo('creacion-oc')">
+      <ion-icon name="file-tray-outline" class="menu-icon"></ion-icon>
+      <p>Orden de Compra</p>
+      <span>Crea las ordenes de compra y los productos</span>
+    </div>
   </div>
 
   <ion-button fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">

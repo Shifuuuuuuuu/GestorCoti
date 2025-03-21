@@ -11,7 +11,6 @@
   <div class="container">
     <ion-segment [(ngModel)]="modoSeleccionado">
       <ion-segment-button value="formulario">Formulario de SOLPE</ion-segment-button>
-      <ion-segment-button value="Crear">Creacion de producto</ion-segment-button>
     </ion-segment>
 
     <div *ngIf="modoSeleccionado === 'formulario'" class="form-container">

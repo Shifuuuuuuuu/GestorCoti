@@ -1,0 +1,275 @@
+
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Generar Certificado</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="container">
+    <ion-segment [(ngModel)]="modoSeleccionado">
+      <ion-segment-button value="Creacion_OC">Ordenes de Compra</ion-segment-button>
+      <ion-segment-button value="Crear">Creacion de producto</ion-segment-button>
+    </ion-segment>
+      <div *ngIf="modoSeleccionado === 'Creacion_OC'">
+        <div class="image-card">
+          <h2 style="text-align: center; color: white;">Datos de Orden de Compra</h2>
+          <div class="form-container">
+            <ion-item>
+              <ion-label>Numero de orden de Compra</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Proveedor</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Condicion de Pago</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Moneda</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Centro de costo</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Fecha orden</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Entrega final</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Estado</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Etapa</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>N.Vta/Cotiz</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <h5>Tabla de Items</h5>
+
+            <div class="table-container">
+              <table class="styled-table">
+                <thead>
+                  <tr>
+                    <th>Línea</th>
+                    <th>Codigo Producto</th>
+                    <th>Unidad de medida</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario($)</th>
+                    <th>SubTotal($)</th>
+                    <th>Desc</th>
+                    <th>Total Descuento($)</th>
+                    <th>Total($)</th>
+                    <th>Fecha Entrega</th>
+                    <th>Centro de Costo</th>
+                    <th>Detalle Producto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td></td> <!-- Item Autoincremental -->
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                    <td>
+                      <ion-input ></ion-input>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <ion-buttons class="botones-flex">
+                <ion-button expand="full" >
+                  <ion-icon name="add-outline"></ion-icon> Agregar Fila</ion-button>
+                <ion-button expand="block" color="success" >
+                  <ion-icon name="send-outline"></ion-icon> Enviar
+                </ion-button>
+              </ion-buttons>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="modoSeleccionado === 'Crear'">
+        <div class="image-card">
+          <h2 style="text-align: center; color: white;">Datos de producto</h2>
+          <div class="form-container">
+            <ion-item>
+              <ion-label>Sub grupo</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Nombre producto</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Nombre continuo</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Numero</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Codigo de producto</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Descripción</ion-label>
+              <ion-input></ion-input>
+            </ion-item>
+            <ion-item>
+              <ion-label>Codigo de grupo</ion-label>
+              <ion-select >
+                <ion-select-option value="1">OTROS</ion-select-option>
+                <ion-select-option value="1000000000">LUBRICANTES Y ADITIVOS</ion-select-option>
+                <ion-select-option value="2000000000">NEUMATICOS</ion-select-option>
+                <ion-select-option value="3000000000">EPP Y SEGURIDAD</ion-select-option>
+                <ion-select-option value="4000000000">INSUMOS DE OFICINA</ion-select-option>
+                <ion-select-option value="5000000000">FIJACIONES</ion-select-option>
+                <ion-select-option value="600000000">REPUESTOS</ion-select-option>
+                <ion-select-option value="7000000000">HERRAMIENTAS DE TRABAJO</ion-select-option>
+                <ion-select-option value="8000000000">ARIDOS-SERVICIOS-MANTENCION</ion-select-option>
+                <ion-select-option value="9000000000">MATERIALES DE TRABAJO</ion-select-option>
+                <ion-select-option value="AFJ1000000">ACTIVO FIJO</ion-select-option>
+                <ion-select-option value="FXR0000000">FONDOS A RENDIR</ion-select-option>
+                <ion-select-option value="MP10000000">MATERIAS PRIMAS</ion-select-option>
+                <ion-select-option value="PT10000000">PRODUCTO TERMINADOS HORMIGON</ion-select-option>
+                <ion-select-option value="RRHH000000">BIENESTAR RRHH</ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-label>Codigo de sub grupo</ion-label>
+              <ion-select>
+                <ion-select-option value="1">OTROS</ion-select-option>
+                <ion-select-option value="1100000000">ACEITE</ion-select-option>
+                <ion-select-option value="1200000000">ADITIVOS</ion-select-option>
+                <ion-select-option value="1300000000">PETROLEO</ion-select-option>
+                <ion-select-option value="1400000000">DESENGRASANTE</ion-select-option>
+                <ion-select-option value="1500000000">RECIPIENTES Y ELEMENTOS</ion-select-option>
+                <ion-select-option value="1600000000">ACIDOS</ion-select-option>
+                <ion-select-option value="2100000000">NEUMATICOS</ion-select-option>
+                <ion-select-option value="2200000000">NEUMATICO VEHICULO PESADO</ion-select-option>
+                <ion-select-option value="3100000000">VEPP Y SEGURIDAD</ion-select-option>
+                <ion-select-option value="4100000000">ARTICULOS DE ASEO</ion-select-option>
+                <ion-select-option value="4200000000">ARTICULO DE LIBRERÍA</ion-select-option>
+                <ion-select-option value="4300000000">ACCESORIOS COMPUTACIONALES</ion-select-option>
+                <ion-select-option value="4400000000">LICENCIA DE SOFTWARE</ion-select-option>
+                <ion-select-option value="4500000000">SUMINISTRO DE IMPRESIÓN</ion-select-option>
+                <ion-select-option value="4600000000">COMPUTADORES Y PERIFERICOS</ion-select-option>
+                <ion-select-option value="5100000000">ABRAZADERA</ion-select-option>
+                <ion-select-option value="5200000000">GOLILLAS</ion-select-option>
+                <ion-select-option value="5300000000">PERNO</ion-select-option>
+                <ion-select-option value="5400000000">TUERCA</ion-select-option>
+                <ion-select-option value="6100000000">FILTRO DE ACEITE</ion-select-option>
+                <ion-select-option value="6110000000">FLEXIBLE HI</ion-select-option>
+                <ion-select-option value="6120000000">FLEXIBLE CONEXIÓN JIC</ion-select-option>
+                <ion-select-option value="6130000000">REPUESTO ACCESORIO</ion-select-option>
+                <ion-select-option value="6140000000">REPUESTO ALECTRICO</ion-select-option>
+                <ion-select-option value="6150000000">REPUESTO MECANICO</ion-select-option>
+                <ion-select-option value="6160000000">REPUESTO PLANTA ARIDOS</ion-select-option>
+                <ion-select-option value="6170000000">REPUESTO PLANTA HORMIGON</ion-select-option>
+                <ion-select-option value="6200000000">FILTRO DE AIRE</ion-select-option>
+                <ion-select-option value="6300000000">FILTRO PARA CABINA</ion-select-option>
+                <ion-select-option value="6400000000">FILTRO COMBUSTIBLE</ion-select-option>
+                <ion-select-option value="6500000000">FILTRO ELEMENTO</ion-select-option>
+                <ion-select-option value="6600000000">FILTRO</ion-select-option>
+                <ion-select-option value="6700000000">FILTRO HIDRAULICO</ion-select-option>
+                <ion-select-option value="6800000000">FILTRO SEPARADOR DE AGUA</ion-select-option>
+                <ion-select-option value="6900000000">FLEXIBLE HE</ion-select-option>
+                <ion-select-option value="7100000000">HERRAMIENTAS DE TRABAJO</ion-select-option>
+                <ion-select-option value="7200000000">HERRAMIENTAS MANUALES</ion-select-option>
+                <ion-select-option value="7300000000">HERRAMIENTAS ELECTRICAS</ion-select-option>
+                <ion-select-option value="8100000000">SERVICIOS DE ALIMENTACIÓN</ion-select-option>
+                <ion-select-option value="8110000000">SERVICIO DE TRANSPORTE PERSONAL</ion-select-option>
+                <ion-select-option value="8120000000">SERVICIOS PRESTADOS</ion-select-option>
+                <ion-select-option value="8130000000">SERVICIO DE MANTENCIÓN Y REPARACIÓN</ion-select-option>
+                <ion-select-option value="8140000000">SERVICIOS BASICOS</ion-select-option>
+                <ion-select-option value="8200000000">ARIDOS - SUMINISTRO</ion-select-option>
+                <ion-select-option value="8300000000">ARRIENDO MAQUINARIA</ion-select-option>
+                <ion-select-option value="8400000000">CAPACITACION  Y CERTIFICACIONES</ion-select-option>
+                <ion-select-option value="8500000000">ARRIENDO VEHICULO</ion-select-option>
+                <ion-select-option value="8600000000">ARRIENDO OFICINA - BIEN RAIZ</ion-select-option>
+                <ion-select-option value="8700000000">ARRIENDO EQUIPOS</ion-select-option>
+                <ion-select-option value="8800000000">MANTENCION PLANTA</ion-select-option>
+                <ion-select-option value="8900000000">SERVICI DE FLETE</ion-select-option>
+                <ion-select-option value="9100000000">MT - FIERRO</ion-select-option>
+                <ion-select-option value="9200000000">MT - GENERAL</ion-select-option>
+                <ion-select-option value="9300000000">MT - PRODUCCION</ion-select-option>
+                <ion-select-option value="9400000000">MT - ELECTRICO</ion-select-option>
+                <ion-select-option value="9500000000">COMUNICACIONES</ion-select-option>
+                <ion-select-option value="AFJ1100000">ACTIVO FIJO - EQUIPOS DE COMPUTACION</ion-select-option>
+                <ion-select-option value="AFJ1200000">ACTIVO FIJO - INSTALACIONES</ion-select-option>
+                <ion-select-option value="AFJ1300000">ACTIVO FIJO - MAQUINARIA</ion-select-option>
+                <ion-select-option value="AFJ1400000">ACTIVO FIJO - VEHICULOS</ion-select-option>
+                <ion-select-option value="AFJ1500000">ACTIVO FIJO - HERRAMIENTAS</ion-select-option>
+                <ion-select-option value="AFJ1600000">ACTIVO FIJO - EQUIPOS ESTACIONARIOS</ion-select-option>
+                <ion-select-option value="AFJ1700000">ACTIVO FIJO - MUEBLES Y UTILES</ion-select-option>
+                <ion-select-option value="FXR1000000">GASTOS DE CAJA CHICA</ion-select-option>
+                <ion-select-option value="MP11000000">CEMENTO</ion-select-option>
+                <ion-select-option value="MP12000000">ARIDOS</ion-select-option>
+                <ion-select-option value="MP13000000">ADITIVO - MATERIA PRIMA</ion-select-option>
+                <ion-select-option value="MP14000000">FIBRA</ion-select-option>
+                <ion-select-option value="MP15000000">HORMIGÓN</ion-select-option>
+                <ion-select-option value="MP16000000">AGUA INDUSTRIAL</ion-select-option>
+                <ion-select-option value="PT11000000">PROD. TERMINADO HN</ion-select-option>
+                <ion-select-option value="PT12000000">PROD. TERMINADO GN</ion-select-option>
+                <ion-select-option value="PT13000000">PROD. TERMINADO HB</ion-select-option>
+                <ion-select-option value="PT14000000">PROD. TERMINADO GB</ion-select-option>
+                <ion-select-option value="PT15000000">PROD. TERMINADO HS / HF / HAC</ion-select-option>
+                <ion-select-option value="PT16000000">OTROS SERVICIOS</ion-select-option>
+                <ion-select-option value="RRHH100000">BIENESTAR DE RRHH</ion-select-option>
+                <ion-select-option value="PT17000000">HORMIGON ALAFLEXSO TRACCION</ion-select-option>
+                <ion-select-option value="PT18000000">PROD. TERMINADO SHG</ion-select-option>
+                <ion-select-option value="PT19000000">PROD. TERMINADO HCU</ion-select-option>
+                <ion-select-option value="PT11400000">PROD. TERMINADO SG</ion-select-option>
+              </ion-select>
+            </ion-item>
+            <div class="botones-flex">
+              <ion-button expand="full" color="success" shape="round">
+                <ion-icon name="document-text-outline"></ion-icon> Crear producto
+              </ion-button>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+</ion-content>

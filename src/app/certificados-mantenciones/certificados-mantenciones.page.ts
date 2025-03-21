@@ -15,6 +15,7 @@ declare module 'jspdf' {
   styleUrls: ['./certificados-mantenciones.page.scss'],
 })
 export class CertificadosMantencionesPage  {
+  modoSeleccionado: string = 'Certificado';
   equipo: Equipos = {
     equipo: '',
     codigo: '',
