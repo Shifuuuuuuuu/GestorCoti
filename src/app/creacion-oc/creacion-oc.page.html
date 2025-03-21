@@ -14,12 +14,14 @@
       <ion-segment-button value="Creacion_OC">Ordenes de Compra</ion-segment-button>
       <ion-segment-button value="Crear">Creacion de producto</ion-segment-button>
     </ion-segment>
+
+      <!-- Orden de Compra -->
       <div *ngIf="modoSeleccionado === 'Creacion_OC'">
         <div class="image-card">
           <h2 style="text-align: center; color: white;">Datos de Orden de Compra</h2>
           <div class="form-container">
             <ion-item>
-              <ion-label>Numero de orden de Compra</ion-label>
+              <ion-label>Numero de Orden de Compra</ion-label>
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
@@ -27,7 +29,7 @@
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
-              <ion-label>Condicion de Pago</ion-label>
+              <ion-label>Condición de Pago</ion-label>
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
@@ -35,15 +37,15 @@
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
-              <ion-label>Centro de costo</ion-label>
+              <ion-label>Centro de Costo</ion-label>
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
-              <ion-label>Fecha orden</ion-label>
+              <ion-label>Fecha Orden</ion-label>
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
-              <ion-label>Entrega final</ion-label>
+              <ion-label>Entrega Final</ion-label>
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
@@ -55,11 +57,11 @@
               <ion-input></ion-input>
             </ion-item>
             <ion-item>
-              <ion-label>N.Vta/Cotiz</ion-label>
+              <ion-label>N.Vta / Cotiz</ion-label>
               <ion-input></ion-input>
             </ion-item>
-            <h5>Tabla de Items</h5>
 
+            <h5>Tabla de Items</h5>
             <div class="table-container">
               <table class="styled-table">
                 <thead>
@@ -80,47 +82,27 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td></td> <!-- Item Autoincremental -->
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
-                    <td>
-                      <ion-input ></ion-input>
-                    </td>
+                    <td></td> <!-- Autoincremental -->
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
+                    <td><ion-input></ion-input></td>
                   </tr>
                 </tbody>
               </table>
+
               <ion-buttons class="botones-flex">
-                <ion-button expand="full" >
-                  <ion-icon name="add-outline"></ion-icon> Agregar Fila</ion-button>
-                <ion-button expand="block" color="success" >
+                <ion-button expand="full">
+                  <ion-icon name="add-outline"></ion-icon> Agregar Fila
+                </ion-button>
+                <ion-button expand="block" color="success">
                   <ion-icon name="send-outline"></ion-icon> Enviar
                 </ion-button>
               </ion-buttons>

@@ -4,6 +4,9 @@
       <ion-back-button defaultHref="/menu-solpe" style="color: white;"></ion-back-button>
     </ion-buttons>
     <ion-title>Historial de SOLPES</ion-title>
+    <ion-button slot="end" size="small" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
+      <ion-icon name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
@@ -73,9 +76,6 @@
 </div>
   <!-- Historial con filtros colapsables -->
   <div *ngIf="segmentoSeleccionado === 'historial'">
-    <ion-button size="small" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
-      <ion-icon name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
-    </ion-button>
 
     <div *ngIf="mostrarFiltros">
       <ion-card>
