@@ -74,6 +74,10 @@ const routes: Routes = [
     path: 'creacion-oc',
     loadChildren: () => import('./creacion-oc/creacion-oc.module').then( m => m.CreacionOcPageModule)
   },
+  {
+    path: 'visualizacion-solped',
+    loadChildren: () => import('./visualizacion-solped/visualizacion-solped.module').then( m => m.VisualizacionSolpedPageModule)
+  },
 
 
 ];

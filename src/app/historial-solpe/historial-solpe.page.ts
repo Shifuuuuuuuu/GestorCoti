@@ -30,12 +30,8 @@ export class HistorialSolpePage implements OnInit {
   cargarSolpes() {
     // Obtener los documentos de SOLPES
     this.firestore.collection('solpes').get().subscribe(snapshot => {
-      // Mapeamos cada solpe
       this.solpesOriginal = snapshot.docs.map((doc: any) => {
         const solpe = doc.data();
-
-        // Aquí asumimos que los items son una subcolección dentro de cada solpe
-        // Si no es así, solo ajusta según tu estructura de datos
         this.firestore.collection('solpes').doc(doc.id).collection('items').get().subscribe(itemSnapshot => {
           const items = itemSnapshot.docs.map(itemDoc => itemDoc.data());
 

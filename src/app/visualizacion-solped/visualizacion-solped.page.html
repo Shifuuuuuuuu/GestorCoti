@@ -1,0 +1,87 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home" style="color: white;"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Gestion de solped</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-card *ngFor="let solped of solpedList">
+    <ion-card-header>
+      <ion-card-title>N° SOLPED: {{ solped.numero_solpe }}</ion-card-title>
+      <ion-card-subtitle>Fecha: {{ solped.fecha}}</ion-card-subtitle>
+      <ion-card-subtitle>Usuario: {{ solped.usuario }}</ion-card-subtitle>
+      <ion-card-subtitle>Estado: {{ solped.estatus }}</ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <ion-card class="inner-card">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Descripción</th>
+              <th>Código</th>
+              <th>Cantidad</th>
+              <th>Comparación Precios</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of solped.items">
+              <td>{{ item.item }}</td>
+              <td>{{ item.descripcion }}</td>
+              <td>{{ item.codigo_referencial }}</td>
+              <td>{{ item.cantidad }}</td>
+              <td>
+                <div *ngIf="item.comparaciones?.length">
+                  <h5>Comparaciones:</h5>
+                  <table class="styled-table">
+                    <thead>
+                      <tr>
+                        <th>Empresa</th>
+                        <th>Precio</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let comp of item.comparaciones">
+                        <td>{{ comp.empresa }}</td>
+                        <td>{{ comp.precio | currency }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <br>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </ion-card>
+
+      <ion-item>
+        <ion-label position="floating">Comentario</ion-label>
+        <ion-textarea [(ngModel)]="solped.comentario"></ion-textarea>
+      </ion-item>
+
+      <ion-row class="ion-justify-content-between ion-padding-top">
+        <ion-col size="5">
+          <ion-button color="success" expand="block" (click)="aprobarSolped(solped)">
+            Aprobar
+          </ion-button>
+        </ion-col>
+        <ion-col size="5">
+          <ion-button color="danger" expand="block" (click)="rechazarSolped(solped)">
+            Rechazar
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-text *ngIf="solpedList.length === 0">
+    <p>No hay SOLPED pendientes.</p>
+  </ion-text>
+</ion-content>
+
+

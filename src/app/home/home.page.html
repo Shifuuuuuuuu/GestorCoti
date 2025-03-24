@@ -9,21 +9,10 @@
 
 <ion-content id="main-content" class="main-content">
   <div class="menu-grid">
-
-    <div class="menu-item" (click)="navigateTo('vista-cotizaciones')">
+    <div class="menu-item" (click)="navigateTo('visualizacion-solped')">
       <ion-icon name="eye-outline" class="menu-icon"></ion-icon>
-      <p>Visualiza las cotizaciones</p>
-      <ion-badge color="danger">{{ cotizacionesPendientesCount }}</ion-badge>
-      <br>
-      <span>Podrás ver las cotizaciones que debes Aceptar o Rechazar</span>
-    </div>
-
-    <div class="menu-item" (click)="navigateTo('comparaciones')">
-      <ion-icon name="eye-outline" class="menu-icon"></ion-icon>
-      <p>Visualiza las cotizaciones comparativas</p>
-      <ion-badge color="danger">{{ comparacionesPendientesCount }}</ion-badge>
-      <br>
-      <span>Podrás ver las cotizaciones comparativas que debes Aceptar o Rechazar</span>
+      <p>Aprobacion de solped</p>
+      <span>Podrás aprobar o rechazar solped</span>
     </div>
     <div class="menu-item" (click)="navigateTo('certificados-mantenciones')">
       <ion-icon name="newspaper-outline" class="menu-icon"></ion-icon>
@@ -33,9 +22,8 @@
     <div class="menu-item" (click)="navigateTo('historial-solpe')">
       <ion-icon name="file-tray-outline" class="menu-icon"></ion-icon>
       <p>Historial solpe</p>
-      <span>Revisa el estado en que esta la solpe</span>
+      <span>Revisa el estado en que esta la solped</span>
     </div>
-
   </div>
 
   <ion-button fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">
