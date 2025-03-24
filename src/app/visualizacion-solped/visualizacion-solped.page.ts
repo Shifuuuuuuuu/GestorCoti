@@ -63,5 +63,46 @@ export class VisualizacionSolpedPage implements OnInit {
       console.error('Error al actualizar:', error);
     }
   }
+  async eliminarComparacion(solpedId: string, itemId: string, comparacionId: string) {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar Comparación',
+      message: '¿Estás seguro de que deseas eliminar esta comparación?',
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          cssClass: 'secondary',
+        },
+        {
+          text: 'Eliminar',
+          handler: async () => {
+            try {
+              await this.firestore
+                .collection('solpes')
+                .doc(solpedId)
+                .collection('items')
+                .doc(itemId)
+                .collection('comparaciones')
+                .doc(comparacionId)
+                .delete();
+
+              this.cargarSolped(); // Recarga la lista después de eliminar
+              const successAlert = await this.alertCtrl.create({
+                header: 'Éxito',
+                message: 'Comparación eliminada correctamente.',
+                buttons: ['OK']
+              });
+              await successAlert.present();
+            } catch (error) {
+              console.error('Error al eliminar la comparación:', error);
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
 }
 
