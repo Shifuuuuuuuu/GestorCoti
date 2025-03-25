@@ -37,16 +37,13 @@ export class IniciarSesionPage implements OnInit {
 
       if (user) {
         if (user.emailVerified) {
-          // Consultar Firestore para obtener el rol del usuario
           const userDoc = await this.firestore.collection('Usuarios').doc(user.uid).get().toPromise();
 
           if (userDoc && userDoc.exists) {
-            const userData = userDoc.data() as any; // Convertir el documento en objeto
-            const userRole = userData.role; // Obtener el rol
+            const userData = userDoc.data() as any;
+            const userRole = userData.role;
 
-            localStorage.setItem('userId', user.uid); // Guardar UID en el almacenamiento local
-
-            // Redirigir según el rol
+            localStorage.setItem('userId', user.uid);
             if (userRole === 'cotizador') {
               this.router.navigate(['/menu-cotizador']);
             } else if (userRole === 'admin') {
@@ -71,7 +68,7 @@ export class IniciarSesionPage implements OnInit {
 
 
   async resetPassword(event: Event) {
-    event.preventDefault(); // Detener la acción predeterminada del enlace
+    event.preventDefault();
     const alert = await this.alertController.create({
       header: 'Recuperar Contraseña',
       message: 'Ingrese su correo electrónico para enviarle un enlace de recuperación.',
@@ -111,12 +108,12 @@ export class IniciarSesionPage implements OnInit {
   }
 
   goToRegister(event: Event) {
-    event.preventDefault(); // Detener la acción predeterminada del enlace
+    event.preventDefault();
     this.router.navigate(['/registrar-usuario']);
   }
 
   preventFormSubmit(event: Event) {
-    event.preventDefault(); // Prevenir el envío por defecto del formulario
+    event.preventDefault();
   }
 
   async presentToast(message: string, color: string) {

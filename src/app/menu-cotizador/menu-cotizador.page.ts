@@ -15,7 +15,7 @@ export class MenuCotizadorPage implements OnInit {
   comparacionesPendientesCount: number = 0;
   cotizacionesAceptadasCount: number = 0;
   comparacionesAceptadasCount: number = 0;
-  totalAceptadas: number = 0; // Agregar variable para total general aceptadas
+  totalAceptadas: number = 0;
 
   usuario = {};
 
@@ -31,7 +31,6 @@ export class MenuCotizadorPage implements OnInit {
   }
 
   ngOnInit() {
-    // Obtener las cantidades de cotizaciones y comparaciones
     this.cotizacionesService.getCotizacionesPendientesCount().subscribe(cotizacionesCount => {
       this.cotizacionesService.getImagenesPendientesCount().subscribe(imagenesCount => {
         this.cotizacionesPendientesCount = cotizacionesCount + imagenesCount;
@@ -51,7 +50,6 @@ export class MenuCotizadorPage implements OnInit {
             this.cotizacionesAceptadasCount = (cotizacionesCount || 0) + (imagenesCotizacionesCount || 0);
             this.comparacionesAceptadasCount = (comparacionesCount || 0) + (imagenesComparacionesCount || 0);
 
-            // Calcular totalAceptadas y mostrarlo en HTML
             this.totalAceptadas = this.cotizacionesAceptadasCount + this.comparacionesAceptadasCount;
           });
         });

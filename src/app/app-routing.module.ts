@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from './auth.guard';
 
 const routes: Routes = [
   {
@@ -12,10 +13,6 @@ const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'cotizaciones',
-    loadChildren: () => import('./cotizaciones/cotizaciones.module').then( m => m.CotizacionesPageModule)
-  },
-  {
     path: 'iniciar-sesion',
     loadChildren: () => import('./iniciar-sesion/iniciar-sesion.module').then( m => m.IniciarSesionPageModule)
   },
@@ -25,58 +22,31 @@ const routes: Routes = [
   },
   {
     path: 'perfil-usuario',
-    loadChildren: () => import('./perfil-usuario/perfil-usuario.module').then( m => m.PerfilUsuarioPageModule)
-  },
-  {
-    path: 'cotizacion-comparativa',
-    loadChildren: () => import('./cotizacion-comparativa/cotizacion-comparativa.module').then( m => m.CotizacionComparativaPageModule)
-  },
-  {
-    path: 'vista-cotizaciones',
-    loadChildren: () => import('./vista-cotizaciones/vista-cotizaciones.module').then( m => m.VistaCotizacionesPageModule)
-  },
-  {
-    path: 'comparaciones',
-    loadChildren: () => import('./comparaciones/comparaciones.module').then( m => m.ComparacionesPageModule)
-  },
-  {
-    path: 'cotiaziones-aprobadas',
-    loadChildren: () => import('./cotiaziones-aprobadas/cotiaziones-aprobadas.module').then( m => m.CotiazionesAprobadasPageModule)
+    loadChildren: () => import('./perfil-usuario/perfil-usuario.module').then( m => m.PerfilUsuarioPageModule),     canActivate: [AuthGuard]
   },
   {
     path: 'menu-cotizador',
-    loadChildren: () => import('./menu-cotizador/menu-cotizador.module').then( m => m.MenuCotizadorPageModule)
-  },
-  {
-    path: 'chat',
-    loadChildren: () => import('./chat/chat.module').then( m => m.ChatPageModule)
-  },  {
-    path: 'certificados-mantenciones',
-    loadChildren: () => import('./certificados-mantenciones/certificados-mantenciones.module').then( m => m.CertificadosMantencionesPageModule)
+    loadChildren: () => import('./menu-cotizador/menu-cotizador.module').then( m => m.MenuCotizadorPageModule),     canActivate: [AuthGuard]
   },
   {
     path: 'solpe',
-    loadChildren: () => import('./solpe/solpe.module').then( m => m.SolpePageModule)
+    loadChildren: () => import('./solpe/solpe.module').then( m => m.SolpePageModule),     canActivate: [AuthGuard]
   },
   {
     path: 'historial-solpe',
-    loadChildren: () => import('./historial-solpe/historial-solpe.module').then( m => m.HistorialSolpePageModule)
+    loadChildren: () => import('./historial-solpe/historial-solpe.module').then( m => m.HistorialSolpePageModule),     canActivate: [AuthGuard]
   },
   {
     path: 'menu-solpe',
-    loadChildren: () => import('./menu-solpe/menu-solpe.module').then( m => m.MenuSolpePageModule)
+    loadChildren: () => import('./menu-solpe/menu-solpe.module').then( m => m.MenuSolpePageModule),     canActivate: [AuthGuard]
   },
   {
     path: 'gestorsolpes',
-    loadChildren: () => import('./gestorsolpes/gestorsolpes.module').then( m => m.GestorsolpesPageModule)
-  },
-  {
-    path: 'creacion-oc',
-    loadChildren: () => import('./creacion-oc/creacion-oc.module').then( m => m.CreacionOcPageModule)
+    loadChildren: () => import('./gestorsolpes/gestorsolpes.module').then( m => m.GestorsolpesPageModule),     canActivate: [AuthGuard]
   },
   {
     path: 'visualizacion-solped',
-    loadChildren: () => import('./visualizacion-solped/visualizacion-solped.module').then( m => m.VisualizacionSolpedPageModule)
+    loadChildren: () => import('./visualizacion-solped/visualizacion-solped.module').then( m => m.VisualizacionSolpedPageModule),     canActivate: [AuthGuard]
   },
 
 

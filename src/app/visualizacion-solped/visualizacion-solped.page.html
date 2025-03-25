@@ -9,7 +9,6 @@
 
 <ion-content class="ion-padding">
 
-  <!-- Skeleton mientras carga -->
   <ng-container *ngIf="loading">
     <ion-list *ngFor="let i of [1,2,3]">
       <ion-list-header>
@@ -28,7 +27,6 @@
     </ion-list>
   </ng-container>
 
-  <!-- Contenido real -->
   <ng-container *ngIf="!loading">
     <ion-card *ngFor="let solped of solpedList">
       <ion-card-header>

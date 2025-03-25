@@ -16,7 +16,7 @@ export class HistorialSolpePage implements OnInit {
   filtroEstatus: string = '';
   filtroResponsable: string = '';
   filtroUsuario: string = '';
-  mostrarFiltros: boolean = false;  // Controla el mostrar/ocultar
+  mostrarFiltros: boolean = false;
 
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
@@ -33,26 +33,18 @@ export class HistorialSolpePage implements OnInit {
 
       snapshot.docs.forEach((doc: any) => {
         const solpe = doc.data();
-        solpe.id = doc.id; // Guarda el ID si lo necesitas después
-
-        // Inicializa las subcolecciones como vacías
+        solpe.id = doc.id;
         solpe.items = [];
         solpe.comparaciones = [];
-
-        // Carga los items
         this.firestore.collection('solpes').doc(doc.id).collection('items').get().subscribe(itemSnapshot => {
           solpe.items = itemSnapshot.docs.map(itemDoc => itemDoc.data());
         });
-
-        // Carga las comparaciones
         this.firestore.collection('items').doc(doc.id).collection('comparaciones').get().subscribe(compSnapshot => {
           solpe.comparaciones = compSnapshot.docs.map(compDoc => compDoc.data());
         });
 
         solpesTemp.push(solpe);
       });
-
-      // Al finalizar el recorrido, asigna a tus variables
       this.solpesOriginal = solpesTemp;
       this.solpesFiltradas = [...this.solpesOriginal];
     });
@@ -77,22 +69,20 @@ export class HistorialSolpePage implements OnInit {
 
       if (solpe.fecha) {
         try {
-          // Si viene como Timestamp de Firestore
           if (solpe.fecha.toDate) {
             fechaSolpe = solpe.fecha.toDate().toISOString().split('T')[0];
           } else {
-            // Verificamos si es un string o Date válido
             const fechaTemp = new Date(solpe.fecha);
             if (!isNaN(fechaTemp.getTime())) {
               fechaSolpe = fechaTemp.toISOString().split('T')[0];
             } else {
               console.warn('Fecha inválida encontrada:', solpe.fecha);
-              fechaSolpe = ''; // Forzamos vacío para no hacer match
+              fechaSolpe = '';
             }
           }
         } catch (error) {
           console.error('Error procesando la fecha:', error);
-          fechaSolpe = ''; // Evita que rompa la ejecución
+          fechaSolpe = '';
         }
       }
 
@@ -104,9 +94,6 @@ export class HistorialSolpePage implements OnInit {
       return coincideFecha && coincideEstatus && coincideResponsable && coincideUsuario;
     });
   }
-
-
-
 
   limpiarFiltros() {
     this.filtroFecha = '';

@@ -10,8 +10,8 @@ import { ChatModalComponent } from '../chat-modal/chat-modal.component';
   styleUrls: ['./perfil-usuario.page.scss'],
 })
 export class PerfilUsuarioPage implements OnInit {
-  profileImageUrl: string = ''; // URL de la imagen de perfil
-  defaultProfileImage: string = 'assets/icon/default-profile.png'; // Ruta del icono predeterminado
+  profileImageUrl: string = '';
+  defaultProfileImage: string = 'assets/icon/default-profile.png';
   user: AppUser | null = null;
   isEditing: boolean = false;
   userEmail!: string | undefined;
@@ -28,14 +28,14 @@ export class PerfilUsuarioPage implements OnInit {
     private menuController: MenuController,
     private modalController: ModalController
   ) {}
-    // Abrir menú manualmente
+
 openMenu() {
   this.menuController.open();
 }
   async ngOnInit() {
-    const userId = localStorage.getItem('userId');  // Obtenemos el UID del usuario desde localStorage
+    const userId = localStorage.getItem('userId');
     if (userId) {
-      this.loadUserData(userId);  // Cargamos los datos del usuario usando el UID
+      this.loadUserData(userId);
     } else {
       this.errorMessage = 'Error: no se encontró el usuario.';
     }
@@ -43,10 +43,10 @@ openMenu() {
 
   async loadUserData(userId: string) {
     try {
-      const userResult = await this.authService.getUserById(userId);  // Obtén el usuario de Firestore
+      const userResult = await this.authService.getUserById(userId);
       if (userResult) {
         this.user = userResult;
-        this.profileImageUrl = this.user.photoURL || this.defaultProfileImage;  // Asigna la URL de la imagen o una predeterminada
+        this.profileImageUrl = this.user.photoURL || this.defaultProfileImage;
         console.log('Usuario cargado:', this.user);
       } else {
         this.errorMessage = 'No se encontró el usuario.';
@@ -62,25 +62,15 @@ openMenu() {
     const file = event.target.files[0];
     if (file) {
       try {
-        // Convertir el archivo a Base64
         const base64Image = await this.convertToBase64(file);
-
-        // Verificar si `this.user` no es null antes de asignar valores
         if (this.user) {
-          // Asignar la URL generada al usuario
           this.user.photoURL = base64Image;
-
-          // Guardar la URL en Firestore usando AuthService
           await this.authService.updateUser(this.user);
-
-          console.log('Imagen de perfil actualizada correctamente.');
           this.showToast('Imagen de perfil actualizada correctamente.', 'success');
         } else {
-          console.error('El usuario no está definido.');
           this.showToast('No se pudo actualizar la imagen de perfil. Usuario no definido.', 'danger');
         }
       } catch (error) {
-        console.error('Error al subir la imagen de perfil:', error);
         this.showToast('No se pudo actualizar la imagen de perfil.', 'danger');
       }
     } else {
@@ -98,13 +88,9 @@ openMenu() {
     });
   }
 
-
-
-
-
   editProfile() {
     this.isEditing = true;
-    console.log('Editando perfil:', this.isEditing); // Debug
+    console.log('Editando perfil:', this.isEditing);
     this.tempNombreCompleto = this.user?.fullName || '';
     this.tempEmail = this.user?.email || '';
     this.tempRut = this.user?.rut || '';
@@ -115,10 +101,10 @@ openMenu() {
   async saveProfile() {
     try {
       if (this.user) {
-        this.user.fullName = this.tempNombreCompleto; // Usamos `fullName` en vez de `Nombre_completo`
-        this.user.rut = this.tempRut; // Usamos `rut` en vez de `Rut`
-        this.user.phone = this.tempTelefono; // Usamos `phone` en vez de `Telefono`
-        await this.authService.updateUser(this.user);  // Método para actualizar el usuario
+        this.user.fullName = this.tempNombreCompleto;
+        this.user.rut = this.tempRut;
+        this.user.phone = this.tempTelefono;
+        await this.authService.updateUser(this.user);
         this.showToast('Los cambios se guardaron correctamente.', 'success');
         this.isEditing = false;
       }
@@ -130,15 +116,14 @@ openMenu() {
 
   cancelEdit() {
     this.isEditing = false;
-    const userId = localStorage.getItem('userId');  // Obtenemos el UID del usuario desde localStorage
+    const userId = localStorage.getItem('userId');
     if (userId) {
-      this.loadUserData(userId);  // Pasamos el UID a la función loadUserData
+      this.loadUserData(userId);
     } else {
       this.errorMessage = 'No se pudo encontrar el usuario.';
     }
   }
 
-  // Método para mostrar un mensaje con ToastController
   async showToast(message: string, color: string) {
     const toast = await this.toastController.create({
       message: message,
@@ -150,7 +135,7 @@ openMenu() {
   async openChat(usuario: any) {
     const modal = await this.modalController.create({
       component: ChatModalComponent,
-      componentProps: { usuario, receptorId: usuario.uid } // Pasa el usuario y el ID del receptor
+      componentProps: { usuario, receptorId: usuario.uid }
     });
     return await modal.present();
   }

@@ -22,7 +22,6 @@ export class VisualizacionSolpedPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Simula carga de datos mientras se muestra un skeleton
     setTimeout(() => {
       this.cargarSolped();
       this.loading = false;
@@ -31,10 +30,7 @@ export class VisualizacionSolpedPage implements OnInit {
 
   cargarSolped() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
-      // Filtrar solo las SOLPEDs con estatus 'Solicitado'
       const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
-
-      // Mapeo para asegurar estructura de items y comparaciones
       this.solpedList = filtradas.map((solpe: any) => {
         solpe.items = solpe.items
           ? solpe.items.map((item: any) => ({
@@ -44,8 +40,6 @@ export class VisualizacionSolpedPage implements OnInit {
           : [];
         return solpe;
       });
-
-      console.log('✅ SOLPEDS CARGADAS (solo Solicitadas):', this.solpedList);
     });
   }
 
@@ -71,7 +65,7 @@ export class VisualizacionSolpedPage implements OnInit {
       });
       await alert.present();
 
-      this.cargarSolped(); // Refresca la lista filtrada
+      this.cargarSolped();
     } catch (error) {
       console.error('Error al actualizar:', error);
       const errorAlert = await this.alertCtrl.create({
@@ -100,12 +94,8 @@ export class VisualizacionSolpedPage implements OnInit {
           );
 
           if (comparacionIndex !== -1) {
-            // Elimina la comparación
             item.comparaciones.splice(comparacionIndex, 1);
-
-            // Actualiza en Firestore
             await solpedRef.update({ items });
-            console.log('✅ Comparación eliminada correctamente');
           } else {
             console.log('❌ Comparación no encontrada');
           }

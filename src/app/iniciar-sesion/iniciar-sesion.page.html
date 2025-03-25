@@ -7,27 +7,17 @@
 <ion-content>
   <form class="form-control" (submit)="preventFormSubmit($event)">
     <p class="title">Bienvenido, inicia sesión</p>
-
-    <!-- Email -->
     <div class="input-field">
       <input required class="input" type="email" id="email" />
       <label class="label" for="email">Escribe tu email</label>
     </div>
-
-    <!-- Contraseña -->
     <div class="input-field">
       <input required class="input" type="password" id="password" />
       <label class="label" for="password">Escribe tu contraseña</label>
     </div>
     <br />
-
-    <!-- Recuperar contraseña -->
     <a href="#" (click)="resetPassword($event)">¿Olvidaste tu contraseña?</a>
-
-    <!-- Botón para iniciar sesión -->
     <button type="button" class="submit-btn" (click)="login()">Iniciar sesión</button>
-
-    <!-- Redirigir a registro -->
     <div class="redirect-register">
       <p style="color: var(--ion-color-primary);">¿No tienes una cuenta?</p>
       <a href="#" (click)="goToRegister($event)">Regístrate aquí</a>

@@ -8,7 +8,6 @@
 </ion-header>
 <br>
 <ion-content [fullscreen]="true">
-  <!-- SKELETON mientras carga -->
   <ng-container *ngIf="loading; else contentLoaded">
     <ion-list>
       <ion-list-header>
@@ -32,8 +31,6 @@
       </ion-item>
     </ion-list>
   </ng-container>
-
-  <!-- CONTENIDO REAL -->
   <ng-template #contentLoaded>
     <ion-card class="main-card">
       <div *ngFor="let solpe of solpes" class="solpe-container">

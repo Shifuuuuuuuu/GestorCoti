@@ -19,9 +19,6 @@
       <ion-label>Buscar por número</ion-label>
     </ion-segment-button>
   </ion-segment>
-
-<!-- Buscar por número con tabla -->
-<!-- Buscar por número con tabla -->
 <div *ngIf="segmentoSeleccionado === 'buscar'">
   <ion-grid>
     <ion-row>
@@ -39,7 +36,6 @@
     </ion-row>
   </ion-grid>
 
-  <!-- Tabla con resultados generales de la SOLPE -->
   <ion-grid *ngIf="solpeEncontrada">
     <ion-row class="header-row">
       <ion-col><b>N° SOLPE</b></ion-col>
@@ -55,7 +51,7 @@
     </ion-row>
   </ion-grid>
 
-  <!-- Tabla con detalles de los items -->
+
   <ion-grid *ngIf="solpeEncontrada?.items?.length">
     <ion-row class="header-row">
       <ion-col><b>Item</b></ion-col>
@@ -71,7 +67,6 @@
     </ion-row>
   </ion-grid>
 
-  <!-- Tabla con detalles de las comparaciones -->
   <ion-grid *ngIf="solpeEncontrada?.comparaciones?.length">
     <ion-row class="header-row">
       <ion-col><b>Proveedor</b></ion-col>
@@ -85,7 +80,7 @@
     </ion-row>
   </ion-grid>
 
-  <!-- Mensaje si no se encuentra la SOLPE -->
+
   <div *ngIf="buscado && !solpeEncontrada">
     <ion-text color="danger">
       <p>No se encontró la SOLPE con ese número.</p>
@@ -93,38 +88,32 @@
   </div>
 </div>
 
-  <!-- Historial con filtros colapsables -->
+
   <div *ngIf="segmentoSeleccionado === 'historial'">
 
     <div *ngIf="mostrarFiltros">
       <ion-card>
         <ion-grid>
           <ion-row class="ion-align-items-center">
-            <!-- Filtro de Fecha -->
+
             <ion-col size="12" size-md="3">
               <ion-item>
                 <ion-label position="floating">Fecha</ion-label>
                 <ion-input [(ngModel)]="filtroFecha" type="date"></ion-input>
               </ion-item>
             </ion-col>
-
-            <!-- Filtro por Estatus -->
             <ion-col size="12" size-md="3">
               <ion-item>
                 <ion-label position="floating">Filtrar por Estatus</ion-label>
                 <ion-input [(ngModel)]="filtroEstatus"></ion-input>
               </ion-item>
             </ion-col>
-
-            <!-- Filtro por Responsable Correctivo -->
             <ion-col size="12" size-md="3">
               <ion-item>
                 <ion-label position="floating">Filtrar por Responsable Correctivo</ion-label>
                 <ion-input [(ngModel)]="filtroResponsable"></ion-input>
               </ion-item>
             </ion-col>
-
-            <!-- Filtro por Usuario -->
             <ion-col size="12" size-md="3">
               <ion-item>
                 <ion-label position="floating">Filtrar por Usuario</ion-label>
@@ -132,8 +121,6 @@
               </ion-item>
             </ion-col>
           </ion-row>
-
-          <!-- Botones de acción -->
           <ion-row>
             <ion-col size="6">
               <ion-button expand="block" color="primary" (click)="filtrarSolpes()">
@@ -150,8 +137,6 @@
       </ion-card>
     </div>
 
-
-      <!-- Tabla con resultados -->
   <ion-grid *ngFor="let solpe of solpesFiltradas">
     <ion-row class="header-row">
       <ion-col><b>N° SOLPE</b></ion-col>

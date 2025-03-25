@@ -48,14 +48,13 @@ export class SolpePage implements OnInit  {
   }
 
   agregarFila() {
-    // Genera un ID único para el nuevo ítem, basado en el tamaño actual de la lista
     const nuevoId = this.solpe.items.length > 0 ? this.solpe.items[this.solpe.items.length - 1].id + 1 : 1;
     this.solpe.items.push({
-      id: nuevoId,  // Asignar un ID único al ítem
+      id: nuevoId,
       descripcion: '',
       codigo_referencial: '',
       cantidad: null,
-      editando: true,  // La fila inicia en edición
+      editando: true,
     });
   }
 
@@ -66,20 +65,20 @@ export class SolpePage implements OnInit  {
   verificarYGuardarItem(index: number) {
     const item = this.solpe.items[index];
 
-    // Verificamos si todos los campos están completos
+
     if (item.descripcion && item.codigo_referencial && item.cantidad !== null) {
-      this.guardarItem(index);  // Guardamos el ítem si todos los campos están completos
+      this.guardarItem(index);
     }
   }
 
   guardarItem(index: number) {
-    // Si ya está completado, no permite editar más
+
     this.solpe.items[index].editando = false;
     this.mostrarToast('Item guardado correctamente', 'success');
   }
 
   editarItem(index: number) {
-    // Permite editar el ítem nuevamente
+
     this.solpe.items[index].editando = true;
   }
 
@@ -89,7 +88,7 @@ export class SolpePage implements OnInit  {
     this.solpe.items[index].editando = false;
     this.mostrarToast('Item actualizado', 'success');
   }
-  // 🔥 FUNCION PRINCIPAL PARA RESCATAR EL NOMBRE DEL USUARIO
+
   obtenerNombreUsuario() {
     this.afAuth.authState.subscribe(user => {
       if (user) {
@@ -113,8 +112,6 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Debes agregar al menos un item', 'warning');
       return;
     }
-
-    // Asignar el número de item autoincremental antes de guardar
     this.solpe.items = this.solpe.items.map((item: Item, index: number) => ({
       item: index + 1,
       descripcion: item.descripcion,
@@ -122,11 +119,10 @@ export class SolpePage implements OnInit  {
       cantidad: item.cantidad
     }));
 
-    // Formatear la fecha
     const hoy = new Date();
     this.solpe.fecha = `${hoy.getDate().toString().padStart(2, '0')}/${(hoy.getMonth() + 1).toString().padStart(2, '0')}/${hoy.getFullYear()}`;
 
-    // Guardar en la base de datos
+
     this.solpeService.guardarSolpe(this.solpe).then(() => {
       this.mostrarToast('SOLPE guardada con éxito', 'success');
       this.resetearFormulario();

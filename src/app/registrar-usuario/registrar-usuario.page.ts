@@ -19,7 +19,7 @@ export class RegistrarUsuarioPage implements OnInit {
   ) {}
 
   async register(event?: Event) {
-    if (event) event.preventDefault(); // Prevenir envío automático del form
+    if (event) event.preventDefault();
 
     const fullName = (document.getElementById('fullName') as HTMLInputElement).value.trim();
     let rut = (document.getElementById('rut') as HTMLInputElement).value.trim();
@@ -28,26 +28,20 @@ export class RegistrarUsuarioPage implements OnInit {
     const password = (document.getElementById('password') as HTMLInputElement).value;
     const role = (document.getElementById('role') as HTMLSelectElement).value;
 
-    // ✅ Validación de dominio xtrememining.cl
+
     const emailPattern = /^[a-zA-Z0-9._%+-]+@xtrememining\.cl$/;
     if (!emailPattern.test(email)) {
       this.presentToast('El correo debe ser del dominio @xtrememining.cl', 'danger');
       return;
     }
 
-    // ✅ Validación de contraseña segura y restricción de 10 caracteres
     const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,10}$/;
     if (!passwordPattern.test(password)) {
       this.presentToast('La contraseña debe tener entre 5 y 10 caracteres, con 1 mayúscula, 1 número y 1 caracter especial.', 'danger');
       return;
     }
-
-    // ✅ Formateo de RUT tipo "21-098-143-8"
     rut = this.formatRUTForSave(rut);
-
-    // ✅ Formateo de teléfono tipo "+56948096007"
     phone = this.formatPhoneForSave(phone);
-
     try {
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
@@ -81,19 +75,15 @@ export class RegistrarUsuarioPage implements OnInit {
     }
   }
 
-  // ✅ Función para formatear el RUT antes de guardar
   formatRUTForSave(rut: string): string {
-    const cleanRut = rut.replace(/\D/g, ''); // Solo números
+    const cleanRut = rut.replace(/\D/g, '');
     return `${cleanRut.slice(0, 2)}-${cleanRut.slice(2, 5)}-${cleanRut.slice(5, 8)}-${cleanRut.slice(8)}`;
   }
 
-  // ✅ Función para formatear el teléfono antes de guardar
   formatPhoneForSave(phone: string): string {
-    const cleanPhone = phone.replace(/\D/g, ''); // Solo números
+    const cleanPhone = phone.replace(/\D/g, '');
     return `+56${cleanPhone}`;
   }
-
-  // ✅ Validación visual en input si quieres formatear mientras escribe (opcional)
   formatRUT(event: any) {
     let input = event.target.value.replace(/\D/g, '');
     if (input.length > 8) {
@@ -112,7 +102,7 @@ export class RegistrarUsuarioPage implements OnInit {
     event.target.value = event.target.value.replace(/\D/g, '').substring(0, 8);
   }
 
-  // ✅ Toasts
+
   async presentToast(message: string, color: string) {
     const toast = await this.toastController.create({
       message,

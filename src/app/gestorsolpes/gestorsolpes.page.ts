@@ -20,12 +20,10 @@ export class GestorsolpesPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Simula la carga de la API o base de datos
     setTimeout(() => {
-      // Aquí llenas la lista real
       this.cargarSolpes();
       this.loading = false;
-    }, 2000); // 2 segundos de skeleton
+    }, 2000);
   }
 
   cargarSolpes() {
@@ -98,10 +96,10 @@ export class GestorsolpesPage implements OnInit {
           text: 'Agregar',
           handler: (data) => {
             if (data.empresa && data.precio) {
-              // Asignar un ID único a la comparación
-              const nuevoId = Date.now(); // Puedes usar un contador incremental si lo prefieres
+
+              const nuevoId = Date.now();
               item.comparaciones.push({
-                id: nuevoId,  // Asignar ID único
+                id: nuevoId,
                 empresa: data.empresa,
                 precio: Number(data.precio)
               });
@@ -124,7 +122,6 @@ export class GestorsolpesPage implements OnInit {
     item.comparaciones.splice(index, 1);
   }
 
-  // Ahora este método sube las comparaciones de todos los ítems de la SOLPE
   async subirComparaciones(solpe: any) {
     const confirm = await this.alertController.create({
       header: 'Confirmar',
