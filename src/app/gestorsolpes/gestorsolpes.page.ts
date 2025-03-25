@@ -30,7 +30,8 @@ export class GestorsolpesPage implements OnInit {
 
   cargarSolpes() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
-      this.solpes = data.map((solpe: any) => {
+      const filtradas = data.filter(solpe => solpe.estatus === 'Solicitada');
+      this.solpes = filtradas.map((solpe: any) => {
         solpe.items = solpe.items.map((item: any) => ({
           ...item,
           comparaciones: item.comparaciones || [],
