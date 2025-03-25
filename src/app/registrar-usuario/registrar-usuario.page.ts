@@ -18,20 +18,35 @@ export class RegistrarUsuarioPage implements OnInit {
     private router: Router
   ) {}
 
-  async register() {
+  async register(event?: Event) {
+    if (event) event.preventDefault(); // Prevenir envío automático del form
+
     const fullName = (document.getElementById('fullName') as HTMLInputElement).value.trim();
-    const rut = (document.getElementById('rut') as HTMLInputElement).value.trim();
+    let rut = (document.getElementById('rut') as HTMLInputElement).value.trim();
     const email = (document.getElementById('email') as HTMLInputElement).value.trim();
-    const phone = (document.getElementById('phone') as HTMLInputElement).value.trim();
+    let phone = (document.getElementById('phone') as HTMLInputElement).value.trim();
     const password = (document.getElementById('password') as HTMLInputElement).value;
     const role = (document.getElementById('role') as HTMLSelectElement).value;
 
-    // Validar que el correo tiene un formato correcto
-    const emailPattern = /^[^\s@]+@gmail\.(com|cl)$/;
+    // ✅ Validación de dominio xtrememining.cl
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@xtrememining\.cl$/;
     if (!emailPattern.test(email)) {
-      this.presentToast('El correo electrónico no es válido.', 'danger');
+      this.presentToast('El correo debe ser del dominio @xtrememining.cl', 'danger');
       return;
     }
+
+    // ✅ Validación de contraseña segura y restricción de 10 caracteres
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,10}$/;
+    if (!passwordPattern.test(password)) {
+      this.presentToast('La contraseña debe tener entre 5 y 10 caracteres, con 1 mayúscula, 1 número y 1 caracter especial.', 'danger');
+      return;
+    }
+
+    // ✅ Formateo de RUT tipo "21-098-143-8"
+    rut = this.formatRUTForSave(rut);
+
+    // ✅ Formateo de teléfono tipo "+56948096007"
+    phone = this.formatPhoneForSave(phone);
 
     try {
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
@@ -56,7 +71,6 @@ export class RegistrarUsuarioPage implements OnInit {
 
         this.presentToast('Usuario registrado. Por favor verifica tu correo.', 'success');
 
-        // Esperar 2 segundos antes de redirigir
         setTimeout(() => {
           this.router.navigate(['/iniciar-sesion']);
         }, 2000);
@@ -67,12 +81,43 @@ export class RegistrarUsuarioPage implements OnInit {
     }
   }
 
-  // Función para mostrar los mensajes de toast
+  // ✅ Función para formatear el RUT antes de guardar
+  formatRUTForSave(rut: string): string {
+    const cleanRut = rut.replace(/\D/g, ''); // Solo números
+    return `${cleanRut.slice(0, 2)}-${cleanRut.slice(2, 5)}-${cleanRut.slice(5, 8)}-${cleanRut.slice(8)}`;
+  }
+
+  // ✅ Función para formatear el teléfono antes de guardar
+  formatPhoneForSave(phone: string): string {
+    const cleanPhone = phone.replace(/\D/g, ''); // Solo números
+    return `+56${cleanPhone}`;
+  }
+
+  // ✅ Validación visual en input si quieres formatear mientras escribe (opcional)
+  formatRUT(event: any) {
+    let input = event.target.value.replace(/\D/g, '');
+    if (input.length > 8) {
+      input = input.substring(0, 8) + '-' + input.substring(8);
+    }
+    let rutFormateado = '';
+    if (input.length > 1) {
+      rutFormateado = input.slice(0, -1).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '' + input.slice(-1);
+    } else {
+      rutFormateado = input;
+    }
+    event.target.value = rutFormateado;
+  }
+
+  formatPhone(event: any) {
+    event.target.value = event.target.value.replace(/\D/g, '').substring(0, 8);
+  }
+
+  // ✅ Toasts
   async presentToast(message: string, color: string) {
     const toast = await this.toastController.create({
       message,
       color,
-      duration: 2000, // Reducido a 2 segundos para que la redirección no tarde demasiado
+      duration: 2000,
       position: 'top',
     });
     toast.present();

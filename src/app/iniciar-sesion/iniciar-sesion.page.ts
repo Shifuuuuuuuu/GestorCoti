@@ -21,7 +21,11 @@ export class IniciarSesionPage implements OnInit {
   async login() {
     const email = (document.getElementById('email') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
-
+    const emailPattern = /^[^\s@]+@xtrememining\.(cl)$/;
+    if (!emailPattern.test(email)) {
+      this.presentToast('El correo electrónico no es válido.', 'danger');
+      return;
+    }
     if (!email || !password) {
       this.presentToast('Por favor, ingrese un correo y una contraseña válidos', 'warning');
       return;

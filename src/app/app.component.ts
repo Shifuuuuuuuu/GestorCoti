@@ -9,9 +9,9 @@ import { Router } from '@angular/router';
 })
 export class AppComponent {
   public appPages = [
-    { title: 'Home', url: '/home', icon: 'home' },
-    { title: 'Menu solpe', url: '/menu-solpe', icon: 'document-text' },
-    { title: 'Menu cotizador', url: '/menu-cotizador', icon: 'document-attach' },
+    { title: 'Menu de gestor', url: '/home', icon: 'home' },
+    { title: 'Menu solped', url: '/menu-solpe', icon: 'document-text' },
+    { title: 'Menu precios', url: '/menu-cotizador', icon: 'document-attach' },
     { title: 'Perfil', url: '/perfil-usuario', icon: 'person-circle' },
   ];
 

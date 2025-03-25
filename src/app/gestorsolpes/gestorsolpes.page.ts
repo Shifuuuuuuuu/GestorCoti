@@ -10,6 +10,8 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 })
 export class GestorsolpesPage implements OnInit {
   solpes: any[] = [];
+  loading: boolean = true;
+  solpesFiltradas: any[] = [];
 
   constructor(
     private solpeService: SolpeService,
@@ -18,7 +20,12 @@ export class GestorsolpesPage implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.cargarSolpes();
+    // Simula la carga de la API o base de datos
+    setTimeout(() => {
+      // Aquí llenas la lista real
+      this.cargarSolpes();
+      this.loading = false;
+    }, 2000); // 2 segundos de skeleton
   }
 
   cargarSolpes() {
@@ -77,7 +84,6 @@ export class GestorsolpesPage implements OnInit {
     await alert.present();
   }
 
-
   async abrirComparacion(item: any) {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
@@ -91,7 +97,13 @@ export class GestorsolpesPage implements OnInit {
           text: 'Agregar',
           handler: (data) => {
             if (data.empresa && data.precio) {
-              item.comparaciones.push({ empresa: data.empresa, precio: Number(data.precio) });
+              // Asignar un ID único a la comparación
+              const nuevoId = Date.now(); // Puedes usar un contador incremental si lo prefieres
+              item.comparaciones.push({
+                id: nuevoId,  // Asignar ID único
+                empresa: data.empresa,
+                precio: Number(data.precio)
+              });
             }
           },
         },
@@ -100,7 +112,6 @@ export class GestorsolpesPage implements OnInit {
     await alert.present();
   }
 
-
   guardarComparacion(item: any, solpeId: string) {
     const solpeRef = this.firestore.collection('solpes').doc(solpeId);
     const itemRef = solpeRef.collection('items').doc(item.id);
@@ -108,27 +119,31 @@ export class GestorsolpesPage implements OnInit {
     itemRef.update({ comparaciones: item.comparaciones });
   }
 
-// Ahora este método sube las comparaciones de todos los ítems de la SOLPE
-async subirComparaciones(solpe: any) {
-  const confirm = await this.alertController.create({
-    header: 'Confirmar',
-    message: '¿Estás seguro de subir las comparaciones a Firestore?',
-    buttons: [
-      { text: 'Cancelar', role: 'cancel' },
-      {
-        text: 'Sí, subir',
-        handler: () => {
-          this.firestore.collection('solpes').doc(solpe.id).update({
-            items: solpe.items
-          }).then(() => {
-            console.log('Comparaciones subidas a Firestore');
-          }).catch(err => {
-            console.error('Error al subir comparaciones:', err);
-          });
+  eliminarComparacion(item: any, index: number) {
+    item.comparaciones.splice(index, 1);
+  }
+
+  // Ahora este método sube las comparaciones de todos los ítems de la SOLPE
+  async subirComparaciones(solpe: any) {
+    const confirm = await this.alertController.create({
+      header: 'Confirmar',
+      message: '¿Estás seguro de subir las comparaciones a Firestore?',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Sí, subir',
+          handler: () => {
+            this.firestore.collection('solpes').doc(solpe.id).update({
+              items: solpe.items
+            }).then(() => {
+              console.log('Comparaciones subidas a Firestore');
+            }).catch(err => {
+              console.error('Error al subir comparaciones:', err);
+            });
+          }
         }
-      }
-    ]
-  });
-  await confirm.present();
-}
+      ]
+    });
+    await confirm.present();
+  }
 }

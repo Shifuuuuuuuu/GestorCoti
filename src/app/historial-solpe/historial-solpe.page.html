@@ -21,6 +21,7 @@
   </ion-segment>
 
 <!-- Buscar por número con tabla -->
+<!-- Buscar por número con tabla -->
 <div *ngIf="segmentoSeleccionado === 'buscar'">
   <ion-grid>
     <ion-row>
@@ -38,7 +39,7 @@
     </ion-row>
   </ion-grid>
 
-  <!-- Tabla con resultados -->
+  <!-- Tabla con resultados generales de la SOLPE -->
   <ion-grid *ngIf="solpeEncontrada">
     <ion-row class="header-row">
       <ion-col><b>N° SOLPE</b></ion-col>
@@ -70,10 +71,28 @@
     </ion-row>
   </ion-grid>
 
+  <!-- Tabla con detalles de las comparaciones -->
+  <ion-grid *ngIf="solpeEncontrada?.comparaciones?.length">
+    <ion-row class="header-row">
+      <ion-col><b>Proveedor</b></ion-col>
+      <ion-col><b>Precio</b></ion-col>
+      <ion-col><b>Condiciones</b></ion-col>
+    </ion-row>
+    <ion-row *ngFor="let comp of solpeEncontrada.comparaciones">
+      <ion-col>{{ comp.proveedor }}</ion-col>
+      <ion-col>{{ comp.precio }}</ion-col>
+      <ion-col>{{ comp.condiciones }}</ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <!-- Mensaje si no se encuentra la SOLPE -->
   <div *ngIf="buscado && !solpeEncontrada">
-    <ion-text color="danger"><p>No se encontró la SOLPE con ese número.</p></ion-text>
+    <ion-text color="danger">
+      <p>No se encontró la SOLPE con ese número.</p>
+    </ion-text>
   </div>
 </div>
+
   <!-- Historial con filtros colapsables -->
   <div *ngIf="segmentoSeleccionado === 'historial'">
 

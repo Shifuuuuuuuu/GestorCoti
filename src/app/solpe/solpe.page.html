@@ -16,7 +16,7 @@
     <div *ngIf="modoSeleccionado === 'formulario'" class="form-container">
       <ion-item>
         <ion-label position="floating">Número de SOLPE</ion-label>
-        <ion-input [(ngModel)]="solpe.numero_solpe" type="number"></ion-input>
+        <ion-input [(ngModel)]="solpe.numero_solpe" type="number" readonly></ion-input>
       </ion-item>
 
       <ion-item>
@@ -33,9 +33,10 @@
         </ion-select>
       </ion-item>
 
+      <!-- Campo de Usuario llenado automáticamente -->
       <ion-item>
         <ion-label position="floating">Usuario</ion-label>
-        <ion-input [(ngModel)]="solpe.usuario"></ion-input>
+        <ion-input [(ngModel)]="solpe.usuario" readonly></ion-input>
       </ion-item>
 
       <h5>Tabla de Items</h5>
@@ -53,34 +54,45 @@
           </thead>
           <tbody>
             <tr *ngFor="let item of solpe.items; let i = index">
-              <td>{{ i + 1 }}</td> <!-- Item Autoincremental -->
+              <td>{{ i + 1 }}</td>
               <td>
-                <ion-input [(ngModel)]="item.descripcion" [readonly]="!item.editando"></ion-input>
+                <ion-input [(ngModel)]="item.descripcion"
+                           [readonly]="!item.editando"
+                           (ionBlur)="verificarYGuardarItem(i)">
+                </ion-input>
               </td>
               <td>
-                <ion-input [(ngModel)]="item.codigo_referencial" [readonly]="!item.editando"></ion-input>
+                <ion-input [(ngModel)]="item.codigo_referencial"
+                           [readonly]="!item.editando"
+                           (ionBlur)="verificarYGuardarItem(i)">
+                </ion-input>
               </td>
               <td>
-                <ion-input type="number" [(ngModel)]="item.cantidad" [readonly]="!item.editando"></ion-input>
+                <ion-input type="number"
+                           [(ngModel)]="item.cantidad"
+                           [readonly]="!item.editando"
+                           (ionBlur)="verificarYGuardarItem(i)">
+                </ion-input>
               </td>
               <td>
                 <ion-button fill="clear" color="primary" *ngIf="!item.editando" (click)="editarItem(i)">
                   <ion-icon name="create-outline"></ion-icon>
                 </ion-button>
-                <ion-button fill="clear" color="success" *ngIf="item.editando" (click)="guardarEdicion(i)">
+                <ion-button fill="clear" color="success" *ngIf="item.editando" (click)="guardarItem(i)">
                   <ion-icon name="save-outline"></ion-icon>
                 </ion-button>
                 <ion-button fill="clear" color="danger" (click)="eliminarItem(i)">
                   <ion-icon name="trash-outline"></ion-icon>
                 </ion-button>
-
               </td>
             </tr>
           </tbody>
         </table>
+
         <ion-buttons class="botones-flex">
           <ion-button expand="full" (click)="agregarFila()">
-            <ion-icon name="add-outline"></ion-icon> Agregar Fila</ion-button>
+            <ion-icon name="add-outline"></ion-icon> Agregar Fila
+          </ion-button>
           <ion-button expand="block" color="success" (click)="guardarSolpe()">
             <ion-icon name="send-outline"></ion-icon> Enviar
           </ion-button>

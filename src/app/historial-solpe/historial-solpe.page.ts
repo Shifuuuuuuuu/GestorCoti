@@ -28,21 +28,32 @@ export class HistorialSolpePage implements OnInit {
   }
 
   cargarSolpes() {
-    // Obtener los documentos de SOLPES
     this.firestore.collection('solpes').get().subscribe(snapshot => {
-      this.solpesOriginal = snapshot.docs.map((doc: any) => {
-        const solpe = doc.data();
-        this.firestore.collection('solpes').doc(doc.id).collection('items').get().subscribe(itemSnapshot => {
-          const items = itemSnapshot.docs.map(itemDoc => itemDoc.data());
+      const solpesTemp: any[] = [];
 
-          // Agregar los items al solpe
-          solpe.items = items || [];
+      snapshot.docs.forEach((doc: any) => {
+        const solpe = doc.data();
+        solpe.id = doc.id; // Guarda el ID si lo necesitas después
+
+        // Inicializa las subcolecciones como vacías
+        solpe.items = [];
+        solpe.comparaciones = [];
+
+        // Carga los items
+        this.firestore.collection('solpes').doc(doc.id).collection('items').get().subscribe(itemSnapshot => {
+          solpe.items = itemSnapshot.docs.map(itemDoc => itemDoc.data());
         });
 
-        return solpe;
+        // Carga las comparaciones
+        this.firestore.collection('items').doc(doc.id).collection('comparaciones').get().subscribe(compSnapshot => {
+          solpe.comparaciones = compSnapshot.docs.map(compDoc => compDoc.data());
+        });
+
+        solpesTemp.push(solpe);
       });
 
-      // Clonar los solpes originales en el array de filtrados
+      // Al finalizar el recorrido, asigna a tus variables
+      this.solpesOriginal = solpesTemp;
       this.solpesFiltradas = [...this.solpesOriginal];
     });
   }

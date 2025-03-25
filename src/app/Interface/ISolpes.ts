@@ -1,9 +1,11 @@
+import { Item } from "./IItem";
+
 export interface Solpes {
   numero_solpe: number;
   fecha: any;
   numero_contrato: string;
   usuario: string;
-  item: string;
+  items: Item[];
   descripcion: string;
   codigo_referencial: string;
   cantidad: number;

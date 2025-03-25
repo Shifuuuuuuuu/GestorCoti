@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { CotizacionService } from '../services/cotizacion.service';
-import { ModalController, ToastController } from '@ionic/angular';
+import {  ToastController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
 import { Item } from '../Interface/IItem';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
   selector: 'app-solpe',
@@ -23,13 +24,16 @@ export class SolpePage implements OnInit  {
 
   constructor(
     private solpeService: SolpeService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private afAuth: AngularFireAuth,
+    private firestore: AngularFirestore
   ) {}
 
   ngOnInit() {
     const hoy = new Date();
     this.solpe.fecha = hoy.toISOString().split('T')[0];
     this.obtenerUltimoNumeroSolpe();
+    this.obtenerNombreUsuario();
   }
 
   obtenerUltimoNumeroSolpe() {
@@ -44,7 +48,10 @@ export class SolpePage implements OnInit  {
   }
 
   agregarFila() {
+    // Genera un ID único para el nuevo ítem, basado en el tamaño actual de la lista
+    const nuevoId = this.solpe.items.length > 0 ? this.solpe.items[this.solpe.items.length - 1].id + 1 : 1;
     this.solpe.items.push({
+      id: nuevoId,  // Asignar un ID único al ítem
       descripcion: '',
       codigo_referencial: '',
       cantidad: null,
@@ -56,14 +63,49 @@ export class SolpePage implements OnInit  {
     this.solpe.items.splice(index, 1);
     this.mostrarToast('Item eliminado', 'danger');
   }
+  verificarYGuardarItem(index: number) {
+    const item = this.solpe.items[index];
+
+    // Verificamos si todos los campos están completos
+    if (item.descripcion && item.codigo_referencial && item.cantidad !== null) {
+      this.guardarItem(index);  // Guardamos el ítem si todos los campos están completos
+    }
+  }
+
+  guardarItem(index: number) {
+    // Si ya está completado, no permite editar más
+    this.solpe.items[index].editando = false;
+    this.mostrarToast('Item guardado correctamente', 'success');
+  }
 
   editarItem(index: number) {
+    // Permite editar el ítem nuevamente
     this.solpe.items[index].editando = true;
   }
+
+
 
   guardarEdicion(index: number) {
     this.solpe.items[index].editando = false;
     this.mostrarToast('Item actualizado', 'success');
+  }
+  // 🔥 FUNCION PRINCIPAL PARA RESCATAR EL NOMBRE DEL USUARIO
+  obtenerNombreUsuario() {
+    this.afAuth.authState.subscribe(user => {
+      if (user) {
+        const uid = user.uid;
+        this.firestore.collection('Usuarios').doc(uid).get().subscribe(doc => {
+          if (doc.exists) {
+            const data: any = doc.data();
+            this.solpe.usuario = data.fullName;
+          } else {
+            console.log('No se encontró el usuario en la colección.');
+          }
+        });
+      } else {
+        console.log('No hay usuario logueado');
+      }
+    });
   }
 
   guardarSolpe() {
@@ -79,7 +121,6 @@ export class SolpePage implements OnInit  {
       codigo_referencial: item.codigo_referencial,
       cantidad: item.cantidad
     }));
-
 
     // Formatear la fecha
     const hoy = new Date();

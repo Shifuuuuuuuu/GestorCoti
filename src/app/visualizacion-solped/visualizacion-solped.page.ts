@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AlertController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
+import { Solpes } from '../Interface/ISolpes';
+import { Comparacion } from '../Interface/IComparacion';
+import { Comparaciones } from '../Interface/Icompara';
 
 @Component({
   selector: 'app-visualizacion-solped',
@@ -10,31 +13,41 @@ import { SolpeService } from '../services/solpe.service';
 })
 export class VisualizacionSolpedPage implements OnInit {
   solpedList: any[] = [];
+  loading: boolean = true;
 
-  constructor(private firestore: AngularFirestore, private alertCtrl: AlertController, private solpeService: SolpeService) {}
+  constructor(
+    private firestore: AngularFirestore,
+    private alertCtrl: AlertController,
+    private solpeService: SolpeService
+  ) {}
 
   ngOnInit() {
-    this.cargarSolped();
+    // Simula carga de datos mientras se muestra un skeleton
+    setTimeout(() => {
+      this.cargarSolped();
+      this.loading = false;
+    }, 2000);
   }
 
   cargarSolped() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
-      // Mapeo de los solpes
-      this.solpedList = data.map((solpe: any) => {
-        // Aseguramos que cada solpe tenga una propiedad 'items', incluso si está vacía
-        solpe.items = solpe.items ? solpe.items.map((item: any) => ({
-          ...item,
-          comparaciones: item.comparaciones || [], // Si no hay comparaciones, inicializamos como un array vacío
-        })) : [];
+      // Filtrar solo las SOLPEDs con estatus 'Solicitado'
+      const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
 
+      // Mapeo para asegurar estructura de items y comparaciones
+      this.solpedList = filtradas.map((solpe: any) => {
+        solpe.items = solpe.items
+          ? solpe.items.map((item: any) => ({
+              ...item,
+              comparaciones: item.comparaciones || [],
+            }))
+          : [];
         return solpe;
       });
 
-      console.log('✅ SOLPEDS CARGADAS:', this.solpedList);
+      console.log('✅ SOLPEDS CARGADAS (solo Solicitadas):', this.solpedList);
     });
   }
-
-
 
   aprobarSolped(solped: any) {
     this.actualizarEstado(solped.id, 'Aprobado', solped.comentario);
@@ -48,61 +61,63 @@ export class VisualizacionSolpedPage implements OnInit {
     try {
       await this.firestore.collection('solpes').doc(id).update({
         estatus: estado,
-        comentario: comentario
+        comentario: comentario,
       });
 
       const alert = await this.alertCtrl.create({
         header: 'Éxito',
         message: `SOLPED ${estado}`,
-        buttons: ['OK']
+        buttons: ['OK'],
       });
       await alert.present();
 
-      this.cargarSolped(); // Recarga la lista actualizada
+      this.cargarSolped(); // Refresca la lista filtrada
     } catch (error) {
       console.error('Error al actualizar:', error);
+      const errorAlert = await this.alertCtrl.create({
+        header: 'Error',
+        message: 'Hubo un problema al actualizar el estado.',
+        buttons: ['OK'],
+      });
+      await errorAlert.present();
     }
   }
-  async eliminarComparacion(solpedId: string, itemId: string, comparacionId: string) {
-    const alert = await this.alertCtrl.create({
-      header: 'Eliminar Comparación',
-      message: '¿Estás seguro de que deseas eliminar esta comparación?',
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-          cssClass: 'secondary',
-        },
-        {
-          text: 'Eliminar',
-          handler: async () => {
-            try {
-              await this.firestore
-                .collection('solpes')
-                .doc(solpedId)
-                .collection('items')
-                .doc(itemId)
-                .collection('comparaciones')
-                .doc(comparacionId)
-                .delete();
 
-              this.cargarSolped(); // Recarga la lista después de eliminar
-              const successAlert = await this.alertCtrl.create({
-                header: 'Éxito',
-                message: 'Comparación eliminada correctamente.',
-                buttons: ['OK']
-              });
-              await successAlert.present();
-            } catch (error) {
-              console.error('Error al eliminar la comparación:', error);
-            }
+  async eliminarComparacion(solpedId: string, itemId: string, comparacionId: number) {
+    const solpedRef = this.firestore.collection('solpes').doc(solpedId);
+
+    try {
+      const solpedDoc = await solpedRef.get().toPromise();
+
+      if (solpedDoc && solpedDoc.exists) {
+        const solpedData = solpedDoc.data() as Solpes;
+        const items = solpedData?.items || [];
+
+        const item = items.find(i => i.id === itemId);
+        if (item) {
+          const comparacionIndex = item.comparaciones.findIndex(
+            (comp: Comparaciones) => comp.id === comparacionId
+          );
+
+          if (comparacionIndex !== -1) {
+            // Elimina la comparación
+            item.comparaciones.splice(comparacionIndex, 1);
+
+            // Actualiza en Firestore
+            await solpedRef.update({ items });
+            console.log('✅ Comparación eliminada correctamente');
+          } else {
+            console.log('❌ Comparación no encontrada');
           }
+        } else {
+          console.log('❌ Ítem no encontrado');
         }
-      ]
-    });
-
-    await alert.present();
+      } else {
+        console.log('❌ Documento no encontrado o vacío');
+      }
+    } catch (error) {
+      console.error('Error eliminando la comparación:', error);
+    }
   }
-
 }
 
