@@ -1,4 +1,4 @@
-/* registro.page.scss */
+
 ion-content {
   display: flex;
   justify-content: center;
@@ -6,22 +6,20 @@ ion-content {
   height: 100vh;
 }
 
-/* Estilos para el formulario */
+
 .form-control {
   background-color: #ffffff;
   box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
-  width: 80%; /* Ancho del formulario */
-  max-width: 400px; /* Limita el ancho máximo para pantallas grandes */
+  width: 80%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
   padding: 25px;
   border-radius: 8px;
-  margin-top: 5%; /* Margen superior para alejar del borde superior */
-  /* Usamos flexbox en el contenedor principal */
+  margin-top: 5%;
   margin-left: auto;
-  margin-right: auto; /* Centramos el formulario */
+  margin-right: auto;
 }
-
 .title {
   font-size: 2rem;
   font-weight: 800;
@@ -93,7 +91,7 @@ ion-content {
   box-shadow: 0px 0px 0px 2px #ffffff, 0px 0px 0px 4px #0000003a;
 }
 
-/* Media Query para pantallas más pequeñas (móviles) */
+
 @media (max-width: 600px) {
   .form-control {
     width: 90%;

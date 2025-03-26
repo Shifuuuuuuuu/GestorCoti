@@ -11,13 +11,11 @@
   <form class="form-control" (submit)="register($event)">
     <p class="title">Regístrate</p>
 
-    <!-- Nombre Completo -->
     <div class="input-field">
       <input required class="input" type="text" id="fullName" />
       <label class="label" for="fullName">Escribe tu Nombre</label>
     </div>
 
-    <!-- RUT con formato automático -->
     <div class="input-field">
       <input required class="input" type="text" id="rut"
              (input)="formatRUT($event)"
@@ -25,7 +23,6 @@
       <label class="label" for="rut">Escribe tu RUT</label>
     </div>
 
-    <!-- Correo -->
     <div class="input-field">
       <input required class="input" type="email" id="email"
              pattern="^[a-zA-Z0-9._%+-]+@xtrememining\.cl$"/>
@@ -33,7 +30,6 @@
 
     </div>
 
-    <!-- Teléfono con +569 fijo -->
     <div class="input-field">
       <div style="display: flex; align-items: center;">
         <input class="input" type="text" value="+569" disabled style="width: 60px;" />
@@ -45,7 +41,6 @@
       <label class="label" for="phone"></label>
     </div>
 
-    <!-- Rol -->
     <div class="input-field">
       <select id="role" class="input" required>
         <option value="cotizador">Generador de solped</option>
@@ -55,7 +50,6 @@
       <label class="label" for="role">Selecciona tu Rol</label>
     </div>
 
-    <!-- Contraseña con restricción -->
     <div class="input-field">
       <input required class="input" type="password" id="password"
              maxlength="10" minlength="5"

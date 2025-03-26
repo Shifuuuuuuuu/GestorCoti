@@ -4,14 +4,13 @@
   text-align: center;
 }
 
-/* Estilo del mensaje de error */
 .error-card {
   --background: #f8d7da;
 }
 
-/* Contenedor de la imagen de perfil */
+
 .profile-image {
-  width: 140px; /* Tamaño más grande para la imagen */
+  width: 140px;
   height: 140px;
   border-radius: 50%;
   overflow: hidden;
@@ -21,7 +20,7 @@
   align-items: center;
   position: relative;
   background-color: #f2f2f2;
-  margin: 0 auto; /* Centrado horizontal */
+  margin: 0 auto;
 }
 
 .profile-image img {
@@ -35,7 +34,7 @@
   color: #ccc;
 }
 
-/* Contenedor de iconos */
+
 .icon-container {
   display: flex;
   gap: 15px;
@@ -49,8 +48,8 @@
 }
 
 .icon-container ion-icon:hover {
-  color: #084a9a; /* Cambia de color al pasar el cursor */
-  transform: scale(1.1); /* Efecto de zoom en hover */
+  color: #084a9a;
+  transform: scale(1.1);
 }
 
 .upload-overlay {
@@ -69,7 +68,7 @@
 }
 
 .upload-overlay.hidden {
-  display: none; /* Ocultar completamente el ícono si no está en modo edición */
+  display: none;
 }
 
 .upload-overlay ion-icon {
@@ -86,32 +85,29 @@
   cursor: pointer;
 }
 
-/* Estilo redondeado para los inputs */
 .ion-input-custom {
   --background: #f2f2f2;
-  --border-radius: 25px; /* Bordes redondeados */
+  --border-radius: 25px;
   --border-width: 0;
   --inner-border-width: 0;
-  padding: 10px 15px; /* Espaciado interno */
+  padding: 10px 15px;
   margin-bottom: 10px;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Cuando el input está en edición */
 .ion-input-edit-custom {
   --background: white;
 }
 
-/* Estilos para ion-item */
 ion-item {
-  --border-radius: 25px; /* Bordes redondeados */
+  --border-radius: 25px;
   --background: #f2f2f2;
   padding: 10px;
   margin-bottom: 10px;
-  border-radius: 25px; /* Bordes redondeados */
+  border-radius: 25px;
 }
 
-/* Estilos para ion-label */
+
 ion-label {
   font-weight: 500;
   font-size: 16px;
@@ -120,7 +116,6 @@ ion-label {
   border-radius: 25px;
 }
 
-/* Estilo para los inputs dentro de los ion-items */
 ion-input {
   --padding-start: 10px;
   --padding-end: 10px;
@@ -129,20 +124,16 @@ ion-input {
   color: #000;
 }
 
-/* Hover y efectos */
 .ion-input-custom:hover,
 ion-item:hover {
   background-color: #e6e6e6;
 }
 
 
-/* Efecto al hacer focus */
 ion-input:focus {
   outline: none;
 }
 
-
-/* Estilo para los títulos */
 h3 {
   font-weight: 400;
   color: #333;

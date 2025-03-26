@@ -2,13 +2,13 @@
   <ion-toolbar>
     <ion-title *ngIf="!chatActivo">
       <ion-row class="title">
-        <!-- Columna para el botón de cerrar -->
+
         <ion-col size="auto">
           <ion-button fill="clear" (click)="cerrarMod()" class="cerrar-btn">
-            <ion-icon name="close-outline"></ion-icon> <!-- Icono de "X" para cerrar -->
+            <ion-icon name="close-outline"></ion-icon>
           </ion-button>
         </ion-col>
-        <!-- Columna para el texto 'chats' -->
+
         <ion-col>
           chats
         </ion-col>
@@ -19,7 +19,7 @@
       <ion-row class="chats">
         <ion-col size="auto">
           <ion-button fill="clear" (click)="cerrarChat()">
-            <ion-icon name="arrow-back-outline"></ion-icon> <!-- Flecha hacia atrás -->
+            <ion-icon name="arrow-back-outline"></ion-icon>
           </ion-button>
         </ion-col>
         <ion-col>
@@ -35,7 +35,7 @@
 
 
 <ion-content>
-  <!-- Lista de usuarios (solo visible si no hay chat activo) -->
+
   <div *ngIf="!chatActivo" class="usuarios-container">
     <div *ngFor="let usuario of usuarios" class="usuario" (click)="seleccionarUsuario(usuario)">
       <ion-avatar *ngIf="usuario.photoURL; else noAvatar">
@@ -50,20 +50,20 @@
     </div>
   </div>
 
-  <!-- Chat (solo visible cuando hay un chat activo) -->
+
   <div *ngIf="chatActivo" class="chat-container">
     <div *ngFor="let msg of mensajes"
          [ngClass]="{'mensaje-propio': msg.remitenteId === remitente?.uid, 'mensaje-ajeno': msg.remitenteId !== remitente?.uid}">
       <p><strong>{{ msg.nombreRemitente }}</strong>: {{ msg.mensaje }}</p>
       <small>{{ msg.timestamp | date: 'short' }}</small>
 
-      <!-- Icono de checkmark según si el mensaje ha sido visto -->
+
       <ion-icon *ngIf="!msg.visto" name="checkmark" color="medium"></ion-icon>
       <ion-icon *ngIf="msg.visto" name="checkmark-done" color="success"></ion-icon>
       <ion-icon *ngIf="msg.visto && msg.vistoPorAmbos" name="checkmark-done" color="success"></ion-icon>
     </div>
 
-<!-- Indicador de escritura con animación -->
+
     <div *ngIf="escribiendo" class="escribiendo">
       Escribiendo...
     </div>
@@ -74,13 +74,12 @@
 <ion-footer *ngIf="chatActivo">
   <ion-toolbar>
     <ion-row class="paper">
-      <!-- Columna para el input -->
+
       <ion-col size="11">
         <ion-input [(ngModel)]="mensaje" placeholder="Escribe un mensaje..." (input)="onInput()"></ion-input>
 
       </ion-col>
 
-      <!-- Columna para el botón de enviar -->
       <ion-col size="1">
         <ion-button (click)="enviarMensaje()"[disabled]="!mensaje.trim()" >
           <ion-icon name="paper-plane-outline"></ion-icon>

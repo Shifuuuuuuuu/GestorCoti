@@ -1,4 +1,4 @@
-/* Estilos de la tabla */
+
 .table-container {
   margin-top: 10px;
   overflow-x: auto;
@@ -7,7 +7,7 @@
 .styled-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;  /* Ajuste de tamaño para móviles */
+  font-size: 12px;
 }
 
 .styled-table th, .styled-table td {
@@ -37,8 +37,6 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Diseño responsivo */
-/* Respuesta para pantallas pequeñas */
 @media screen and (max-width: 600px) {
   .styled-table th, .styled-table td {
     padding: 6px 8px;
@@ -59,7 +57,7 @@
   }
 
   ion-button {
-    font-size: 12px;  /* Ajusta el tamaño de los botones en móviles */
+    font-size: 12px;
   }
 
   h3 {
@@ -68,3 +66,17 @@
   }
 }
 
+.no-solped-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  text-align: center;
+}
+
+.no-solped-img {
+  width: 200px;
+  height: auto;
+  opacity: 0.6;
+}

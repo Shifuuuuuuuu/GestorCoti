@@ -40,12 +40,12 @@
 .chat-icon {
   position: fixed;
   bottom: 20px;
-  right: 20px;  /* Cambiar de left a right para que esté a la derecha */
-  z-index: 1000;  /* Asegúrate de que el ícono esté encima de otros elementos */
+  right: 20px;
+  z-index: 1000;
   background: transparent;
   border: none;
   padding: 0;
-  font-size: 20px;  /* Hacer el ícono más grande */
+  font-size: 20px;
 }
 
 

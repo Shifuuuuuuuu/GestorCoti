@@ -36,50 +36,39 @@
     </ion-row>
   </ion-grid>
 
-  <ion-grid *ngIf="solpeEncontrada">
-    <ion-row class="header-row">
-      <ion-col><b>N° SOLPE</b></ion-col>
-      <ion-col><b>Fecha</b></ion-col>
-      <ion-col><b>Usuario</b></ion-col>
-      <ion-col><b>Estatus</b></ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col>{{ solpeEncontrada.numero_solpe }}</ion-col>
-      <ion-col>{{ solpeEncontrada.fecha }}</ion-col>
-      <ion-col>{{ solpeEncontrada.usuario }}</ion-col>
-      <ion-col>{{ solpeEncontrada.estatus }}</ion-col>
-    </ion-row>
-  </ion-grid>
+  <ion-card *ngIf="solpeEncontrada">
+    <ion-card-header>
+      <ion-card-title>Detalles SOLPE #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
+      <ion-card-subtitle>Fecha: {{ solpeEncontrada.fecha }}</ion-card-subtitle>
+      <ion-card-subtitle>Usuario: {{ solpeEncontrada.usuario }}</ion-card-subtitle>
+      <ion-card-subtitle>Estatus: {{ solpeEncontrada.estatus }}</ion-card-subtitle>
+    </ion-card-header>
 
+    <ion-card-content *ngFor="let item of solpeEncontrada.items">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Item {{ item.item }} - {{ item.descripcion }}</ion-card-title>
+          <ion-card-subtitle>Cantidad: {{ item.cantidad }}</ion-card-subtitle>
+          <ion-card-subtitle>Código: {{ item.codigo_referencial }}</ion-card-subtitle>
+        </ion-card-header>
 
-  <ion-grid *ngIf="solpeEncontrada?.items?.length">
-    <ion-row class="header-row">
-      <ion-col><b>Item</b></ion-col>
-      <ion-col><b>Descripción</b></ion-col>
-      <ion-col><b>Código</b></ion-col>
-      <ion-col><b>Cantidad</b></ion-col>
-    </ion-row>
-    <ion-row *ngFor="let item of solpeEncontrada.items">
-      <ion-col>{{ item.item }}</ion-col>
-      <ion-col>{{ item.descripcion }}</ion-col>
-      <ion-col>{{ item.codigo_referencial }}</ion-col>
-      <ion-col>{{ item.cantidad }}</ion-col>
-    </ion-row>
-  </ion-grid>
-
-  <ion-grid *ngIf="solpeEncontrada?.comparaciones?.length">
-    <ion-row class="header-row">
-      <ion-col><b>Proveedor</b></ion-col>
-      <ion-col><b>Precio</b></ion-col>
-      <ion-col><b>Condiciones</b></ion-col>
-    </ion-row>
-    <ion-row *ngFor="let comp of solpeEncontrada.comparaciones">
-      <ion-col>{{ comp.proveedor }}</ion-col>
-      <ion-col>{{ comp.precio }}</ion-col>
-      <ion-col>{{ comp.condiciones }}</ion-col>
-    </ion-row>
-  </ion-grid>
-
+        <ion-card-content>
+          <ion-text color="primary"><b>Precio</b></ion-text>
+          <ion-grid *ngIf="item.comparaciones?.length" style="color: white;">
+            <ion-row class="header-row">
+              <ion-col><b>Empresa</b></ion-col>
+              <ion-col><b>Precio</b></ion-col>
+            </ion-row>
+            <ion-row *ngFor="let comp of item.comparaciones">
+              <ion-col>{{ comp.empresa }}</ion-col>
+              <ion-col>${{ comp.precio }}</ion-col>
+            </ion-row>
+          </ion-grid>
+          <ion-text *ngIf="!item.comparaciones || item.comparaciones.length === 0" color="medium"> Sin productos</ion-text>
+        </ion-card-content>
+      </ion-card>
+    </ion-card-content>
+  </ion-card>
 
   <div *ngIf="buscado && !solpeEncontrada">
     <ion-text color="danger">
@@ -154,7 +143,7 @@
   <br><br><br><br>
 
     <ion-text *ngIf="solpesFiltradas.length === 0">
-      <p>No hay SOLPES que coincidan con los filtros.</p>
+      <img src="assets/img/no_data.png" alt="No hay SOLPED" class="no-solped-img">
     </ion-text>
   </div>
 </ion-content>

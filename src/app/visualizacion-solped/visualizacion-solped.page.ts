@@ -3,7 +3,6 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { AlertController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
 import { Solpes } from '../Interface/ISolpes';
-import { Comparacion } from '../Interface/IComparacion';
 import { Comparaciones } from '../Interface/Icompara';
 
 @Component({

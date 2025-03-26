@@ -34,21 +34,14 @@ export class HistorialSolpePage implements OnInit {
       snapshot.docs.forEach((doc: any) => {
         const solpe = doc.data();
         solpe.id = doc.id;
-        solpe.items = [];
-        solpe.comparaciones = [];
-        this.firestore.collection('solpes').doc(doc.id).collection('items').get().subscribe(itemSnapshot => {
-          solpe.items = itemSnapshot.docs.map(itemDoc => itemDoc.data());
-        });
-        this.firestore.collection('items').doc(doc.id).collection('comparaciones').get().subscribe(compSnapshot => {
-          solpe.comparaciones = compSnapshot.docs.map(compDoc => compDoc.data());
-        });
-
         solpesTemp.push(solpe);
       });
+
       this.solpesOriginal = solpesTemp;
       this.solpesFiltradas = [...this.solpesOriginal];
     });
   }
+
 
   buscarSolpe() {
     this.firestore
@@ -69,15 +62,10 @@ export class HistorialSolpePage implements OnInit {
 
       if (solpe.fecha) {
         try {
-          if (solpe.fecha.toDate) {
-            fechaSolpe = solpe.fecha.toDate().toISOString().split('T')[0];
-          } else {
-            const fechaTemp = new Date(solpe.fecha);
-            if (!isNaN(fechaTemp.getTime())) {
-              fechaSolpe = fechaTemp.toISOString().split('T')[0];
-            } else {
-              console.warn('Fecha inválida encontrada:', solpe.fecha);
-              fechaSolpe = '';
+          if (typeof solpe.fecha === 'string' && solpe.fecha.includes('/')) {
+            const partes = solpe.fecha.split('/');
+            if (partes.length === 3) {
+              fechaSolpe = `${partes[2]}-${partes[1]}-${partes[0]}`;
             }
           }
         } catch (error) {
@@ -85,7 +73,6 @@ export class HistorialSolpePage implements OnInit {
           fechaSolpe = '';
         }
       }
-
       const coincideFecha = this.filtroFecha ? fechaSolpe === this.filtroFecha : true;
       const coincideEstatus = this.filtroEstatus ? solpe.estatus?.toLowerCase().includes(this.filtroEstatus.toLowerCase()) : true;
       const coincideResponsable = this.filtroResponsable ? solpe.numero_contrato?.toLowerCase().includes(this.filtroResponsable.toLowerCase()) : true;
@@ -94,6 +81,8 @@ export class HistorialSolpePage implements OnInit {
       return coincideFecha && coincideEstatus && coincideResponsable && coincideUsuario;
     });
   }
+
+
 
   limpiarFiltros() {
     this.filtroFecha = '';

@@ -10,7 +10,7 @@ import firebase from 'firebase/compat/app';
   providedIn: 'root'
 })
 export class AuthService {
-  private usersCollection: AngularFirestoreCollection<AppUser>;  // Usa AppUser en lugar de User
+  private usersCollection: AngularFirestoreCollection<AppUser>;
   private currentUserEmailSubject: BehaviorSubject<string | undefined> = new BehaviorSubject<string | undefined>(this.getStoredUserEmail());
   public currentUserEmail$: Observable<string | undefined> = this.currentUserEmailSubject.asObservable();
 
@@ -22,11 +22,11 @@ export class AuthService {
     return localStorage.getItem('id') || null;
   }
 
-  // Obtener todos los usuarios registrados en Firestore
-  obtenerUsuarios(): Observable<AppUser[]> {  // Cambia User por AppUser
+
+  obtenerUsuarios(): Observable<AppUser[]> {
     return this.usersCollection.snapshotChanges().pipe(
       map(actions => actions.map(a => {
-        const data = a.payload.doc.data() as AppUser;  // Cambia User por AppUser
+        const data = a.payload.doc.data() as AppUser;
         const id = a.payload.doc.id;
         return { id, ...data };
       }))
@@ -34,23 +34,23 @@ export class AuthService {
   }
 
 
-  async getCurrentUser(): Promise<firebase.User | null> {  // Usamos el tipo firebase.User
+  async getCurrentUser(): Promise<firebase.User | null> {
     return this.afAuth.currentUser;
   }
 
-  // Obtener los datos de un usuario por su ID
-  async getUserData(userId: string): Promise<AppUser | null> {  // Cambia User por AppUser
+
+  async getUserData(userId: string): Promise<AppUser | null> {
     try {
       const userDoc = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
-      return userDoc?.exists ? (userDoc.data() as AppUser) : null;  // Cambia User por AppUser
+      return userDoc?.exists ? (userDoc.data() as AppUser) : null;
     } catch (error) {
       console.error('Error al obtener los datos del usuario:', error);
       return null;
     }
   }
 
-  // Método para registrar un usuario con autenticación y enviar verificación de correo
-  async registerUser(user: Omit<AppUser, 'token'>, password: string): Promise<Omit<AppUser, 'token'>> {  // Cambia User por AppUser
+
+  async registerUser(user: Omit<AppUser, 'token'>, password: string): Promise<Omit<AppUser, 'token'>> {
     try {
       await this.afAuth.signOut();
 
@@ -62,7 +62,7 @@ export class AuthService {
         console.log('Correo de verificación enviado a:', user.email);
       }
 
-      const userData: Omit<AppUser, 'token'> = {  // Cambia User por AppUser
+      const userData: Omit<AppUser, 'token'> = {
         uid: userCredential.user?.uid || '',
         email: user.email,
         displayName: user.displayName,
@@ -83,8 +83,7 @@ export class AuthService {
     }
   }
 
-  // Método para iniciar sesión
-  async login(email: string, password: string): Promise<AppUser | null> {  // Cambia User por AppUser
+  async login(email: string, password: string): Promise<AppUser | null> {
     const userCredential = await this.afAuth.signInWithEmailAndPassword(email, password);
     const uid = userCredential.user?.uid;
 
@@ -93,9 +92,9 @@ export class AuthService {
 
       if (userSnapshot && !userSnapshot.empty) {
         const userDoc = userSnapshot.docs[0];
-        const userData = userDoc.data() as AppUser;  // Cambia User por AppUser
+        const userData = userDoc.data() as AppUser;
 
-        // Guardar el tipo de usuario en localStorage
+
         localStorage.setItem('userType', 'usuario');
         localStorage.setItem('id', uid);
 
@@ -105,7 +104,6 @@ export class AuthService {
     return null;
   }
 
-  // Método para verificar si un usuario está registrado por correo
   async verifyUserByEmail(email: string): Promise<boolean> {
     try {
       const snapshot = await this.firestore
@@ -126,7 +124,6 @@ export class AuthService {
     }
   }
 
-  // Método para restablecer la contraseña
   async resetPassword(email: string): Promise<void> {
     try {
       await this.afAuth.sendPasswordResetEmail(email);
@@ -137,39 +134,39 @@ export class AuthService {
     }
   }
 
-  // Obtener el correo electrónico actual del usuario
+
   getCurrentUserEmail(): Observable<string | null> {
     return this.afAuth.authState.pipe(
       map(user => user ? user.email : null)
     );
   }
 
-  // Método privado para obtener el correo electrónico desde localStorage
+
   private getStoredUserEmail(): string | undefined {
     return localStorage.getItem('currentUserEmail') || undefined;
   }
 
-  // Método para obtener un usuario por ID
-  async getUserById(userId: string): Promise<AppUser | null> {  // Cambia User por AppUser
+
+  async getUserById(userId: string): Promise<AppUser | null> {
     try {
       const userDoc = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
 
-      if (userDoc && userDoc.exists) { // Comprobamos si userDoc es definido y si existe el documento
-        return userDoc.data() as AppUser;  // Si existe, devolvemos los datos del documento como AppUser
+      if (userDoc && userDoc.exists) {
+        return userDoc.data() as AppUser;
       } else {
         console.log('Documento no encontrado.');
-        return null;  // Si no existe el documento, devolvemos null
+        return null;
       }
     } catch (error) {
       console.error('Error al obtener usuario por ID:', error);
-      throw error;  // Lanzamos el error para manejarlo en otra parte si es necesario
+      throw error;
     }
   }
 
-  // Método para actualizar los datos del usuario en Firestore y Firebase Authentication
-  async updateUser(user: AppUser): Promise<void> {  // Cambia User por AppUser
+
+  async updateUser(user: AppUser): Promise<void> {
     try {
-      // Actualizar solo los campos necesarios en Firestore
+
       await this.firestore.collection('Usuarios').doc(user.uid).update({
         photoURL: user.photoURL,
         email: user.email,
@@ -182,7 +179,6 @@ export class AuthService {
     }
   }
 
-  // Método para cerrar sesión
   async logout() {
     return this.afAuth.signOut();
   }

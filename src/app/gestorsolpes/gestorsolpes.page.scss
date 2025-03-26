@@ -1,4 +1,4 @@
-/* Estilos generales */
+
 ion-content {
   --padding-start: 0;
   --padding-end: 0;
@@ -22,16 +22,16 @@ ion-content {
   padding: 10px;
 }
 
-/* Estilos de la tabla */
+
 .table-container {
   margin-top: 10px;
-  overflow-x: auto;  /* Permite el desplazamiento horizontal */
+  overflow-x: auto;
 }
 
 .styled-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;  /* Ajuste de tamaño para móviles */
+  font-size: 12px;
 }
 
 .styled-table th, .styled-table td {
@@ -44,7 +44,7 @@ ion-content {
   color: white;
 }
 
-/* Respuesta para pantallas pequeñas */
+
 @media screen and (max-width: 600px) {
   .styled-table th, .styled-table td {
     padding: 6px 8px;
@@ -65,7 +65,7 @@ ion-content {
   }
 
   ion-button {
-    font-size: 12px;  /* Ajusta el tamaño de los botones en móviles */
+    font-size: 12px;
   }
 
   h3 {
