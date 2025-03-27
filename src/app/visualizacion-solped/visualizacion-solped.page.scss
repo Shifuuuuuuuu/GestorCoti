@@ -14,10 +14,20 @@
   padding: 10px;
   text-align: left;
 }
-
-
+ion-card-title{
+  color: white;
+}
+ion-card-subtitle{
+  color: white;
+}
+th{
+  color: white;
+}
+td{
+  color: white;
+}
 .styled-table th {
-  background-color: royalblue;
+  background-color: rgb(87, 189, 132);
   color: white;
 }
 
@@ -34,7 +44,7 @@
   margin-bottom: 30px;
   padding: 15px;
   border-radius: 20px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
 }
 
 @media screen and (max-width: 600px) {

@@ -3,18 +3,18 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/menu-solpe" style="color: white;"></ion-back-button>
     </ion-buttons>
-    <ion-title>Historial de SOLPES</ion-title>
+    <ion-title>Historial de SOLPED</ion-title>
     <ion-button slot="end" size="small" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
       <ion-icon name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
     </ion-button>
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <ion-segment [(ngModel)]="segmentoSeleccionado">
-    <ion-segment-button value="historial">
+<ion-content class="ion-padding"  >
+  <ion-segment [(ngModel)]="segmentoSeleccionado" >
+    <ion-segment-button value="historial" style="color: rgb(87, 189, 132);">
       <ion-label>Historial de SOLPES</ion-label>
-    </ion-segment-button>
+    </ion-segment-button >
     <ion-segment-button value="buscar">
       <ion-label>Buscar por número</ion-label>
     </ion-segment-button>
@@ -29,15 +29,15 @@
         </ion-item>
       </ion-col>
       <ion-col size="2">
-        <ion-button expand="block" color="primary" (click)="buscarSolpe()">
+        <ion-button  expand="block" shape="Round" style="--background: rgb(87, 189, 132)" (click)="buscarSolpe()">
           <ion-icon name="search-outline"></ion-icon>
         </ion-button>
       </ion-col>
     </ion-row>
   </ion-grid>
 
-  <ion-card *ngIf="solpeEncontrada">
-    <ion-card-header>
+  <ion-card *ngIf="solpeEncontrada"style="color: white;" >
+    <ion-card-header >
       <ion-card-title>Detalles SOLPE #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
       <ion-card-subtitle>Fecha: {{ solpeEncontrada.fecha }}</ion-card-subtitle>
       <ion-card-subtitle>Usuario: {{ solpeEncontrada.usuario }}</ion-card-subtitle>
@@ -45,14 +45,14 @@
     </ion-card-header>
 
     <ion-card-content *ngFor="let item of solpeEncontrada.items">
-      <ion-card>
-        <ion-card-header>
+      <ion-card style="color: white;">
+        <ion-card-header >
           <ion-card-title>Item {{ item.item }} - {{ item.descripcion }}</ion-card-title>
           <ion-card-subtitle>Cantidad: {{ item.cantidad }}</ion-card-subtitle>
           <ion-card-subtitle>Código: {{ item.codigo_referencial }}</ion-card-subtitle>
         </ion-card-header>
 
-        <ion-card-content>
+        <ion-card-content style="color: white;">
           <ion-text color="primary"><b>Precio</b></ion-text>
           <ion-grid *ngIf="item.comparaciones?.length" style="color: white;">
             <ion-row class="header-row">
@@ -81,9 +81,9 @@
   <div *ngIf="segmentoSeleccionado === 'historial'">
 
     <div *ngIf="mostrarFiltros">
-      <ion-card>
+      <ion-card style="color: white;">
         <ion-grid>
-          <ion-row class="ion-align-items-center">
+          <ion-row class="ion-align-items-center" >
 
             <ion-col size="12" size-md="3">
               <ion-item>
@@ -93,31 +93,31 @@
             </ion-col>
             <ion-col size="12" size-md="3">
               <ion-item>
-                <ion-label position="floating">Filtrar por Estatus</ion-label>
+                <ion-label position="floating">F. Estatus</ion-label>
                 <ion-input [(ngModel)]="filtroEstatus"></ion-input>
               </ion-item>
             </ion-col>
             <ion-col size="12" size-md="3">
               <ion-item>
-                <ion-label position="floating">Filtrar por Responsable Correctivo</ion-label>
+                <ion-label position="floating">F. Responsable Correctivo</ion-label>
                 <ion-input [(ngModel)]="filtroResponsable"></ion-input>
               </ion-item>
             </ion-col>
             <ion-col size="12" size-md="3">
               <ion-item>
-                <ion-label position="floating">Filtrar por Usuario</ion-label>
+                <ion-label position="floating">F. Usuario</ion-label>
                 <ion-input [(ngModel)]="filtroUsuario"></ion-input>
               </ion-item>
             </ion-col>
           </ion-row>
           <ion-row>
             <ion-col size="6">
-              <ion-button expand="block" color="primary" (click)="filtrarSolpes()">
+              <ion-button style="--background: rgb(87, 189, 132)" expand="block"  (click)="filtrarSolpes()">
                 Aplicar Filtros
               </ion-button>
             </ion-col>
             <ion-col size="6">
-              <ion-button expand="block" color="medium" (click)="limpiarFiltros()">
+              <ion-button expand="block" color="danger" (click)="limpiarFiltros()">
                 Limpiar Filtros
               </ion-button>
             </ion-col>

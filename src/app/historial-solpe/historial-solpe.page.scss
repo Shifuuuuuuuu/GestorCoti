@@ -1,4 +1,5 @@
 
+
 .table-container {
   margin-top: 20px;
   overflow-x: auto;
@@ -16,7 +17,7 @@
 }
 
 .styled-table th {
-  background-color: royalblue;
+  background-color: rgb(87, 189, 132);
   color: white;
 }
 
@@ -34,9 +35,36 @@
 
 
 .header-row {
-  background-color: dodgerblue;
+background-color: rgb(87, 189, 132);
   font-weight: bold;
 }
 ion-col {
   text-align: center;
+}
+ion-segment-button {
+  --indicator-color: rgb(87, 189, 132);
+}
+
+ion-segment-button.md {
+  --color: #ffffff;
+  --color-checked: rgb(87, 189, 132);
+  --indicator-height: 4px;
+}
+
+ion-segment-button.ios {
+  --color: rgb(87, 189, 132);
+  --color-checked: #fff;
+  --border-radius: 20px;
+}
+ion-label{
+  color: white;
+}
+ion-input{
+  color: white;
+}
+ion-card-title{
+  color: white;
+}
+ion-card-subtitle{
+  color: white;
 }

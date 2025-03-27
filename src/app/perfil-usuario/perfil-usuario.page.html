@@ -36,8 +36,8 @@
     </ion-grid>
 
     <div class="profile-image mx-auto">
-      <img *ngIf="profileImageUrl" [src]="profileImageUrl" alt="Imagen de perfil" />
-      <ion-icon *ngIf="!profileImageUrl" name="person-circle-outline" class="default-icon"></ion-icon>
+      <img *ngIf="profileImageUrl && profileImageUrl !== defaultProfileImage" [src]="profileImageUrl" alt="Imagen de perfil" />
+      <ion-icon *ngIf="!profileImageUrl || profileImageUrl === defaultProfileImage" name="person-circle-outline" class="default-icon"></ion-icon>
 
       <div class="upload-overlay" [class.hidden]="!isEditing">
         <ion-icon name="camera-outline"></ion-icon>
@@ -45,6 +45,7 @@
         <label for="fileInput" class="upload-label"></label>
       </div>
     </div>
+
     <br>
     <form *ngIf="user" class="mt-3">
       <div class="mb-3">
@@ -88,7 +89,7 @@
     </form>
   </ion-card>
 
-  <ion-button fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">
+  <ion-button  fill="clear" (click)="openChat(usuario)" class="chat-icon" *ngIf="usuario">
     <ion-icon name="chatbubbles-outline"></ion-icon>
   </ion-button>
 </ion-content>

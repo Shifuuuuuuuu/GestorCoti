@@ -46,7 +46,7 @@ openMenu() {
       const userResult = await this.authService.getUserById(userId);
       if (userResult) {
         this.user = userResult;
-        this.profileImageUrl = this.user.photoURL || this.defaultProfileImage;
+        this.profileImageUrl = this.user.photoURL ? this.user.photoURL : this.defaultProfileImage;
         console.log('Usuario cargado:', this.user);
       } else {
         this.errorMessage = 'No se encontró el usuario.';
@@ -56,6 +56,7 @@ openMenu() {
       this.errorMessage = 'Ocurrió un error al cargar los datos del usuario.';
     }
   }
+
 
 
   async uploadProfileImage(event: any) {

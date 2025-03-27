@@ -3,14 +3,14 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/menu-solpe" style="color: white;"></ion-back-button>
     </ion-buttons>
-    <ion-title>Creación de SOLPES</ion-title>
+    <ion-title>Creación de SOLPED</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
   <div class="container">
     <ion-segment [(ngModel)]="modoSeleccionado">
-      <ion-segment-button value="formulario">Formulario de SOLPE</ion-segment-button>
+      <ion-segment-button value="formulario">Formulario de SOLPED</ion-segment-button>
     </ion-segment>
 
     <div *ngIf="modoSeleccionado === 'formulario'" class="form-container">

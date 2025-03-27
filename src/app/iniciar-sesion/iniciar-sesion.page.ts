@@ -44,10 +44,12 @@ export class IniciarSesionPage implements OnInit {
             const userRole = userData.role;
 
             localStorage.setItem('userId', user.uid);
-            if (userRole === 'cotizador') {
+            if (userRole === 'Editor') {
               this.router.navigate(['/menu-cotizador']);
-            } else if (userRole === 'admin') {
+            } else if (userRole === 'Aprobador/Editor') {
               this.router.navigate(['/home']);
+            } else if (userRole === 'Generador solped') {
+              this.router.navigate(['/menu-solpe']);
             } else {
               this.presentToast('No tiene un rol asignado. Contacte con soporte.', 'danger');
             }

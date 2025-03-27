@@ -32,11 +32,11 @@
     </ion-list>
   </ng-container>
   <ng-template #contentLoaded>
-    <ion-card class="main-card">
+    <ion-card class="main-card" style="color: white;">
       <div *ngFor="let solpe of solpes" class="solpe-container">
         <h3 style="margin-left: 1%;">SOLPE N° {{ solpe.numero_solpe }}</h3>
 
-        <ion-card class="inner-card">
+        <ion-card class="inner-card"style="color: white;">
           <div class="table-container">
             <table class="styled-table">
               <thead>
@@ -55,7 +55,7 @@
                   <td>{{ solpe.usuario }}</td>
                   <td>{{ solpe.estatus }}</td>
                   <td>
-                    <ion-button size="small" (click)="cambiarEstatus(solpe)">
+                    <ion-button style="--background: rgb(87, 189, 132)" size="small" (click)="cambiarEstatus(solpe)">
                       Cambiar Estatus
                     </ion-button>
                   </td>
@@ -66,7 +66,7 @@
         </ion-card>
 
         <ion-card class="inner-card">
-          <div class="table-container">
+          <div class="table-container" style="color: white;">
             <table class="styled-table">
               <thead>
                 <tr>

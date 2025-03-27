@@ -6,8 +6,7 @@
     <ion-title>Gestión de SOLPED</ion-title>
   </ion-toolbar>
 </ion-header>
-
-<ion-content class="ion-padding">
+<ion-content class="ion-padding" >
 
   <ng-container *ngIf="!loading">
     <ion-card *ngFor="let solped of solpedList">
@@ -18,7 +17,7 @@
         <ion-card-subtitle>Estado: {{ solped.estatus }}</ion-card-subtitle>
       </ion-card-header>
 
-      <ion-card-content>
+      <ion-card-content >
         <ion-card class="inner-card">
           <ion-grid>
             <ion-row>
@@ -80,12 +79,12 @@
 
         <ion-row class="ion-justify-content-between ion-padding-top">
           <ion-col size="6">
-            <ion-button color="success" expand="block" (click)="aprobarSolped(solped)">
+            <ion-button style="--background: rgb(87, 189, 132)" expand="block" (click)="aprobarSolped(solped)">
               Aprobar
             </ion-button>
           </ion-col>
           <ion-col size="6">
-            <ion-button color="danger" expand="block" (click)="rechazarSolped(solped)">
+            <ion-button shape="Round" color="danger" expand="block" (click)="rechazarSolped(solped)">
               Rechazar
             </ion-button>
           </ion-col>

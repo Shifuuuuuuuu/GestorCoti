@@ -28,7 +28,7 @@ export class GestorsolpesPage implements OnInit {
 
   cargarSolpes() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
-      const filtradas = data.filter(solpe => solpe.estatus === 'Solicitada');
+      const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
       this.solpes = filtradas.map((solpe: any) => {
         solpe.items = solpe.items.map((item: any) => ({
           ...item,
