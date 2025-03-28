@@ -47,7 +47,6 @@ openMenu() {
       if (userResult) {
         this.user = userResult;
         this.profileImageUrl = this.user.photoURL ? this.user.photoURL : this.defaultProfileImage;
-        console.log('Usuario cargado:', this.user);
       } else {
         this.errorMessage = 'No se encontró el usuario.';
       }

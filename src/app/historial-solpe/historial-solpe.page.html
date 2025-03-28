@@ -142,8 +142,9 @@
   </ion-grid>
   <br><br><br><br>
 
-    <ion-text *ngIf="solpesFiltradas.length === 0">
-      <img src="assets/img/no_data.png" alt="No hay SOLPED" class="no-solped-img">
-    </ion-text>
+  <ion-text *ngIf="solpesFiltradas.length === 0" class="no-solped-container">
+    <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
+  </ion-text>
+
   </div>
 </ion-content>

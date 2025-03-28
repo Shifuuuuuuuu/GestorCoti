@@ -6,8 +6,41 @@
     <ion-title>Gestión de SOLPED</ion-title>
   </ion-toolbar>
 </ion-header>
-<ion-content class="ion-padding" >
+<ion-content class="ion-padding">
+  <!-- Contenedor para mostrar el esqueleto de carga mientras los datos se están cargando -->
+  <ng-container *ngIf="loading">
+    <!-- Skeleton de carga para cada tarjeta de SOLPED -->
+    <ion-card *ngFor="let solped of solpedList">
+      <ion-card-header>
+        <ion-card-title>
+          <ion-skeleton-text [animated]="true" style="width: 50%"></ion-skeleton-text>
+        </ion-card-title>
+        <ion-card-subtitle>
+          <ion-skeleton-text [animated]="true" style="width: 30%"></ion-skeleton-text>
+        </ion-card-subtitle>
+        <ion-card-subtitle>
+          <ion-skeleton-text [animated]="true" style="width: 40%"></ion-skeleton-text>
+        </ion-card-subtitle>
+        <ion-card-subtitle>
+          <ion-skeleton-text [animated]="true" style="width: 40%"></ion-skeleton-text>
+        </ion-card-subtitle>
+      </ion-card-header>
 
+      <ion-card-content>
+        <ion-card class="inner-card">
+          <ion-grid>
+            <ion-row>
+              <ion-col size="12">
+                <ion-skeleton-text [animated]="true" style="width: 100%; height: 200px;"></ion-skeleton-text>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <!-- Contenedor principal para mostrar los datos de SOLPED cuando se han cargado -->
   <ng-container *ngIf="!loading">
     <ion-card *ngFor="let solped of solpedList">
       <ion-card-header>
@@ -17,7 +50,7 @@
         <ion-card-subtitle>Estado: {{ solped.estatus }}</ion-card-subtitle>
       </ion-card-header>
 
-      <ion-card-content >
+      <ion-card-content>
         <ion-card class="inner-card">
           <ion-grid>
             <ion-row>
@@ -54,9 +87,8 @@
                                 <td>{{ comp.empresa }}</td>
                                 <td>{{ comp.precio | currency }}</td>
                                 <td>
-                                  <ion-button color="danger" fill="clear"
-                                  (click)="eliminarComparacion(solped.id, item.id, comp.id)">
-                                  <ion-icon name="close-circle"></ion-icon>
+                                  <ion-button color="danger" fill="clear" (click)="eliminarComparacion(solped.id, item.id, comp.id)">
+                                    <ion-icon name="close-circle"></ion-icon>
                                   </ion-button>
                                 </td>
                               </tr>
@@ -91,9 +123,8 @@
         </ion-row>
       </ion-card-content>
     </ion-card>
-
     <div *ngIf="solpedList.length === 0" class="no-solped-container">
-      <img src="assets/img/no_data.png" alt="No hay SOLPED" class="no-solped-img">
+      <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
     </div>
   </ng-container>
 </ion-content>

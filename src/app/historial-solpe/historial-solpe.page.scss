@@ -68,3 +68,16 @@ ion-card-title{
 ion-card-subtitle{
   color: white;
 }
+.no-solped-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  text-align: center;
+}
+.no-solped-icon {
+  font-size: 48px;
+  color: white;
+  margin-top: 20px;
+}
