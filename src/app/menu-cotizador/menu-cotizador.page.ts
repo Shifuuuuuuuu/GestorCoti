@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChatModalComponent } from '../chat-modal/chat-modal.component';
-import { ModalController } from '@ionic/angular';
+import { MenuController, ModalController } from '@ionic/angular';
 
 @Component({
   selector: 'app-menu-cotizador',
@@ -19,7 +19,8 @@ export class MenuCotizadorPage implements OnInit {
 
   constructor(
     private router: Router,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private menu: MenuController
   ) {}
 
   navigateTo(page: string) {
@@ -29,7 +30,9 @@ export class MenuCotizadorPage implements OnInit {
   ngOnInit() {
 
   }
-
+  ionViewWillEnter() {
+    this.menu.enable(true);
+  }
   async openChat(usuario: any) {
     const modal = await this.modalController.create({
       component: ChatModalComponent,

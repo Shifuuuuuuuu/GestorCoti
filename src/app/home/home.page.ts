@@ -32,6 +32,7 @@ export class HomePage implements OnInit  {
   ionViewWillEnter() {
     this.menu.enable(true);
   }
+
   async openChat(usuario: any) {
     const modal = await this.modalController.create({
       component: ChatModalComponent,

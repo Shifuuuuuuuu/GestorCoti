@@ -16,16 +16,34 @@ export class IniciarSesionPage implements OnInit {
     private toastController: ToastController,
     private alertController: AlertController,
     private firestore: AngularFirestore,
+    private menu: MenuController
   ) {}
+
+  ngOnInit() {
+    this.verificarSesion();
+  }
+
+  async verificarSesion() {
+    const userId = localStorage.getItem('userId'); // Verifica si hay un usuario guardado
+    if (userId) {
+      try {
+        const userDoc = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
+        if (userDoc && userDoc.exists) {
+          const userData = userDoc.data() as any;
+          this.redirigirPorRol(userData.role);
+        }
+      } catch (error) {
+        console.error('Error al verificar sesión:', error);
+        localStorage.removeItem('userId'); // Si hay un error, limpiar sesión
+      }
+    }
+  }
 
   async login() {
     const email = (document.getElementById('email') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
-    const emailPattern = /^[^\s@]+@xtrememining\.(cl)$/;
-    if (!emailPattern.test(email)) {
-      this.presentToast('El correo electrónico no es válido.', 'danger');
-      return;
-    }
+    const recordarSesion = (document.getElementById('recordarSesion') as HTMLInputElement).checked;
+
     if (!email || !password) {
       this.presentToast('Por favor, ingrese un correo y una contraseña válidos', 'warning');
       return;
@@ -41,18 +59,10 @@ export class IniciarSesionPage implements OnInit {
 
           if (userDoc && userDoc.exists) {
             const userData = userDoc.data() as any;
-            const userRole = userData.role;
-
-            localStorage.setItem('userId', user.uid);
-            if (userRole === 'Editor') {
-              this.router.navigate(['/menu-cotizador']);
-            } else if (userRole === 'Aprobador/Editor') {
-              this.router.navigate(['/home']);
-            } else if (userRole === 'Generador solped') {
-              this.router.navigate(['/menu-solpe']);
-            } else {
-              this.presentToast('No tiene un rol asignado. Contacte con soporte.', 'danger');
+            if (recordarSesion) {
+              localStorage.setItem('userId', user.uid); // Guarda el usuario en localStorage
             }
+            this.redirigirPorRol(userData.role);
           } else {
             this.presentToast('Usuario no encontrado en la base de datos.', 'danger');
           }
@@ -61,61 +71,20 @@ export class IniciarSesionPage implements OnInit {
         }
       }
     } catch (error: any) {
-      this.presentToast(
-        error.message || 'El usuario no está registrado. Por favor, regístrese primero.',
-        'danger'
-      );
+      this.presentToast(error.message || 'Error al iniciar sesión.', 'danger');
     }
   }
 
-
-  async resetPassword(event: Event) {
-    event.preventDefault();
-    const alert = await this.alertController.create({
-      header: 'Recuperar Contraseña',
-      message: 'Ingrese su correo electrónico para enviarle un enlace de recuperación.',
-      inputs: [
-        {
-          name: 'email',
-          type: 'email',
-          placeholder: 'Tu correo electrónico',
-        },
-      ],
-      buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel',
-        },
-        {
-          text: 'Enviar',
-          handler: async (data) => {
-            const email = data.email;
-            if (!email) {
-              this.presentToast('Por favor, ingrese un correo válido.', 'warning');
-              return;
-            }
-
-            try {
-              await this.afAuth.sendPasswordResetEmail(email);
-              this.presentToast('Correo de recuperación enviado. Revisa tu bandeja de entrada.', 'success');
-            } catch (error: any) {
-              this.presentToast(error.message || 'Error al enviar el correo de recuperación.', 'danger');
-            }
-          },
-        },
-      ],
-    });
-
-    await alert.present();
-  }
-
-  goToRegister(event: Event) {
-    event.preventDefault();
-    this.router.navigate(['/registrar-usuario']);
-  }
-
-  preventFormSubmit(event: Event) {
-    event.preventDefault();
+  redirigirPorRol(userRole: string) {
+    if (userRole === 'Editor') {
+      this.router.navigate(['/menu-cotizador']);
+    } else if (userRole === 'Aprobador/Editor') {
+      this.router.navigate(['/home']);
+    } else if (userRole === 'Generador solped') {
+      this.router.navigate(['/menu-solpe']);
+    } else {
+      this.presentToast('No tiene un rol asignado. Contacte con soporte.', 'danger');
+    }
   }
 
   async presentToast(message: string, color: string) {
@@ -128,6 +97,44 @@ export class IniciarSesionPage implements OnInit {
     toast.present();
   }
 
+  async resetPassword(event: Event) {
+    event.preventDefault();
+    const alert = await this.alertController.create({
+      header: 'Recuperar Contraseña',
+      message: 'Ingrese su correo electrónico para enviarle un enlace de recuperación.',
+      inputs: [{ name: 'email', type: 'email', placeholder: 'Tu correo electrónico' }],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Enviar',
+          handler: async (data) => {
+            const email = data.email;
+            if (!email) {
+              this.presentToast('Por favor, ingrese un correo válido.', 'warning');
+              return;
+            }
+            try {
+              await this.afAuth.sendPasswordResetEmail(email);
+              this.presentToast('Correo de recuperación enviado. Revisa tu bandeja de entrada.', 'success');
+            } catch (error: any) {
+              this.presentToast(error.message || 'Error al enviar el correo de recuperación.', 'danger');
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
 
-  ngOnInit() {}
+  goToRegister(event: Event) {
+    event.preventDefault();
+    this.router.navigate(['/registrar-usuario']);
+  }
+
+  preventFormSubmit(event: Event) {
+    event.preventDefault();
+  }
+  ionViewWillEnter() {
+    this.menu.enable(false);
+  }
 }

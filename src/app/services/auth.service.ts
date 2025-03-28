@@ -35,8 +35,13 @@ export class AuthService {
 
 
   async getCurrentUser(): Promise<firebase.User | null> {
-    return this.afAuth.currentUser;
+    return new Promise((resolve) => {
+      this.afAuth.onAuthStateChanged(user => {
+        resolve(user);
+      });
+    });
   }
+
 
 
   async getUserData(userId: string): Promise<AppUser | null> {

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MenuController } from '@ionic/angular';
 
 @Component({
   selector: 'app-menu-solpe',
@@ -17,10 +18,14 @@ export class MenuSolpePage implements OnInit {
 
   constructor(
     private router: Router,
+    private menu: MenuController
   ) {}
 
   navigateTo(page: string) {
     this.router.navigate([`/${page}`]);
+  }
+  ionViewWillEnter() {
+    this.menu.enable(true);
   }
 
   ngOnInit() {
