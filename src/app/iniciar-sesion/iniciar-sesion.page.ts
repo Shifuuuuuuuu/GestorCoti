@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Router } from '@angular/router';
-import { AlertController, ToastController } from '@ionic/angular';
+import { AlertController, MenuController, ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-iniciar-sesion',
@@ -15,7 +15,8 @@ export class IniciarSesionPage implements OnInit {
     private afAuth: AngularFireAuth,
     private toastController: ToastController,
     private alertController: AlertController,
-    private firestore: AngularFirestore
+    private firestore: AngularFirestore,
+    private menu: MenuController,
   ) {}
 
   async login() {
@@ -126,6 +127,9 @@ export class IniciarSesionPage implements OnInit {
       position: 'top',
     });
     toast.present();
+  }
+  ionViewWillEnter() {
+    this.menu.enable(false);
   }
 
   ngOnInit() {}

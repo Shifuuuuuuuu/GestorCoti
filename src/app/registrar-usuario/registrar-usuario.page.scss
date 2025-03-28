@@ -1,15 +1,13 @@
-
 ion-content {
+  --background: #121212;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
 }
 
-
 .form-control {
-  background-color: #ffffff;
-  box-shadow: 0 15px 25px rgba(0, 0, 0, 0.6);
+  background-color: #1e1e1e;
   width: 80%;
   max-width: 400px;
   display: flex;
@@ -20,10 +18,11 @@ ion-content {
   margin-left: auto;
   margin-right: auto;
 }
+
 .title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #000000;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ffffff;
   text-align: center;
 }
 
@@ -37,73 +36,61 @@ ion-content {
   width: 100%;
   outline: none;
   border-radius: 8px;
-  height: 45px;
-  border: 1.5px solid #ecedec;
-  background: transparent;
+  height: 50px;
+  border: none;
+  background: #2a2a2a;
   padding-left: 10px;
-  color: #000000;
-
+  color: #ffffff;
 }
 
 .input:focus {
-  border: 1.5px solid #2d79f3;
+  border: 1.5px solid rgb(87, 189, 132);
 }
 
-.input-field .label {
+.label {
   position: absolute;
-  top: 25px;
+  top: 20px;
   left: 15px;
-  color: #ccc;
+  color: #b0b0b0;
   transition: all 0.3s ease;
-  pointer-events: none;
-  z-index: 2;
 }
 
-.input-field .input:focus ~ .label,
-.input-field .input:valid ~ .label {
+.input:focus ~ .label,
+.input:valid ~ .label {
   top: 5px;
-  left: 5px;
+  left: 10px;
   font-size: 12px;
-  color: #2d79f3;
-  background-color: #ffffff;
-  padding-left: 5px;
-  padding-right: 5px;
+  color: rgb(87, 189, 132);
 }
 
 .submit-btn {
   margin-top: 30px;
-  height: 55px;
-  background: #f2f2f2;
-  border-radius: 11px;
-  border: 0;
-  outline: none;
+  height: 50px;
+  background: rgb(87, 189, 132);
+  border-radius: 12px;
+  border: none;
   color: #ffffff;
   font-size: 18px;
-  font-weight: 700;
-  background: linear-gradient(180deg, #363636 0%, #1b1b1b 50%, #000000 100%);
-  box-shadow: 0px 0px 0px 0px #ffffff, 0px 0px 0px 0px #000000;
-  transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
+  font-weight: bold;
   cursor: pointer;
   width: 100%;
 }
 
 .submit-btn:hover {
-  box-shadow: 0px 0px 0px 2px #ffffff, 0px 0px 0px 4px #0000003a;
+  background: rgb(87, 189, 132);
 }
 
+.redirect-register {
+  text-align: center;
+  margin-top: 15px;
+}
 
-@media (max-width: 600px) {
-  .form-control {
-    width: 90%;
-    padding: 15px;
-  }
+.redirect-register a {
+  color: rgb(87, 189, 132);
+  font-weight: bold;
+  text-decoration: none;
+}
 
-  .title {
-    font-size: 1.5rem;
-  }
-
-  .submit-btn {
-    font-size: 16px;
-    height: 50px;
-  }
+.redirect-register a:hover {
+  text-decoration: underline;
 }

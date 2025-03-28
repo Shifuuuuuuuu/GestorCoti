@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { ToastController } from '@ionic/angular';
+import { MenuController, ToastController } from '@ionic/angular';
 import { AppUser } from '../Interface/IUser';
 import { Router } from '@angular/router';
 
@@ -15,7 +15,8 @@ export class RegistrarUsuarioPage implements OnInit {
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
     private toastController: ToastController,
-    private router: Router
+    private router: Router,
+    private menu: MenuController
   ) {}
 
   async register(event?: Event) {
@@ -111,6 +112,9 @@ export class RegistrarUsuarioPage implements OnInit {
       position: 'top',
     });
     toast.present();
+  }
+  ionViewWillEnter() {
+    this.menu.enable(false);
   }
 
   ngOnInit() {}
