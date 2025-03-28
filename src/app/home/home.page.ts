@@ -19,7 +19,8 @@ export class HomePage implements OnInit  {
 
   constructor(
     private router: Router,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private menu: MenuController,
   ) {}
 
   navigateTo(page: string) {
@@ -28,7 +29,9 @@ export class HomePage implements OnInit  {
 
   ngOnInit() {
   }
-
+  ionViewWillEnter() {
+    this.menu.enable(true);
+  }
   async openChat(usuario: any) {
     const modal = await this.modalController.create({
       component: ChatModalComponent,

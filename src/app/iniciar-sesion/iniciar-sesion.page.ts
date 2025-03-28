@@ -16,7 +16,6 @@ export class IniciarSesionPage implements OnInit {
     private toastController: ToastController,
     private alertController: AlertController,
     private firestore: AngularFirestore,
-    private menu: MenuController,
   ) {}
 
   async login() {
@@ -128,9 +127,7 @@ export class IniciarSesionPage implements OnInit {
     });
     toast.present();
   }
-  ionViewWillEnter() {
-    this.menu.enable(false);
-  }
+
 
   ngOnInit() {}
 }
