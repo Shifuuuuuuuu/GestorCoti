@@ -80,8 +80,8 @@
               <tbody>
                 <tr *ngFor="let item of solpe.items">
                   <td>{{ item.item }}</td>
-                  <td>{{ item.descripcion }}</td>
-                  <td>{{ item.codigo_referencial }}</td>
+                  <td>{{ item.descripcion?.toUpperCase() }}</td>
+                  <td>{{ item.codigo_referencial?.toUpperCase() }}</td>
                   <td>{{ item.cantidad }}</td>
                   <td>
                     <div *ngIf="item.comparaciones?.length">
@@ -96,11 +96,13 @@
                         </thead>
                         <tbody>
                           <tr *ngFor="let comp of item.comparaciones; let i = index">
-                            <td>{{ comp.empresa }}</td>
+                            <td>{{ comp.empresa?.toUpperCase() }}</td>
                             <td>{{ comp.precio | currency }}</td>
-                            <td>       <ion-button color="danger" size="small" fill="clear" (click)="eliminarComparacion(item, i)">
-                              <ion-icon name="close-outline"></ion-icon>
-                            </ion-button></td>
+                            <td>
+                              <ion-button color="danger" size="small" fill="clear" (click)="eliminarComparacion(item, i)">
+                                <ion-icon name="close-outline"></ion-icon>
+                              </ion-button>
+                            </td>
                           </tr>
                         </tbody>
                       </table>

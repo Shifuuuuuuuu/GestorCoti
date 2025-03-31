@@ -131,12 +131,14 @@
               <td>
                 <ion-input [(ngModel)]="item.descripcion"
                            [readonly]="!item.editando"
+                           (ionInput)="item.descripcion = item.descripcion.toUpperCase()"
                            (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>
               </td>
               <td>
                 <ion-input [(ngModel)]="item.codigo_referencial"
                            [readonly]="!item.editando"
+                           (ionInput)="item.codigo_referencial = item.codigo_referencial.toUpperCase()"
                            (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>
               </td>
@@ -171,6 +173,7 @@
           </ion-button>
         </ion-buttons>
       </div>
+
     </div>
   </div>
 </ion-content>
