@@ -1,5 +1,5 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar >
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" style="color: white;"></ion-back-button>
     </ion-buttons>
@@ -7,9 +7,7 @@
   </ion-toolbar>
 </ion-header>
 <ion-content class="ion-padding">
-  <!-- Contenedor para mostrar el esqueleto de carga mientras los datos se están cargando -->
   <ng-container *ngIf="loading">
-    <!-- Skeleton de carga para cada tarjeta de SOLPED -->
     <ion-card *ngFor="let solped of solpedList">
       <ion-card-header>
         <ion-card-title>
@@ -39,8 +37,6 @@
       </ion-card-content>
     </ion-card>
   </ng-container>
-
-  <!-- Contenedor principal para mostrar los datos de SOLPED cuando se han cargado -->
   <ng-container *ngIf="!loading">
     <ion-card *ngFor="let solped of solpedList">
       <ion-card-header>

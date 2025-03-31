@@ -15,7 +15,23 @@ export class AppComponent {
     { title: 'Perfil', url: '/perfil-usuario', icon: 'person-circle' },
   ];
 
-  constructor(private authService: AuthService, private router: Router) {}
+  isDarkMode = false; // Estado del tema
+
+  constructor(private authService: AuthService, private router: Router) {
+    this.initializeTheme();
+  }
+  initializeTheme() {
+    const savedTheme = localStorage.getItem('darkMode') === 'true';
+    this.isDarkMode = savedTheme;
+    document.body.classList.toggle('dark', savedTheme);
+  }
+
+  toggleDarkMode(event: any) {
+    this.isDarkMode = event.detail.checked;
+    document.body.classList.toggle('dark', this.isDarkMode);
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+  }
+
   async logout() {
     try {
       await this.authService.logout();
