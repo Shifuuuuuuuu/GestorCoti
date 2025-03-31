@@ -20,7 +20,7 @@ export class HistorialSolpePage implements OnInit {
 
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
-
+  ordenAscendente: boolean = true;
   constructor(private firestore: AngularFirestore) {}
 
   ngOnInit() {
@@ -81,8 +81,14 @@ export class HistorialSolpePage implements OnInit {
       return coincideFecha && coincideEstatus && coincideResponsable && coincideUsuario;
     });
   }
-
-
+  ordenarSolpes() {
+    this.ordenAscendente = !this.ordenAscendente;
+    this.solpesFiltradas.sort((a, b) => {
+      return this.ordenAscendente
+        ? a.numero_solpe - b.numero_solpe
+        : b.numero_solpe - a.numero_solpe;
+    });
+  }
 
   limpiarFiltros() {
     this.filtroFecha = '';

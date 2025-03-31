@@ -7,6 +7,9 @@
     <ion-button slot="end" size="small" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
       <ion-icon name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
     </ion-button>
+    <ion-button slot="end" size="small" fill="clean" (click)="ordenarSolpes()">
+      {{ ordenAscendente ? '↓' : '↑' }}
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
@@ -130,12 +133,14 @@
     <ion-row class="header-row">
       <ion-col><b>N° SOLPE</b></ion-col>
       <ion-col><b>Fecha</b></ion-col>
+      <ion-col><b>Numero de contrato</b></ion-col>
       <ion-col><b>Usuario</b></ion-col>
       <ion-col><b>Estatus</b></ion-col>
     </ion-row>
     <ion-row>
       <ion-col>{{ solpe.numero_solpe }}</ion-col>
       <ion-col>{{ solpe.fecha }}</ion-col>
+      <ion-col>{{ solpe.numero_contrato }}</ion-col>
       <ion-col>{{ solpe.usuario }}</ion-col>
       <ion-col>{{ solpe.estatus }}</ion-col>
     </ion-row>
