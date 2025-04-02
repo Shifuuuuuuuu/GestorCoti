@@ -14,7 +14,7 @@
   height: 140px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid rgb(87, 189, 132);
+  border: 3px solid red;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -47,10 +47,7 @@
   transition: color 0.3s ease, transform 0.3s ease;
 }
 
-.icon-container ion-icon:hover {
-  color: rgb(87, 189, 132);
-  transform: scale(1.1);
-}
+
 
 .upload-overlay {
   position: absolute;

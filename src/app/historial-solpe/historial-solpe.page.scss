@@ -17,7 +17,7 @@
 }
 
 .styled-table th {
-  background-color: rgb(87, 189, 132);
+  background-color: red;
   color: white;
 }
 
@@ -35,39 +35,28 @@
 
 
 .header-row {
-background-color: rgb(87, 189, 132);
+background-color: red;
   font-weight: bold;
 }
 ion-col {
   text-align: center;
 }
 ion-segment-button {
-  --indicator-color: rgb(87, 189, 132);
+  --indicator-color: red;
 }
 
 ion-segment-button.md {
-  --color: #ffffff;
-  --color-checked: rgb(87, 189, 132);
+  --color: dark;
+  --color-checked: red;
   --indicator-height: 4px;
 }
 
 ion-segment-button.ios {
-  --color: rgb(87, 189, 132);
+  --color: red;
   --color-checked: #fff;
   --border-radius: 20px;
 }
-ion-label{
-  color: white;
-}
-ion-input{
-  color: white;
-}
-ion-card-title{
-  color: white;
-}
-ion-card-subtitle{
-  color: white;
-}
+
 .no-solped-container {
   display: flex;
   flex-direction: column;

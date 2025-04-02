@@ -1,13 +1,13 @@
 <ion-header>
-  <ion-toolbar >
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/menu-solpe" style="color: white;"></ion-back-button>
+  <ion-toolbar style="--background: red;" >
+    <ion-buttons slot="start" style="color: white;">
+      <ion-back-button defaultHref="/menu-solpe" ></ion-back-button>
     </ion-buttons>
-    <ion-title>Historial de SOLPED</ion-title>
-    <ion-button slot="end" size="small" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
-      <ion-icon name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
+    <ion-title style="color: white;">Historial de SOLPED</ion-title>
+    <ion-button  slot="end" size="small" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
+      <ion-icon  color="light" name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
     </ion-button>
-    <ion-button slot="end" size="small" fill="clean" (click)="ordenarSolpes()">
+    <ion-button style="color: white;" slot="end" size="small" fill="clean" (click)="ordenarSolpes()">
       {{ ordenAscendente ? '↓' : '↑' }}
     </ion-button>
   </ion-toolbar>
@@ -15,7 +15,7 @@
 
 <ion-content class="ion-padding"  >
   <ion-segment [(ngModel)]="segmentoSeleccionado" >
-    <ion-segment-button value="historial" style="color: rgb(87, 189, 132);">
+    <ion-segment-button value="historial">
       <ion-label>Historial de SOLPES</ion-label>
     </ion-segment-button >
     <ion-segment-button value="buscar">
@@ -32,14 +32,14 @@
         </ion-item>
       </ion-col>
       <ion-col size="2">
-        <ion-button  expand="block" shape="Round" style="--background: rgb(87, 189, 132)" (click)="buscarSolpe()">
-          <ion-icon name="search-outline"></ion-icon>
+        <ion-button  expand="block" shape="Round" style="--background: red;" (click)="buscarSolpe()">
+          <ion-icon color="light" name="search-outline"></ion-icon>
         </ion-button>
       </ion-col>
     </ion-row>
   </ion-grid>
 
-  <ion-card *ngIf="solpeEncontrada"style="color: white;" >
+  <ion-card *ngIf="solpeEncontrada">
     <ion-card-header >
       <ion-card-title>Detalles SOLPE #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
       <ion-card-subtitle>Fecha: {{ solpeEncontrada.fecha }}</ion-card-subtitle>
@@ -48,17 +48,17 @@
     </ion-card-header>
 
     <ion-card-content *ngFor="let item of solpeEncontrada.items">
-      <ion-card style="color: white;">
+      <ion-card >
         <ion-card-header >
           <ion-card-title>Item {{ item.item }} - {{ item.descripcion }}</ion-card-title>
           <ion-card-subtitle>Cantidad: {{ item.cantidad }}</ion-card-subtitle>
           <ion-card-subtitle>Código: {{ item.codigo_referencial }}</ion-card-subtitle>
         </ion-card-header>
 
-        <ion-card-content style="color: white;">
-          <ion-text color="primary"><b>Precio</b></ion-text>
-          <ion-grid *ngIf="item.comparaciones?.length" style="color: white;">
-            <ion-row class="header-row">
+        <ion-card-content >
+          <ion-text color="dark"><b>Precios</b></ion-text>
+          <ion-grid *ngIf="item.comparaciones?.length" >
+            <ion-row style="color: white;" class="header-row">
               <ion-col><b>Empresa</b></ion-col>
               <ion-col><b>Precio</b></ion-col>
             </ion-row>
@@ -84,11 +84,11 @@
   <div *ngIf="segmentoSeleccionado === 'historial'">
 
     <div *ngIf="mostrarFiltros">
-      <ion-card style="color: white;">
-        <ion-grid>
+      <ion-card >
+        <ion-grid >
           <ion-row class="ion-align-items-center" >
 
-            <ion-col size="12" size-md="3">
+            <ion-col  size="12" size-md="3">
               <ion-item>
                 <ion-label position="floating">Fecha</ion-label>
                 <ion-input [(ngModel)]="filtroFecha" type="date"></ion-input>
@@ -130,7 +130,7 @@
     </div>
 
   <ion-grid *ngFor="let solpe of solpesFiltradas">
-    <ion-row class="header-row">
+    <ion-row style="color: white;"  class="header-row">
       <ion-col><b>N° SOLPE</b></ion-col>
       <ion-col><b>Fecha</b></ion-col>
       <ion-col><b>Numero de contrato</b></ion-col>
