@@ -36,7 +36,7 @@
 }
 
 .styled-table th {
-  background-color: rgb(87, 189, 132);
+  background-color: red;
 
 }
 
@@ -117,18 +117,18 @@ ion-button {
 
 
 ion-segment-button {
-  --indicator-color: rgb(87, 189, 132)1;
+  --indicator-color: red;
 }
 
 /* Material Design styles */
 ion-segment-button.md {
-  --color-checked: rgb(87, 189, 132);
+  --color-checked: red;
   --indicator-height: 4px;
 }
 
 /* iOS styles */
 ion-segment-button.ios {
-  --color: rgb(87, 189, 132);
+  --color: red;
   --color-checked: #fff;
   --border-radius: 20px;
 }

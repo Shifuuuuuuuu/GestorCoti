@@ -1,14 +1,17 @@
-<ion-header >
+<ion-header>
   <ion-toolbar style="--background: red;">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/iniciar-sesion" style="color: white;"></ion-back-button>
     </ion-buttons>
-    <ion-title>Registrar Usuario</ion-title>
+    <ion-title style="color: white;">Registrar Usuario</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
   <form class="form-control" (submit)="register($event)">
+    <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+      <img src="assets/img/Logo XT Servicios Transparente.png" alt="Logo XT" style="height: 80px;">
+    </div>
     <p class="title">Regístrate</p>
 
     <div class="input-field">
@@ -27,7 +30,6 @@
       <input required class="input" type="email" id="email"
              pattern="^[a-zA-Z0-9._%+-]+@xtrememining\.cl$"/>
       <label class="label" for="email">Email (solo &#64;xtrememining.cl)</label>
-
     </div>
 
     <div class="input-field">
@@ -61,6 +63,3 @@
     <button type="submit" class="submit-btn">Registrar</button>
   </form>
 </ion-content>
-
-
-

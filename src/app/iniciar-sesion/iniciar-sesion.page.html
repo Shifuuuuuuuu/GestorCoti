@@ -1,15 +1,24 @@
 <ion-content>
   <form class="form-control" (submit)="preventFormSubmit($event)">
-    <p class="title">Bienvenido, inicia sesión</p>
+
+    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
+      <img src="assets/img/Logo XT Servicios Transparente.png" alt="Logo XT" style="height: 80px;">
+    </div>
+    <h1 class="title">Bienvenido</h1>
+    <h5 class="title">inicia sesión</h5>
+
     <div class="input-field">
       <input required class="input" type="email" id="email" />
       <label class="label" for="email">Escribe tu email</label>
     </div>
+
     <div class="input-field">
       <input required class="input" type="password" id="password" />
       <label class="label" for="password">Escribe tu contraseña</label>
     </div>
+
     <br />
+
     <div class="input-field">
       <input type="checkbox" id="recordarSesion" />
       <label for="recordarSesion">Recordar sesión</label>
@@ -17,10 +26,11 @@
 
     <a href="#" (click)="resetPassword($event)">¿Olvidaste tu contraseña?</a>
     <button type="button" class="submit-btn" (click)="login()">Iniciar sesión</button>
+
     <div class="redirect-register">
       <p style="color: var(--ion-color-primary);">¿No tienes una cuenta?</p>
       <a href="#" (click)="goToRegister($event)">Regístrate aquí</a>
     </div>
+
   </form>
 </ion-content>
-

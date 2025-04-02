@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" style="color: white;"></ion-back-button>
     </ion-buttons>
-    <ion-title>Gestión de SOLPED</ion-title>
+    <ion-title style="color: white;">Gestión de SOLPED</ion-title>
   </ion-toolbar>
 </ion-header>
 <ion-content class="ion-padding">
@@ -40,7 +40,7 @@
   <ng-container *ngIf="!loading">
     <ion-card *ngFor="let solped of solpedList">
       <ion-card-header>
-        <ion-card-title>N° SOLPED: {{ solped.numero_solpe }}</ion-card-title>
+        <ion-card-title color="secondary">N° SOLPED: {{ solped.numero_solpe }}</ion-card-title>
         <ion-card-subtitle>Fecha: {{ solped.fecha }}</ion-card-subtitle>
         <ion-card-subtitle>Usuario: {{ solped.usuario }}</ion-card-subtitle>
         <ion-card-subtitle>Estado: {{ solped.estatus }}</ion-card-subtitle>

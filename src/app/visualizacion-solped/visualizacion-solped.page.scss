@@ -14,20 +14,9 @@
   padding: 10px;
   text-align: left;
 }
-ion-card-title{
-  color: white;
-}
-ion-card-subtitle{
-  color: white;
-}
-th{
-  color: white;
-}
-td{
-  color: white;
-}
+
 .styled-table th {
-  background-color: rgb(87, 189, 132);
+  background-color: red;
   color: white;
 }
 
@@ -86,6 +75,5 @@ td{
 }
 .no-solped-icon {
   font-size: 48px;
-  color: white;
   margin-top: 20px;
 }
