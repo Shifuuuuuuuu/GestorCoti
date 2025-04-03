@@ -11,6 +11,7 @@ export class HistorialSolpePage implements OnInit {
   numeroBusqueda: number | undefined;
   solpeEncontrada: any = null;
   buscado: boolean = false;
+  filtroContrato: string = '';
 
   filtroFecha: string = '';
   filtroEstatus: string = '';
@@ -86,14 +87,17 @@ export class HistorialSolpePage implements OnInit {
           fechaSolpe = '';
         }
       }
+
       const coincideFecha = this.filtroFecha ? fechaSolpe === this.filtroFecha : true;
       const coincideEstatus = this.filtroEstatus ? solpe.estatus?.toLowerCase().includes(this.filtroEstatus.toLowerCase()) : true;
       const coincideResponsable = this.filtroResponsable ? solpe.numero_contrato?.toLowerCase().includes(this.filtroResponsable.toLowerCase()) : true;
       const coincideUsuario = this.filtroUsuario ? solpe.usuario?.toLowerCase().includes(this.filtroUsuario.toLowerCase()) : true;
+      const coincideContrato = this.filtroContrato ? solpe.numero_contrato === this.filtroContrato : true;
 
-      return coincideFecha && coincideEstatus && coincideResponsable && coincideUsuario;
+      return coincideFecha && coincideEstatus && coincideResponsable && coincideUsuario && coincideContrato;
     });
   }
+
   ordenarSolpes() {
     this.ordenAscendente = !this.ordenAscendente;
     this.solpesFiltradas.sort((a, b) => {

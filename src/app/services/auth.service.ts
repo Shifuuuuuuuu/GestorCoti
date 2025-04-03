@@ -15,7 +15,7 @@ export class AuthService {
   public currentUserEmail$: Observable<string | undefined> = this.currentUserEmailSubject.asObservable();
 
   constructor(private firestore: AngularFirestore, private afAuth: AngularFireAuth) {
-    this.usersCollection = this.firestore.collection<AppUser>('Usuarios');  // Usa AppUser en lugar de User
+    this.usersCollection = this.firestore.collection<AppUser>('Usuarios');
   }
 
   getUserId(): string | null {
@@ -99,6 +99,9 @@ export class AuthService {
         const userDoc = userSnapshot.docs[0];
         const userData = userDoc.data() as AppUser;
 
+        const userRole = userData.role ?? '';
+
+        localStorage.setItem('userRole', userRole);
 
         localStorage.setItem('userType', 'usuario');
         localStorage.setItem('id', uid);
@@ -108,6 +111,7 @@ export class AuthService {
     }
     return null;
   }
+
 
   async verifyUserByEmail(email: string): Promise<boolean> {
     try {
