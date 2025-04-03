@@ -29,21 +29,29 @@ export class RegistrarUsuarioPage implements OnInit {
     const password = (document.getElementById('password') as HTMLInputElement).value;
     const role = (document.getElementById('role') as HTMLSelectElement).value;
 
-
     const emailPattern = /^[a-zA-Z0-9._%+-]+@xtrememining\.cl$/;
     if (!emailPattern.test(email)) {
       this.presentToast('El correo debe ser del dominio @xtrememining.cl', 'danger');
       return;
     }
 
-    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,10}$/;
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,12}$/;
     if (!passwordPattern.test(password)) {
       this.presentToast('La contraseña debe tener entre 5 y 10 caracteres, con 1 mayúscula, 1 número y 1 caracter especial.', 'danger');
       return;
     }
+
+    if (!email || !password) {
+      this.presentToast('Por favor ingresa un correo y una contraseña válidos.', 'danger');
+      return;
+    }
+
     rut = this.formatRUTForSave(rut);
     phone = this.formatPhoneForSave(phone);
+
     try {
+      console.log('Registrando usuario con correo:', email, 'y contraseña:', password);
+
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
 

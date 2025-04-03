@@ -3,8 +3,9 @@
     <ion-menu contentId="main-content" type="overlay">
       <ion-header>
         <ion-toolbar style="--background: red;">
-          <img src="assets/img/Logo XT Servicios.png" alt="Logo" style="height: 40px; display: block; margin: auto;">
+          <img src="assets/img/Logo XT Servicios.png" alt="Logo" style="height: 40px; display: block; margin: auto; border-radius: 10px;">
         </ion-toolbar>
+
       </ion-header>
       <ion-content>
         <ion-list id="inbox-list">
@@ -36,8 +37,10 @@
             <ion-label></ion-label>
           </ion-item>
           <ion-item>
-            <ion-label>Modo Oscuro</ion-label>
+            <ion-label>Modo fondo de pantalla</ion-label>
             <ion-toggle (ionChange)="toggleDarkMode($event)" [checked]="isDarkMode"></ion-toggle>
+            <ion-icon color="warning" *ngIf="!isDarkMode" name="sunny" slot="end" (click)="toggleDarkMode($event)"></ion-icon>
+            <ion-icon  *ngIf="isDarkMode" name="moon" slot="end" (click)="toggleDarkMode($event)"></ion-icon>
           </ion-item>
 
           <ion-item button (click)="logout()" class="logout-item">

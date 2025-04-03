@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SolpeService } from '../services/solpe.service';
-import { AlertController } from '@ionic/angular';
+import { AlertController, ToastController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
@@ -16,7 +16,8 @@ export class GestorsolpesPage implements OnInit {
   constructor(
     private solpeService: SolpeService,
     private alertController: AlertController,
-    private firestore: AngularFirestore
+    private firestore: AngularFirestore,
+    private toastController: ToastController
   ) {}
 
   ngOnInit() {
@@ -40,12 +41,16 @@ export class GestorsolpesPage implements OnInit {
   }
 
   async cambiarEstatus(solpe: any) {
+    if (!this.validarComparaciones(solpe)) {
+      await this.mostrarToast('Todos los ítems deben tener al menos una comparación de precios', 'danger');
+      return;
+    }
+
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',
       inputs: [
-        { name: 'estatus', type: 'radio', label: 'Aprobado', value: 'Aprobado' },
-        { name: 'estatus', type: 'radio', label: 'Rechazado', value: 'Rechazado' },
-        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Tránsito a Faena' },
+        { name: 'estatus', type: 'radio', label: 'Pre Aprobado', value: 'Pre Aprobado' },
+        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Rechazado' },
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
@@ -53,28 +58,11 @@ export class GestorsolpesPage implements OnInit {
           text: 'Siguiente',
           handler: async (estatusSeleccionado) => {
             if (estatusSeleccionado) {
-              const commentAlert = await this.alertController.create({
-                header: 'Agregar Comentario',
-                inputs: [
-                  { name: 'comentario', type: 'text', placeholder: 'Escribe un comentario' }
-                ],
-                buttons: [
-                  { text: 'Cancelar', role: 'cancel' },
-                  {
-                    text: 'Guardar',
-                    handler: (data) => {
-                      this.firestore.collection('solpes').doc(solpe.id).update({
-                        estatus: estatusSeleccionado,
-                        comentario: data.comentario || ''
-                      }).then(() => {
-                        solpe.estatus = estatusSeleccionado;
-                        solpe.comentario = data.comentario || '';
-                      });
-                    }
-                  }
-                ]
+              this.firestore.collection('solpes').doc(solpe.id).update({
+                estatus: estatusSeleccionado,
+              }).then(() => {
+                solpe.estatus = estatusSeleccionado;
               });
-              await commentAlert.present();
             }
           },
         },
@@ -121,6 +109,17 @@ export class GestorsolpesPage implements OnInit {
   eliminarComparacion(item: any, index: number) {
     item.comparaciones.splice(index, 1);
   }
+  destacarComparacion(item: any, index: number) {
+    item.comparaciones[index].destacado = !item.comparaciones[index].destacado;
+    const solpeRef = this.firestore.collection('solpes').doc(item.solpeId);
+    solpeRef.update({
+      items: item.comparaciones
+    }).then(() => {
+      console.log('Comparación actualizada en Firestore');
+    }).catch(err => {
+      console.error('Error al actualizar comparación:', err);
+    });
+  }
 
   async subirComparaciones(solpe: any) {
     const confirm = await this.alertController.create({
@@ -133,15 +132,30 @@ export class GestorsolpesPage implements OnInit {
           handler: () => {
             this.firestore.collection('solpes').doc(solpe.id).update({
               items: solpe.items
-            }).then(() => {
+            }).then(async () => {
               console.log('Comparaciones subidas a Firestore');
-            }).catch(err => {
+              await this.mostrarToast('Comparaciones subidas con éxito', 'success');
+            }).catch(async err => {
               console.error('Error al subir comparaciones:', err);
+              await this.mostrarToast('Error al subir comparaciones', 'danger');
             });
           }
         }
       ]
     });
     await confirm.present();
+  }
+  validarComparaciones(solpe: any): boolean {
+    return solpe.items.every((item: any) => item.comparaciones && item.comparaciones.length > 0);
+  }
+
+  async mostrarToast(mensaje: string, color: 'success' | 'danger') {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 2000,
+      color: color,
+      position: 'top'
+    });
+    toast.present();
   }
 }

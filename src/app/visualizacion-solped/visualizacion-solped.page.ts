@@ -29,7 +29,7 @@ export class VisualizacionSolpedPage implements OnInit {
 
   cargarSolped() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
-      const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
+      const filtradas = data.filter(solpe => solpe.estatus === 'Pre Aprobado');
       this.solpedList = filtradas.map((solpe: any) => {
         solpe.items = solpe.items
           ? solpe.items.map((item: any) => ({
@@ -42,13 +42,25 @@ export class VisualizacionSolpedPage implements OnInit {
     });
   }
 
-  aprobarSolped(solped: any) {
+  async aprobarSolped(solped: any) {
+    if (!solped.comentario || solped.comentario.trim() === '') {
+      const alert = await this.alertCtrl.create({
+        header: 'Advertencia',
+        message: 'Debe ingresar un comentario para aprobar la SOLPED.',
+        buttons: ['OK'],
+      });
+      await alert.present();
+      return;
+    }
+
     this.actualizarEstado(solped.id, 'Aprobado', solped.comentario);
   }
 
   rechazarSolped(solped: any) {
-    this.actualizarEstado(solped.id, 'Rechazado', solped.comentario);
+    const comentario = solped.comentario ? solped.comentario : '';
+    this.actualizarEstado(solped.id, 'Rechazado', comentario);
   }
+
 
   async actualizarEstado(id: string, estado: string, comentario: string) {
     try {

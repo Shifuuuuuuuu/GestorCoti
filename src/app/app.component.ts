@@ -15,17 +15,20 @@ export class AppComponent {
     { title: 'Perfil', url: '/perfil-usuario', icon: 'person-circle' },
   ];
 
-  isDarkMode = false; // Estado del tema
+  isDarkMode = false;
 
   constructor(private authService: AuthService, private router: Router) {
-    this.initializeTheme();
+    const storedMode = localStorage.getItem('darkMode');
+    if (storedMode !== null) {
+      this.isDarkMode = storedMode === 'true';
+      document.body.classList.toggle('dark', this.isDarkMode);
+    }
   }
   initializeTheme() {
     const savedTheme = localStorage.getItem('darkMode') === 'true';
     this.isDarkMode = savedTheme;
     document.body.classList.toggle('dark', savedTheme);
   }
-
   toggleDarkMode(event: any) {
     this.isDarkMode = event.detail.checked;
     document.body.classList.toggle('dark', this.isDarkMode);

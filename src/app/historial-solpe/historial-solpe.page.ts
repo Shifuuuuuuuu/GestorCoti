@@ -110,4 +110,20 @@ export class HistorialSolpePage implements OnInit {
     this.filtroUsuario = '';
     this.solpesFiltradas = [...this.solpesOriginal];
   }
+    getColorByStatus(estatus: string) {
+      switch (estatus) {
+        case 'Aprobado':
+          return 'green';
+        case 'Rechazado':
+          return 'red';
+        case 'Solicitado':
+          return 'orange';
+        case 'Tránsito a Faena':
+          return 'blue';
+        case 'Pre Aprobado':
+          return 'yellow';
+        default:
+          return 'gray';
+      }
+    }
 }

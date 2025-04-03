@@ -35,7 +35,6 @@
     <ion-card class="main-card" >
       <div *ngFor="let solpe of solpes" class="solpe-container">
         <h3 style="margin-left: 1%;">SOLPE N° {{ solpe.numero_solpe }}</h3>
-
         <ion-card class="inner-card">
           <div class="table-container">
             <table class="styled-table">
@@ -64,7 +63,6 @@
             </table>
           </div>
         </ion-card>
-
         <ion-card class="inner-card">
           <div class="table-container" >
             <table class="styled-table">
@@ -74,6 +72,7 @@
                   <th>Descripción</th>
                   <th>Código</th>
                   <th>Cantidad</th>
+                  <th>stock</th>
                   <th>Comparación Precios</th>
                 </tr>
               </thead>
@@ -83,6 +82,7 @@
                   <td>{{ item.descripcion?.toUpperCase() }}</td>
                   <td>{{ item.codigo_referencial?.toUpperCase() }}</td>
                   <td>{{ item.cantidad }}</td>
+                  <td>{{ item.stock }}</td>
                   <td>
                     <div *ngIf="item.comparaciones?.length">
                       <h5>Comparaciones:</h5>
@@ -102,12 +102,17 @@
                               <ion-button color="danger" size="small" fill="clear" (click)="eliminarComparacion(item, i)">
                                 <ion-icon name="close-outline"></ion-icon>
                               </ion-button>
+
+                              <ion-button color="warning" size="small" fill="clear" (click)="destacarComparacion(item, i)">
+                                <ion-icon color="warning" [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
+                              </ion-button>
                             </td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
                     <br>
+
                     <ion-buttons>
                       <ion-button size="small" (click)="abrirComparacion(item)">
                         <ion-icon color="secondary" name="add-circle-outline"></ion-icon>

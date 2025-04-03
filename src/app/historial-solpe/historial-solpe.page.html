@@ -46,15 +46,14 @@
       <ion-card-subtitle>Usuario: {{ solpeEncontrada.usuario }}</ion-card-subtitle>
       <ion-card-subtitle>Estatus: {{ solpeEncontrada.estatus }}</ion-card-subtitle>
     </ion-card-header>
-
     <ion-card-content *ngFor="let item of solpeEncontrada.items">
       <ion-card >
         <ion-card-header >
           <ion-card-title>Item {{ item.item }} - {{ item.descripcion }}</ion-card-title>
           <ion-card-subtitle>Cantidad: {{ item.cantidad }}</ion-card-subtitle>
           <ion-card-subtitle>Código: {{ item.codigo_referencial }}</ion-card-subtitle>
+          <ion-card-subtitle>Stock: {{ item.stock }}</ion-card-subtitle>
         </ion-card-header>
-
         <ion-card-content >
           <ion-text color="dark"><b>Precios</b></ion-text>
           <ion-grid *ngIf="item.comparaciones?.length" >
@@ -137,22 +136,25 @@
       </ion-card>
     </div>
 
-  <ion-grid *ngFor="let solpe of solpesFiltradas">
-    <ion-row style="color: white;"  class="header-row">
-      <ion-col><b>N° SOLPE</b></ion-col>
-      <ion-col><b>Fecha</b></ion-col>
-      <ion-col><b>Numero de contrato</b></ion-col>
-      <ion-col><b>Usuario</b></ion-col>
-      <ion-col><b>Estatus</b></ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col>{{ solpe.numero_solpe }}</ion-col>
-      <ion-col>{{ solpe.fecha }}</ion-col>
-      <ion-col>{{ solpe.numero_contrato }}</ion-col>
-      <ion-col>{{ solpe.usuario }}</ion-col>
-      <ion-col>{{ solpe.estatus }}</ion-col>
-    </ion-row>
-  </ion-grid>
+    <ion-grid *ngFor="let solpe of solpesFiltradas">
+      <ion-row style="color: white;" class="header-row "[ngStyle]="{ 'background-color': getColorByStatus(solpe.estatus) }">
+        <ion-col><b>N° SOLPE</b></ion-col>
+        <ion-col><b>Fecha</b></ion-col>
+        <ion-col><b>Numero de contrato</b></ion-col>
+        <ion-col><b>Usuario</b></ion-col>
+        <ion-col><b>Estatus</b></ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col>{{ solpe.numero_solpe }}</ion-col>
+        <ion-col>{{ solpe.fecha }}</ion-col>
+        <ion-col>{{ solpe.numero_contrato }}</ion-col>
+        <ion-col>{{ solpe.usuario }}</ion-col>
+        <ion-col >
+          {{ solpe.estatus }}
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+
   <br><br><br><br>
 
   <ion-text *ngIf="solpesFiltradas.length === 0" class="no-solped-container">
