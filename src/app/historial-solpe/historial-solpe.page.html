@@ -96,8 +96,12 @@
             </ion-col>
             <ion-col size="12" size-md="3">
               <ion-item>
-                <ion-label position="floating">F. Estatus</ion-label>
-                <ion-input [(ngModel)]="filtroEstatus"></ion-input>
+                <ion-label>F. Estatus</ion-label>
+                <ion-select [(ngModel)]="filtroEstatus">
+                  <ion-select-option *ngFor="let estatus of listaEstatus" [value]="estatus">
+                    {{ estatus }}
+                  </ion-select-option>
+                </ion-select>
               </ion-item>
             </ion-col>
             <ion-col size="12" size-md="3">
@@ -108,8 +112,12 @@
             </ion-col>
             <ion-col size="12" size-md="3">
               <ion-item>
-                <ion-label position="floating">F. Usuario</ion-label>
-                <ion-input [(ngModel)]="filtroUsuario"></ion-input>
+                <ion-label>F. Usuario</ion-label>
+                <ion-select [(ngModel)]="filtroUsuario">
+                  <ion-select-option *ngFor="let usuario of listaUsuarios" [value]="usuario.fullName">
+                    {{ usuario.fullName }}
+                  </ion-select-option>
+                </ion-select>
               </ion-item>
             </ion-col>
           </ion-row>

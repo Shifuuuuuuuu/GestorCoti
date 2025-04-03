@@ -6,5 +6,6 @@ export interface Item {
   item: number;
   cantidad: number;
   codigo_referencial: string;
+  stock: number;
   comparaciones: Comparaciones[];
 }

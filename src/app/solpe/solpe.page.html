@@ -122,6 +122,7 @@
               <th>Descripción</th>
               <th>Código Referencial</th>
               <th>Cantidad</th>
+              <th>Stock</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -145,6 +146,13 @@
               <td>
                 <ion-input type="number"
                            [(ngModel)]="item.cantidad"
+                           [readonly]="!item.editando"
+                           (ionBlur)="verificarYGuardarItem(i)">
+                </ion-input>
+              </td>
+              <td>
+                <ion-input type="number"
+                           [(ngModel)]="item.stock"
                            [readonly]="!item.editando"
                            (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>

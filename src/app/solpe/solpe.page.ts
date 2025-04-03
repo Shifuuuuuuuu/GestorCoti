@@ -54,6 +54,7 @@ export class SolpePage implements OnInit  {
       descripcion: '',
       codigo_referencial: '',
       cantidad: null,
+      stock: null,
       editando: true,
     });
   }
@@ -64,9 +65,7 @@ export class SolpePage implements OnInit  {
   }
   verificarYGuardarItem(index: number) {
     const item = this.solpe.items[index];
-
-
-    if (item.descripcion && item.codigo_referencial && item.cantidad !== null) {
+    if (item.descripcion && item.codigo_referencial && item.cantidad !== null && item.stock !== null) {
       this.guardarItem(index);
     }
   }
@@ -112,17 +111,13 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Debes agregar al menos un item', 'warning');
       return;
     }
-    this.solpe.items = this.solpe.items.map((item: Item, index: number) => ({
+    this.solpe.items = this.solpe.items.map((item: any, index: number) => ({
       item: index + 1,
       descripcion: item.descripcion,
       codigo_referencial: item.codigo_referencial,
-      cantidad: item.cantidad
+      cantidad: item.cantidad,
+      stock: item.stock
     }));
-
-    const hoy = new Date();
-    this.solpe.fecha = `${hoy.getDate().toString().padStart(2, '0')}/${(hoy.getMonth() + 1).toString().padStart(2, '0')}/${hoy.getFullYear()}`;
-
-
     this.solpeService.guardarSolpe(this.solpe).then(() => {
       this.mostrarToast('SOLPE guardada con éxito', 'success');
       this.resetearFormulario();

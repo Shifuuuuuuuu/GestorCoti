@@ -17,7 +17,8 @@ export class HistorialSolpePage implements OnInit {
   filtroResponsable: string = '';
   filtroUsuario: string = '';
   mostrarFiltros: boolean = false;
-
+  listaUsuarios: any[] = [];
+  listaEstatus: string[] = ['Aprobado', 'Rechazado', 'Solicitado', 'Tránsito a Faena', 'Pre Aprobado'];
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
@@ -25,6 +26,7 @@ export class HistorialSolpePage implements OnInit {
 
   ngOnInit() {
     this.cargarSolpes();
+    this.cargarUsuarios();
   }
 
   cargarSolpes() {
@@ -41,8 +43,19 @@ export class HistorialSolpePage implements OnInit {
       this.solpesFiltradas = [...this.solpesOriginal];
     });
   }
-
-
+  cargarUsuarios() {
+    this.firestore.collection('Usuarios').get().subscribe(snapshot => {
+      this.listaUsuarios = snapshot.docs.map(doc => {
+        const data = doc.data() as { fullName: string };
+        return {
+          id: doc.id,
+          fullName: data.fullName
+        };
+      });
+    }, error => {
+      console.error('Error recuperando usuarios:', error);
+    });
+  }
   buscarSolpe() {
     this.firestore
       .collection('solpes', ref => ref.where('numero_solpe', '==', this.numeroBusqueda))
