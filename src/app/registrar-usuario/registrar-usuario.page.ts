@@ -29,11 +29,24 @@ export class RegistrarUsuarioPage implements OnInit {
     const password = (document.getElementById('password') as HTMLInputElement).value;
     const role = (document.getElementById('role') as HTMLSelectElement).value;
 
-    const emailPattern = /^[a-zA-Z0-9._%+-]+@xtrememining\.cl$/;
-    if (!emailPattern.test(email)) {
-      this.presentToast('El correo debe ser del dominio @xtrememining.cl', 'danger');
+    const correosPermitidos = [
+      'gmanzor@xtrememining.cl',
+      'jcubillos@xtrememining.cl',
+      'tallerpmchs@xtrememining.cl',
+      'tallerxtreme17@gmail.com',
+      'ralfaro12344@xtrememining.cl',
+      'mmarchant@xtrememining.cl',
+      'bodegacaneche@xtremeservicios.cl',
+      'amartinez@xtrememining.cl',
+      'avacher@xtrememining.cl',
+      'rsanhueza@xtrememining.cl'
+    ];
+
+    if (!correosPermitidos.includes(email.toLowerCase())) {
+      this.presentToast('Este correo no está autorizado para registrarse.', 'danger');
       return;
     }
+
 
     const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,12}$/;
     if (!passwordPattern.test(password)) {
@@ -80,9 +93,15 @@ export class RegistrarUsuarioPage implements OnInit {
       }
     } catch (error: any) {
       console.error('Error durante el registro:', error);
-      this.presentToast(error.message || 'Ocurrió un error desconocido.', 'danger');
+
+      if (error.code === 'auth/email-already-in-use') {
+        this.presentToast('Este correo ya está registrado. Intenta iniciar sesión o usar otro.', 'danger');
+      } else {
+        this.presentToast(error.message || 'Ocurrió un error desconocido.', 'danger');
+      }
     }
   }
+
 
   formatRUTForSave(rut: string): string {
     const cleanRut = rut.replace(/\D/g, '');

@@ -73,6 +73,7 @@
                   <th>Código</th>
                   <th>Cantidad</th>
                   <th>stock</th>
+                  <th>Patente ejemplo o Numero interno</th>
                   <th>Comparación Precios</th>
                 </tr>
               </thead>
@@ -83,6 +84,7 @@
                   <td>{{ item.codigo_referencial?.toUpperCase() }}</td>
                   <td>{{ item.cantidad }}</td>
                   <td>{{ item.stock }}</td>
+                  <td>{{ item.numero_interno }}</td>
                   <td>
                     <div *ngIf="item.comparaciones?.length">
                       <h5>Comparaciones:</h5>

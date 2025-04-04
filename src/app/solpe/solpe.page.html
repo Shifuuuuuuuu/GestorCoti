@@ -60,6 +60,7 @@
               <th>Código Referencial</th>
               <th>Cantidad</th>
               <th>Stock</th>
+              <th>Patente de ejemplo o Numero interno</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -91,6 +92,13 @@
                 <ion-input type="number"
                            [(ngModel)]="item.stock"
                            [readonly]="!item.editando"
+                           (ionBlur)="verificarYGuardarItem(i)">
+                </ion-input>
+              </td>
+              <td>
+                <ion-input [(ngModel)]="item.numero_interno"
+                           [readonly]="!item.editando"
+                           (ionInput)="item.numero_interno = item.numero_interno.toUpperCase()"
                            (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>
               </td>

@@ -55,9 +55,11 @@ export class SolpePage implements OnInit  {
       codigo_referencial: '',
       cantidad: null,
       stock: null,
+      numero_interno: '',
       editando: true,
     });
   }
+
 
   eliminarItem(index: number) {
     this.solpe.items.splice(index, 1);
@@ -65,10 +67,17 @@ export class SolpePage implements OnInit  {
   }
   verificarYGuardarItem(index: number) {
     const item = this.solpe.items[index];
-    if (item.descripcion && item.codigo_referencial && item.cantidad !== null && item.stock !== null) {
+    if (
+      item.descripcion &&
+      item.codigo_referencial &&
+      item.cantidad !== null &&
+      item.stock !== null &&
+      item.numero_interno && item.numero_interno.trim() !== ''
+    ) {
       this.guardarItem(index);
     }
   }
+
 
   guardarItem(index: number) {
 
@@ -111,13 +120,28 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Debes agregar al menos un item', 'warning');
       return;
     }
+
+    for (let item of this.solpe.items) {
+      if (!item.descripcion || item.cantidad == null || item.stock == null || !item.numero_interno) {
+        this.mostrarToast('Todos los campos excepto Código Referencial son obligatorios', 'warning');
+        return;
+      }
+
+      if (!item.codigo_referencial || item.codigo_referencial.trim() === '') {
+        item.codigo_referencial = '0';
+      }
+    }
+
+
     this.solpe.items = this.solpe.items.map((item: any, index: number) => ({
       item: index + 1,
       descripcion: item.descripcion,
       codigo_referencial: item.codigo_referencial,
       cantidad: item.cantidad,
-      stock: item.stock
+      stock: item.stock,
+      numero_interno: item.numero_interno
     }));
+
     this.solpeService.guardarSolpe(this.solpe).then(() => {
       this.mostrarToast('SOLPE guardada con éxito', 'success');
       this.resetearFormulario();
@@ -126,6 +150,7 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Error al guardar la SOLPE', 'danger');
     });
   }
+
 
   resetearFormulario() {
     this.solpe = {

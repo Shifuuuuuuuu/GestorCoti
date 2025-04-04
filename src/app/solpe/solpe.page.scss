@@ -28,17 +28,21 @@
 .styled-table {
   width: 100%;
   border-collapse: collapse;
+  border: 1px solid #000000;
 }
 
-.styled-table th, .styled-table td {
+.styled-table th,
+.styled-table td {
   padding: 12px;
   text-align: left;
+  border: 1px solid #000000;
 }
 
 .styled-table th {
   background-color: red;
 
 }
+
 
 
 .image-container {
