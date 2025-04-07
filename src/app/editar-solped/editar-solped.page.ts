@@ -1,53 +1,267 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { MenuController } from '@ionic/angular';
+import { ActivatedRoute } from '@angular/router';
+import { AlertController, MenuController, ToastController } from '@ionic/angular';
+import { Comparaciones } from '../Interface/Icompara';
+import { Solpes } from '../Interface/ISolpes';
+import { Item } from '../Interface/IItem';
 
 @Component({
   selector: 'app-editar-solped',
   templateUrl: './editar-solped.page.html',
   styleUrls: ['./editar-solped.page.scss'],
 })
+
 export class EditarSolpedPage implements OnInit {
   segmentoSeleccionado: string = 'historial';
   numeroBusqueda: number | undefined;
   solpeEncontrada: any = null;
   buscado: boolean = false;
   filtroContrato: string = '';
-
+  solpeExpandidaId: string | null = null;
   filtroFecha: string = '';
   filtroEstatus: string = '';
   filtroResponsable: string = '';
   filtroUsuario: string = '';
   mostrarFiltros: boolean = false;
+  solpe: any;
+  solpes: any[] = [];
+  solpedId: string = '';  // O null, si prefieres
+
+  items: any[] = [];
   listaUsuarios: any[] = [];
   listaEstatus: string[] = ['Aprobado', 'Rechazado', 'Solicitado', 'Tránsito a Faena', 'Pre Aprobado'];
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
-  constructor(private firestore: AngularFirestore, private menu: MenuController) {}
+  loading: boolean = true;
+
+  constructor(
+    private firestore: AngularFirestore,
+    private menu: MenuController,
+    private route: ActivatedRoute,
+    private alertController: AlertController,
+    private toastController: ToastController,
+    private cdRef: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
+    const solpeId = this.route.snapshot.paramMap.get('id');
+    if (solpeId) {
+      this.firestore.collection('solpes').doc(solpeId).get().subscribe(doc => {
+        if (doc.exists) {
+          this.solpe = doc.data();
+          this.solpe.id = doc.id;
+        }
+      });
+    }
     this.cargarSolpes();
     this.cargarUsuarios();
+  this.cdRef.detectChanges();
   }
 
+  ionViewWillEnter() {
+    this.menu.enable(false);
+  }
+
+  toggleDetalle(solpeId: string) {
+    this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
+  }
+  async eliminarComparacionFirestore(solpedId: string, itemId: string, comparacionId: number) {
+    const solpedRef = this.firestore.collection('solpes').doc(solpedId);
+
+    try {
+      const solpedDoc = await solpedRef.get().toPromise();
+
+      if (solpedDoc && solpedDoc.exists) {
+        const solpedData = solpedDoc.data() as Solpes;
+        const items: Item[] = solpedData?.items || [];
+
+        // Buscar el ítem específico en el array de items
+        const item = items.find((i: Item) => i.id === itemId);
+        if (item) {
+          // Buscar la comparación que se quiere eliminar
+          const comparacionIndex = item.comparaciones.findIndex(
+            (comp: Comparaciones) => comp.id === comparacionId
+          );
+
+          if (comparacionIndex !== -1) {
+            // Eliminar la comparación del array
+            item.comparaciones = item.comparaciones.filter(
+              (comp: Comparaciones) => comp.id !== comparacionId
+            );
+
+            // Actualizar el documento en Firestore con el nuevo array de comparaciones
+            await solpedRef.update({ items });
+
+            // Mostrar un mensaje de éxito
+            this.mostrarToast('Comparación eliminada de Firestore', 'success');
+          } else {
+            console.log('❌ Comparación no encontrada');
+            this.mostrarToast('Comparación no encontrada', 'danger');
+          }
+        } else {
+          console.log('❌ Ítem no encontrado');
+          this.mostrarToast('Ítem no encontrado', 'danger');
+        }
+      } else {
+        console.log('❌ Documento no encontrado o vacío');
+        this.mostrarToast('Documento no encontrado o vacío', 'danger');
+      }
+    } catch (error) {
+      console.error('Error eliminando la comparación:', error);
+      this.mostrarToast('Error al eliminar la comparación en Firestore', 'danger');
+    }
+  }
+  eliminarComparacionLocal(item: any, index: number) {
+    item.comparaciones.splice(index, 1);
+    // Mostrar un mensaje de éxito en la UI local
+    this.mostrarToast('Comparación eliminada de la UI', 'success');
+  }
+
+  async eliminarComparacionCompleta(solpedId: string, itemId: string, comparacionId: number, item: any, index: number) {
+    // Primero, elimina la comparación en Firestore
+    await this.eliminarComparacionFirestore(solpedId, itemId, comparacionId);
+
+    // Luego, actualiza la UI local
+    this.eliminarComparacionLocal(item, index);
+  }
+
+  destacarComparacion(item: any, index: number) {
+    item.comparaciones[index].destacado = !item.comparaciones[index].destacado;
+    const solpeRef = this.firestore.collection('solpes').doc(item.solpeId);
+    solpeRef.update({
+      items: item.comparaciones
+    }).then(() => {
+      console.log('Comparación actualizada en Firestore');
+    }).catch(err => {
+      console.error('Error al actualizar comparación:', err);
+    });
+  }
+  async abrirComparacion(item: any, solpeId: string) {
+    const alert = await this.alertController.create({
+      header: 'Agregar Comparación de Precios',
+      inputs: [
+        { name: 'empresa', type: 'text', placeholder: 'Nombre de la Empresa' },
+        { name: 'precio', type: 'number', placeholder: 'Precio' },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Agregar',
+          handler: async (data) => {
+            if (data.empresa && data.precio) {
+              if (!item.comparaciones) {
+                item.comparaciones = [];
+              }
+
+              const nuevoId = Date.now();
+              const nuevaComparacion = {
+                id: nuevoId,
+                empresa: data.empresa,
+                precio: Number(data.precio)
+              };
+
+              item.comparaciones.push(nuevaComparacion);
+
+              try {
+                const solpeRef = this.firestore.collection('solpes').doc(solpeId);
+                const solpeDoc = await solpeRef.get().toPromise();
+
+                if (solpeDoc && solpeDoc.exists) {
+                  const solpeData = solpeDoc.data() as any; // o as Solpes si tienes esa interfaz
+                  const items = solpeData.items || [];
+
+                  const itemIndex = items.findIndex((i: any) => i.id === item.id);
+                  if (itemIndex !== -1) {
+                    items[itemIndex].comparaciones = item.comparaciones;
+
+                    await solpeRef.update({ items });
+                    this.mostrarToast('Comparación agregada', 'success');
+                  }
+                }
+              } catch (error) {
+                console.error('Error al guardar comparación:', error);
+                this.mostrarToast('Error al agregar la comparación', 'danger');
+              }
+
+              return true;
+            } else {
+              this.mostrarToast('Debes completar ambos campos', 'danger');
+              return false;
+            }
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+
+
+  async subirComparaciones(solpe: any, auto: boolean = false) {
+    if (!auto) {
+      const confirm = await this.alertController.create({
+        header: 'Confirmar',
+        message: '¿Estás seguro de subir las comparaciones a Firestore?',
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          {
+            text: 'Sí, subir',
+            handler: () => this.guardarComparacionesEnFirestore(solpe)
+          }
+        ]
+      });
+      await confirm.present();
+    } else {
+      this.guardarComparacionesEnFirestore(solpe);
+    }
+  }
+  guardarComparacionesEnFirestore(solpe: any) {
+    solpe.items.forEach((item: any) => {
+      if (!item.comparaciones || item.comparaciones.length === 0) {
+        item.comparaciones = [{
+          empresa: 'Sin proveedor válido',
+          precio: 0,
+          observacion: 'Este proveedor no tenía lo que se buscaba'
+        }];
+      }
+    });
+
+    this.firestore.collection('solpes').doc(solpe.id).update({
+      items: solpe.items
+    }).then(() => {
+      console.log('Comparaciones subidas a Firestore automáticamente');
+    }).catch(err => {
+      console.error('Error al subir comparaciones:', err);
+    });
+  }
+  validarComparaciones(solpe: any): boolean {
+    return solpe.items.every((item: any) => item.comparaciones && item.comparaciones.length > 0);
+  }
+  guardarComparacion(item: any, solpeId: string) {
+    const solpeRef = this.firestore.collection('solpes').doc(solpeId);
+    const itemRef = solpeRef.collection('items').doc(item.id);
+
+    itemRef.update({ comparaciones: item.comparaciones });
+  }
   cargarSolpes() {
     this.firestore.collection('solpes').get().subscribe(snapshot => {
       const solpesTemp: any[] = [];
-
       snapshot.docs.forEach((doc: any) => {
         const solpe = doc.data();
         solpe.id = doc.id;
         solpesTemp.push(solpe);
       });
-
+      console.log(solpesTemp);
       this.solpesOriginal = solpesTemp;
       this.solpesFiltradas = [...this.solpesOriginal];
+      this.loading = false;
     });
   }
-  ionViewWillEnter() {
-    this.menu.enable(false);
-  }
+
+
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
       this.listaUsuarios = snapshot.docs.map(doc => {
@@ -61,23 +275,13 @@ export class EditarSolpedPage implements OnInit {
       console.error('Error recuperando usuarios:', error);
     });
   }
-  buscarSolpe() {
-    this.firestore
-      .collection('solpes', ref => ref.where('numero_solpe', '==', this.numeroBusqueda))
-      .get()
-      .subscribe(snapshot => {
-        if (!snapshot.empty) {
-          this.solpeEncontrada = snapshot.docs[0].data();
-        } else {
-          this.solpeEncontrada = null;
-        }
-        this.buscado = true;
-      });
-  }
+
+
   filtrarSolpes() {
+    const normalize = (str: string) => str?.toLowerCase().trim();
+
     this.solpesFiltradas = this.solpesOriginal.filter(solpe => {
       let fechaSolpe = '';
-
       if (solpe.fecha) {
         try {
           if (typeof solpe.fecha === 'string' && solpe.fecha.includes('/')) {
@@ -93,14 +297,18 @@ export class EditarSolpedPage implements OnInit {
       }
 
       const coincideFecha = this.filtroFecha ? fechaSolpe === this.filtroFecha : true;
-      const coincideEstatus = this.filtroEstatus ? solpe.estatus?.toLowerCase().includes(this.filtroEstatus.toLowerCase()) : true;
-      const coincideResponsable = this.filtroResponsable ? solpe.numero_contrato?.toLowerCase().includes(this.filtroResponsable.toLowerCase()) : true;
-      const coincideUsuario = this.filtroUsuario ? solpe.usuario?.toLowerCase().includes(this.filtroUsuario.toLowerCase()) : true;
-      const coincideContrato = this.filtroContrato ? solpe.numero_contrato === this.filtroContrato : true;
+      const coincideEstatus = this.filtroEstatus ? normalize(solpe.estatus) === normalize(this.filtroEstatus) : true;
+      const coincideResponsable = this.filtroResponsable ? solpe.numero_contrato?.toLowerCase().includes(this.filtroResponsable) : true;
 
-      return coincideFecha && coincideEstatus && coincideResponsable && coincideUsuario && coincideContrato;
+      // Verificar si solpe pasa el filtro
+      const pasaFiltro = coincideFecha && coincideEstatus && coincideResponsable;
+      console.log(pasaFiltro, solpe);  // Verifica si solpe pasa el filtro
+      return pasaFiltro;
     });
+
+    console.log(this.solpesFiltradas);  // Verifica si los filtros están funcionando
   }
+
 
   ordenarSolpes() {
     this.ordenAscendente = !this.ordenAscendente;
@@ -118,6 +326,7 @@ export class EditarSolpedPage implements OnInit {
     this.filtroUsuario = '';
     this.solpesFiltradas = [...this.solpesOriginal];
   }
+
   getColorByStatus(estatus: string) {
     switch (estatus) {
       case 'Aprobado':
@@ -133,5 +342,47 @@ export class EditarSolpedPage implements OnInit {
       default:
         return '#6c757d';
     }
+  }
+
+  // Cambiar estado de la SOLPE
+  async cambiarEstatus(solpe: any) {
+    const alert = await this.alertController.create({
+      header: 'Cambiar Estado de la SOLPE',
+      inputs: [
+        { name: 'estatus', type: 'radio', label: 'Pre Aprobado', value: 'Pre Aprobado' },
+        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Rechazado' },
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Siguiente',
+          handler: async (estatusSeleccionado) => {
+            if (estatusSeleccionado) {
+              this.firestore.collection('solpes').doc(solpe.id).update({
+                estatus: estatusSeleccionado,
+              }).then(() => {
+                solpe.estatus = estatusSeleccionado;
+                this.mostrarToast(`SOLPE marcada como "${estatusSeleccionado}"`, 'success');
+              }).catch(err => {
+                this.mostrarToast('Error al actualizar estatus', 'danger');
+                console.error(err);
+              });
+            }
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
+  // Mostrar Toast
+  async mostrarToast(mensaje: string, color: 'success' | 'danger') {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 2000,
+      color: color,
+      position: 'top'
+    });
+    toast.present();
   }
 }

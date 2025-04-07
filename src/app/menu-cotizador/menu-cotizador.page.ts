@@ -47,7 +47,7 @@ export class MenuCotizadorPage implements OnInit {
     }
   }
   ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
   async openChat(usuario: any) {
     const modal = await this.modalController.create({

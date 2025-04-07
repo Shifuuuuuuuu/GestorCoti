@@ -40,7 +40,7 @@ export class MenuSolpePage implements OnInit {
     }
   }
   ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
 
   ngOnInit() {
