@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {  ToastController } from '@ionic/angular';
+import {  MenuController, ToastController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
 import { Item } from '../Interface/IItem';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
@@ -26,7 +26,8 @@ export class SolpePage implements OnInit  {
     private solpeService: SolpeService,
     private toastController: ToastController,
     private afAuth: AngularFireAuth,
-    private firestore: AngularFirestore
+    private firestore: AngularFirestore,
+    private menu: MenuController,
   ) {}
 
   ngOnInit() {
@@ -45,6 +46,9 @@ export class SolpePage implements OnInit  {
         this.solpe.numero_solpe = 1;
       }
     });
+  }
+  ionViewWillEnter() {
+    this.menu.enable(false);
   }
 
   agregarFila() {
@@ -122,17 +126,21 @@ export class SolpePage implements OnInit  {
     }
 
     for (let item of this.solpe.items) {
-      if (!item.descripcion || item.cantidad == null || item.stock == null || !item.numero_interno) {
+      if (!item.descripcion || !item.numero_interno || item.numero_interno.trim() === '') {
         this.mostrarToast('Todos los campos excepto Código Referencial son obligatorios', 'warning');
         return;
       }
-
       if (!item.codigo_referencial || item.codigo_referencial.trim() === '') {
         item.codigo_referencial = '0';
       }
+      if (item.cantidad == null || item.cantidad === '') {
+        item.cantidad = 0;
+      }
+
+      if (item.stock == null || item.stock === '') {
+        item.stock = 0;
+      }
     }
-
-
     this.solpe.items = this.solpe.items.map((item: any, index: number) => ({
       item: index + 1,
       descripcion: item.descripcion,
@@ -150,6 +158,7 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Error al guardar la SOLPE', 'danger');
     });
   }
+
 
 
   resetearFormulario() {

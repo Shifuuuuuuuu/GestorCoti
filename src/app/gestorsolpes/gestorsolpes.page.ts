@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { SolpeService } from '../services/solpe.service';
-import { AlertController, ToastController } from '@ionic/angular';
+import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
@@ -17,7 +17,8 @@ export class GestorsolpesPage implements OnInit {
     private solpeService: SolpeService,
     private alertController: AlertController,
     private firestore: AngularFirestore,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private menu: MenuController,
   ) {}
 
   ngOnInit() {
@@ -39,13 +40,11 @@ export class GestorsolpesPage implements OnInit {
       });
     });
   }
+  ionViewWillEnter() {
+    this.menu.enable(false);
+  }
 
   async cambiarEstatus(solpe: any) {
-    if (!this.validarComparaciones(solpe)) {
-      await this.mostrarToast('Todos los ítems deben tener al menos una comparación de precios', 'danger');
-      return;
-    }
-
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',
       inputs: [
@@ -58,10 +57,18 @@ export class GestorsolpesPage implements OnInit {
           text: 'Siguiente',
           handler: async (estatusSeleccionado) => {
             if (estatusSeleccionado) {
+              if (estatusSeleccionado === 'Pre Aprobado') {
+                await this.subirComparaciones(solpe, true);
+              }
+
               this.firestore.collection('solpes').doc(solpe.id).update({
                 estatus: estatusSeleccionado,
               }).then(() => {
                 solpe.estatus = estatusSeleccionado;
+                this.mostrarToast(`SOLPE marcada como "${estatusSeleccionado}"`, 'success');
+              }).catch(err => {
+                this.mostrarToast('Error al actualizar estatus', 'danger');
+                console.error(err);
               });
             }
           },
@@ -70,6 +77,7 @@ export class GestorsolpesPage implements OnInit {
     });
     await alert.present();
   }
+
 
   async abrirComparacion(item: any) {
     const alert = await this.alertController.create({
@@ -121,29 +129,43 @@ export class GestorsolpesPage implements OnInit {
     });
   }
 
-  async subirComparaciones(solpe: any) {
-    const confirm = await this.alertController.create({
-      header: 'Confirmar',
-      message: '¿Estás seguro de subir las comparaciones a Firestore?',
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Sí, subir',
-          handler: () => {
-            this.firestore.collection('solpes').doc(solpe.id).update({
-              items: solpe.items
-            }).then(async () => {
-              console.log('Comparaciones subidas a Firestore');
-              await this.mostrarToast('Comparaciones subidas con éxito', 'success');
-            }).catch(async err => {
-              console.error('Error al subir comparaciones:', err);
-              await this.mostrarToast('Error al subir comparaciones', 'danger');
-            });
+  async subirComparaciones(solpe: any, auto: boolean = false) {
+    if (!auto) {
+      const confirm = await this.alertController.create({
+        header: 'Confirmar',
+        message: '¿Estás seguro de subir las comparaciones a Firestore?',
+        buttons: [
+          { text: 'Cancelar', role: 'cancel' },
+          {
+            text: 'Sí, subir',
+            handler: () => this.guardarComparacionesEnFirestore(solpe)
           }
-        }
-      ]
+        ]
+      });
+      await confirm.present();
+    } else {
+      this.guardarComparacionesEnFirestore(solpe);
+    }
+  }
+
+  guardarComparacionesEnFirestore(solpe: any) {
+    solpe.items.forEach((item: any) => {
+      if (!item.comparaciones || item.comparaciones.length === 0) {
+        item.comparaciones = [{
+          empresa: 'Sin proveedor válido',
+          precio: 0,
+          observacion: 'Este proveedor no tenía lo que se buscaba'
+        }];
+      }
     });
-    await confirm.present();
+
+    this.firestore.collection('solpes').doc(solpe.id).update({
+      items: solpe.items
+    }).then(() => {
+      console.log('Comparaciones subidas a Firestore automáticamente');
+    }).catch(err => {
+      console.error('Error al subir comparaciones:', err);
+    });
   }
   validarComparaciones(solpe: any): boolean {
     return solpe.items.every((item: any) => item.comparaciones && item.comparaciones.length > 0);

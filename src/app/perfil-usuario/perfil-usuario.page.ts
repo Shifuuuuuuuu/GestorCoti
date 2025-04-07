@@ -26,7 +26,8 @@ export class PerfilUsuarioPage implements OnInit {
     private authService: AuthService,
     private toastController: ToastController,
     private menuController: MenuController,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private menu: MenuController
   ) {}
 
 openMenu() {
@@ -58,6 +59,7 @@ openMenu() {
 
 
 
+
   async uploadProfileImage(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -77,6 +79,9 @@ openMenu() {
       console.error('No se seleccionó ningún archivo.');
       this.showToast('Por favor, selecciona una imagen para subir.', 'warning');
     }
+  }
+  ionViewWillEnter() {
+    this.menu.enable(false);
   }
 
   private convertToBase64(file: File): Promise<string> {

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ChatModalComponent } from '../chat-modal/chat-modal.component';
 import { MenuController, ModalController } from '@ionic/angular';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-menu-cotizador',
@@ -20,7 +21,8 @@ export class MenuCotizadorPage implements OnInit {
   constructor(
     private router: Router,
     private modalController: ModalController,
-    private menu: MenuController
+    private menu: MenuController,
+    private authService: AuthService
   ) {}
 
   navigateTo(page: string) {
@@ -30,8 +32,22 @@ export class MenuCotizadorPage implements OnInit {
   ngOnInit() {
 
   }
+  goToProfile() {
+    this.router.navigate(['/perfil-usuario']);
+  }
+  async logout() {
+    try {
+      localStorage.removeItem('userId');
+
+      await this.authService.logout();
+      console.log('Usuario ha cerrado sesión.');
+      this.router.navigate(['/iniciar-sesion']);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  }
   ionViewWillEnter() {
-    this.menu.enable(true);
+    this.menu.enable(false);
   }
   async openChat(usuario: any) {
     const modal = await this.modalController.create({

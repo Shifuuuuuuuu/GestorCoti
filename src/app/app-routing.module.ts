@@ -47,7 +47,11 @@ const routes: Routes = [
   {
     path: 'visualizacion-solped',
     loadChildren: () => import('./visualizacion-solped/visualizacion-solped.module').then( m => m.VisualizacionSolpedPageModule),     canActivate: [AuthGuard]
+  },  {
+    path: 'editar-solped',
+    loadChildren: () => import('./editar-solped/editar-solped.module').then( m => m.EditarSolpedPageModule)
   },
+
 
 
 ];

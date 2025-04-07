@@ -1,4 +1,3 @@
-
 ion-content {
   --padding-start: 0;
   --padding-end: 0;
@@ -22,7 +21,6 @@ ion-content {
   padding: 10px;
 }
 
-
 .table-container {
   margin-top: 10px;
   overflow-x: auto;
@@ -32,17 +30,20 @@ ion-content {
   width: 100%;
   border-collapse: collapse;
   font-size: 12px;
+  border: 1px solid #ddd; /* Borde general para la tabla */
 }
 
 .styled-table th, .styled-table td {
   padding: 8px 10px;
   text-align: left;
+  border: 1px solid #ddd; /* Borde para cada celda */
 }
 
 .styled-table th {
   background-color: red;
   color: white;
 }
+
 
 
 @media screen and (max-width: 600px) {

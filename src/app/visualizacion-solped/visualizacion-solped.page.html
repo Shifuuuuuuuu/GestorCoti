@@ -79,8 +79,8 @@
                               </tr>
                             </thead>
                             <tbody>
-                              <tr *ngFor="let comp of item.comparaciones">
-                                <td>{{ comp.empresa }}</td>
+                              <tr *ngFor="let comp of item.comparaciones" >
+                                <td [ngClass]="{ 'destacada': comp.destacado }">{{ comp.empresa }}</td>
                                 <td>{{ comp.precio | currency }}</td>
                                 <td>
                                   <ion-button color="danger" fill="clear" (click)="eliminarComparacion(solped.id, item.id, comp.id)">

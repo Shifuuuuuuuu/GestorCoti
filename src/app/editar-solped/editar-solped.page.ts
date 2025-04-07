@@ -3,11 +3,11 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { MenuController } from '@ionic/angular';
 
 @Component({
-  selector: 'app-historial-solpe',
-  templateUrl: './historial-solpe.page.html',
-  styleUrls: ['./historial-solpe.page.scss'],
+  selector: 'app-editar-solped',
+  templateUrl: './editar-solped.page.html',
+  styleUrls: ['./editar-solped.page.scss'],
 })
-export class HistorialSolpePage implements OnInit {
+export class EditarSolpedPage implements OnInit {
   segmentoSeleccionado: string = 'historial';
   numeroBusqueda: number | undefined;
   solpeEncontrada: any = null;
@@ -24,7 +24,7 @@ export class HistorialSolpePage implements OnInit {
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
-  constructor(private firestore: AngularFirestore,private menu: MenuController) {}
+  constructor(private firestore: AngularFirestore, private menu: MenuController) {}
 
   ngOnInit() {
     this.cargarSolpes();
@@ -134,5 +134,4 @@ export class HistorialSolpePage implements OnInit {
         return '#6c757d';
     }
   }
-
 }

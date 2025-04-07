@@ -1,11 +1,17 @@
-<ion-header >
+<ion-header>
   <ion-toolbar style="--background: red;">
-    <ion-buttons slot="start">
-      <ion-menu-button></ion-menu-button>
+    <ion-buttons slot="end">
+      <ion-button (click)="goToProfile()" color="primary">
+        <ion-icon slot="start" name="person-circle-outline" size="large"></ion-icon>
+      </ion-button>
+      <ion-button (click)="logout()" color="danger">
+        <ion-icon slot="start" name="log-out-outline" size="large"></ion-icon>
+      </ion-button>
     </ion-buttons>
-    <ion-title style="color: white;">Menú Comparaciones de precios</ion-title>
+    <ion-title style="color: white;">Menú de cruze de precios</ion-title>
   </ion-toolbar>
 </ion-header>
+
 
 <ion-content id="main-content" class="main-content">
   <div class="menu-grid">
@@ -20,6 +26,11 @@
       <ion-icon name="file-tray-outline" class="menu-icon"></ion-icon>
       <p>Historial solped</p>
       <span>Revisa el estado en que esta la solped</span>
+    </div>
+    <div class="menu-item" (click)="navigateTo('editar-solped')">
+      <ion-icon name="create-outline" class="menu-icon"></ion-icon>
+      <p>Editar solped</p>
+      <span>Podras editar las solped</span>
     </div>
   </div>
 </ion-content>

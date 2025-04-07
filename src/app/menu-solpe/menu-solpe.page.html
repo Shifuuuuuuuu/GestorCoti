@@ -1,7 +1,12 @@
 <ion-header >
   <ion-toolbar style="--background: red;">
-    <ion-buttons slot="start">
-      <ion-menu-button></ion-menu-button>
+    <ion-buttons slot="end">
+      <ion-button (click)="goToProfile()" color="primary">
+        <ion-icon slot="start" name="person-circle-outline" size="large"></ion-icon>
+      </ion-button>
+      <ion-button (click)="logout()" color="danger">
+        <ion-icon slot="start" name="log-out-outline" size="large"></ion-icon>
+      </ion-button>
     </ion-buttons>
     <ion-title style="color: white;">Menú solped</ion-title>
   </ion-toolbar>

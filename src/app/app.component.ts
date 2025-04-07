@@ -33,7 +33,7 @@ import { Router } from '@angular/router';
 
 
     initializeTheme() {
-      const savedTheme = localStorage.getItem('darkMode') === 'true';
+      const savedTheme = localStorage.getItem('darkMode') === 'false';
       this.isDarkMode = savedTheme;
       document.body.classList.toggle('dark', savedTheme);
     }
@@ -46,6 +46,8 @@ import { Router } from '@angular/router';
 
     async logout() {
       try {
+        localStorage.removeItem('userId');
+
         await this.authService.logout();
         console.log('Usuario ha cerrado sesión.');
         this.router.navigate(['/iniciar-sesion']);
@@ -53,4 +55,5 @@ import { Router } from '@angular/router';
         console.error('Error al cerrar sesión:', error);
       }
     }
+
   }

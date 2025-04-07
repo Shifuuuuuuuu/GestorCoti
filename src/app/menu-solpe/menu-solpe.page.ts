@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuController } from '@ionic/angular';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-menu-solpe',
@@ -18,14 +19,28 @@ export class MenuSolpePage implements OnInit {
 
   constructor(
     private router: Router,
-    private menu: MenuController
+    private menu: MenuController,
+    private authService: AuthService
   ) {}
 
   navigateTo(page: string) {
     this.router.navigate([`/${page}`]);
   }
+  goToProfile() {
+    this.router.navigate(['/perfil-usuario']);
+  }
+  async logout() {
+    try {
+      localStorage.removeItem('userId');
+      await this.authService.logout();
+      console.log('Usuario ha cerrado sesión.');
+      this.router.navigate(['/iniciar-sesion']);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  }
   ionViewWillEnter() {
-    this.menu.enable(true);
+    this.menu.enable(false);
   }
 
   ngOnInit() {
