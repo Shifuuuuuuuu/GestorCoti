@@ -1,11 +1,12 @@
 <ion-header>
-  <ion-toolbar style="--background: red;" >
+  <ion-toolbar style="--background: red;">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/home" style="color: white;"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Gestión de SOLPED</ion-title>
   </ion-toolbar>
 </ion-header>
+
 <ion-content class="ion-padding">
   <ng-container *ngIf="loading">
     <ion-card *ngFor="let solped of solpedList">
@@ -37,6 +38,7 @@
       </ion-card-content>
     </ion-card>
   </ng-container>
+
   <ng-container *ngIf="!loading">
     <ion-card *ngFor="let solped of solpedList">
       <ion-card-header>
@@ -59,6 +61,7 @@
                       <th>Código</th>
                       <th>Cantidad</th>
                       <th>Comparación Precios</th>
+                      <th>Guardar</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -79,7 +82,7 @@
                               </tr>
                             </thead>
                             <tbody>
-                              <tr *ngFor="let comp of item.comparaciones" >
+                              <tr *ngFor="let comp of item.comparaciones">
                                 <td [ngClass]="{ 'destacada': comp.destacado }">{{ comp.empresa }}</td>
                                 <td>{{ comp.precio | currency }}</td>
                                 <td>
@@ -92,6 +95,12 @@
                           </table>
                         </div>
                       </td>
+                      <td>
+                        <ion-button fill="outline" size="small" color="primary" (click)="guardarItemTemporal(item, solped.id)">
+                          Guardar
+                        </ion-button>
+
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -99,7 +108,6 @@
             </ion-row>
           </ion-grid>
         </ion-card>
-
         <ion-item>
           <ion-label position="floating">Comentario</ion-label>
           <ion-textarea [(ngModel)]="solped.comentario"></ion-textarea>
@@ -118,6 +126,30 @@
           </ion-col>
         </ion-row>
       </ion-card-content>
+    <div *ngIf="selectedItem">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Item Guardado Temporalmente</ion-card-title>
+        </ion-card-header>
+        <table class="styled-table">
+          <thead>
+            <th>Item</th>
+            <th>Descripción</th>
+            <th>Código</th>
+            <th>Cantidad</th>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ selectedItem.item }}</td>
+              <td>{{ selectedItem.descripcion }}</td>
+              <td>{{ selectedItem.codigo_referencial }}</td>
+              <td>{{ selectedItem.cantidad }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <ion-button color="success" (click)="subirItemAFirestore()">Subir a Firestore</ion-button>
+      </ion-card>
+    </div>
     </ion-card>
     <div *ngIf="solpedList.length === 0" class="no-solped-container">
       <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>

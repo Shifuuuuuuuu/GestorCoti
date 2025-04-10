@@ -13,6 +13,7 @@ import { Comparaciones } from '../Interface/Icompara';
 export class VisualizacionSolpedPage implements OnInit {
   solpedList: any[] = [];
   loading: boolean = true;
+  selectedItem: any = null;  // Add this property to store the selected item
 
   constructor(
     private firestore: AngularFirestore,
@@ -42,6 +43,84 @@ export class VisualizacionSolpedPage implements OnInit {
     });
   }
 
+  guardarItemTemporal(item: any, solpedId: string) {
+    // Set the selected item
+    this.selectedItem = item;
+
+    // Remove the item from solpedList
+    const solped = this.solpedList.find(s => s.id === solpedId);
+    if (solped) {
+      const index = solped.items.indexOf(item);
+      if (index > -1) {
+        solped.items.splice(index, 1); // Remove the item from the list
+        // Eliminar el item de Firestore (base de datos)
+        this.eliminarItemDeFirestore(solpedId, item.id);
+      }
+    }
+}
+
+async eliminarItemDeFirestore(solpedId: string, itemId: string) {
+    const solpedRef = this.firestore.collection('solpes').doc(solpedId);
+
+    try {
+        const solpedDoc = await solpedRef.get().toPromise();
+
+        if (solpedDoc && solpedDoc.exists) {
+            const solpedData = solpedDoc.data() as Solpes;
+            const items = solpedData?.items || [];
+
+            const itemIndex = items.findIndex(i => i.id === itemId);
+            if (itemIndex !== -1) {
+                items.splice(itemIndex, 1);  // Remove item from the list
+                await solpedRef.update({ items });
+            } else {
+                console.log('❌ Ítem no encontrado en Firestore');
+            }
+        } else {
+            console.log('❌ Documento no encontrado o vacío');
+        }
+    } catch (error) {
+        console.error('Error al eliminar el item de Firestore:', error);
+    }
+}
+
+async subirItemAFirestore() {
+    try {
+        if (this.selectedItem) {
+            // Subir item a Firestore
+            const itemRef = this.firestore.collection('items').doc();
+
+            await itemRef.set({
+                item: this.selectedItem.item,
+                descripcion: this.selectedItem.descripcion,
+                codigo_referencial: this.selectedItem.codigo_referencial,
+                cantidad: this.selectedItem.cantidad,
+                // Agregar otros campos si es necesario
+            });
+
+            const alert = await this.alertCtrl.create({
+                header: 'Éxito',
+                message: 'El ítem ha sido subido a Firestore.',
+                buttons: ['OK'],
+            });
+            await alert.present();
+
+            // Limpiar la selección después de subir el ítem
+            this.selectedItem = null;
+        }
+    } catch (error) {
+        console.error('Error al subir el ítem:', error);
+        const errorAlert = await this.alertCtrl.create({
+            header: 'Error',
+            message: 'Hubo un problema al subir el ítem.',
+            buttons: ['OK'],
+        });
+        await errorAlert.present();
+    }
+}
+
+
+
   async aprobarSolped(solped: any) {
     if (!solped.comentario || solped.comentario.trim() === '') {
       const alert = await this.alertCtrl.create({
@@ -60,7 +139,6 @@ export class VisualizacionSolpedPage implements OnInit {
     const comentario = solped.comentario ? solped.comentario : '';
     this.actualizarEstado(solped.id, 'Rechazado', comentario);
   }
-
 
   async actualizarEstado(id: string, estado: string, comentario: string) {
     try {

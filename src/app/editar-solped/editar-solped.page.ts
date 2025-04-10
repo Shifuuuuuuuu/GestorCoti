@@ -77,24 +77,17 @@ export class EditarSolpedPage implements OnInit {
         const solpedData = solpedDoc.data() as Solpes;
         const items: Item[] = solpedData?.items || [];
 
-        // Buscar el ítem específico en el array de items
         const item = items.find((i: Item) => i.id === itemId);
         if (item) {
-          // Buscar la comparación que se quiere eliminar
           const comparacionIndex = item.comparaciones.findIndex(
             (comp: Comparaciones) => comp.id === comparacionId
           );
 
           if (comparacionIndex !== -1) {
-            // Eliminar la comparación del array
             item.comparaciones = item.comparaciones.filter(
               (comp: Comparaciones) => comp.id !== comparacionId
             );
-
-            // Actualizar el documento en Firestore con el nuevo array de comparaciones
             await solpedRef.update({ items });
-
-            // Mostrar un mensaje de éxito
             this.mostrarToast('Comparación eliminada de Firestore', 'success');
           } else {
             console.log('❌ Comparación no encontrada');
@@ -115,15 +108,11 @@ export class EditarSolpedPage implements OnInit {
   }
   eliminarComparacionLocal(item: any, index: number) {
     item.comparaciones.splice(index, 1);
-    // Mostrar un mensaje de éxito en la UI local
     this.mostrarToast('Comparación eliminada de la UI', 'success');
   }
 
   async eliminarComparacionCompleta(solpedId: string, itemId: string, comparacionId: number, item: any, index: number) {
-    // Primero, elimina la comparación en Firestore
     await this.eliminarComparacionFirestore(solpedId, itemId, comparacionId);
-
-    // Luego, actualiza la UI local
     this.eliminarComparacionLocal(item, index);
   }
 
@@ -169,7 +158,7 @@ export class EditarSolpedPage implements OnInit {
                 const solpeDoc = await solpeRef.get().toPromise();
 
                 if (solpeDoc && solpeDoc.exists) {
-                  const solpeData = solpeDoc.data() as any; // o as Solpes si tienes esa interfaz
+                  const solpeData = solpeDoc.data() as any;
                   const items = solpeData.items || [];
 
                   const itemIndex = items.findIndex((i: any) => i.id === item.id);
@@ -299,14 +288,12 @@ export class EditarSolpedPage implements OnInit {
       const coincideFecha = this.filtroFecha ? fechaSolpe === this.filtroFecha : true;
       const coincideEstatus = this.filtroEstatus ? normalize(solpe.estatus) === normalize(this.filtroEstatus) : true;
       const coincideResponsable = this.filtroResponsable ? solpe.numero_contrato?.toLowerCase().includes(this.filtroResponsable) : true;
-
-      // Verificar si solpe pasa el filtro
       const pasaFiltro = coincideFecha && coincideEstatus && coincideResponsable;
-      console.log(pasaFiltro, solpe);  // Verifica si solpe pasa el filtro
+      console.log(pasaFiltro, solpe);
       return pasaFiltro;
     });
 
-    console.log(this.solpesFiltradas);  // Verifica si los filtros están funcionando
+    console.log(this.solpesFiltradas);
   }
 
 
@@ -343,8 +330,6 @@ export class EditarSolpedPage implements OnInit {
         return '#6c757d';
     }
   }
-
-  // Cambiar estado de la SOLPE
   async cambiarEstatus(solpe: any) {
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',
@@ -375,7 +360,6 @@ export class EditarSolpedPage implements OnInit {
     await alert.present();
   }
 
-  // Mostrar Toast
   async mostrarToast(mensaje: string, color: 'success' | 'danger') {
     const toast = await this.toastController.create({
       message: mensaje,
