@@ -13,7 +13,10 @@ import { Comparaciones } from '../Interface/Icompara';
 export class VisualizacionSolpedPage implements OnInit {
   solpedList: any[] = [];
   loading: boolean = true;
-  selectedItem: any = null;  // Add this property to store the selected item
+  selectedItem: any = null;
+  itemsGuardados: any[] = [];
+  solpedSeleccionadaId: string = '';
+  mostrarItems = false;
 
   constructor(
     private firestore: AngularFirestore,
@@ -26,7 +29,50 @@ export class VisualizacionSolpedPage implements OnInit {
       this.cargarSolped();
       this.loading = false;
     }, 2000);
+    this.obtenerItemsGuardados();
   }
+  async agregarItemASolped() {
+    if (!this.solpedSeleccionadaId || !this.selectedItem) {
+      const alert = await this.alertCtrl.create({
+        header: 'Error',
+        message: 'Debes seleccionar una SOLPED y un ítem para poder continuar.',
+        buttons: ['OK'],
+      });
+      await alert.present();
+      return;
+    }
+
+    try {
+      const solpedRef = this.firestore.collection('solpes').doc(this.solpedSeleccionadaId);
+      const solpedDoc = await solpedRef.get().toPromise();
+
+      if (solpedDoc?.exists) {
+        const solpedData = solpedDoc.data() as Solpes;
+        const items = solpedData.items || [];
+
+        const newItem = { ...this.selectedItem };
+        newItem.id = newItem.id || this.firestore.createId();
+        items.push(newItem);
+
+        await solpedRef.update({ items });
+        await this.firestore.collection('items').doc(this.selectedItem.id).delete();
+
+        const successAlert = await this.alertCtrl.create({
+          header: '¡Éxito!',
+          message: 'Ítem añadido correctamente a la SOLPED.',
+          buttons: ['OK'],
+        });
+        await successAlert.present();
+
+        this.selectedItem = null;
+        this.solpedSeleccionadaId = '';
+        this.cargarSolped();
+      }
+    } catch (error) {
+      console.error('Error al agregar el ítem a la SOLPED:', error);
+    }
+  }
+
 
   cargarSolped() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
@@ -42,22 +88,36 @@ export class VisualizacionSolpedPage implements OnInit {
       });
     });
   }
+  async guardarItemTemporal(item: any, solpedId: string) {
+    // Validar que todos los campos estén completos
+    if (!item.item || !item.descripcion || !item.codigo_referencial ||
+        item.cantidad == null || item.stock == null || !item.numero_interno) {
+      const alert = await this.alertCtrl.create({
+        header: 'Faltan datos',
+        message: 'Todos los campos del ítem son obligatorios.',
+        buttons: ['OK'],
+      });
+      await alert.present();
+      return;
+    }
 
-  guardarItemTemporal(item: any, solpedId: string) {
     // Set the selected item
     this.selectedItem = item;
 
-    // Remove the item from solpedList
+    // Remover el item de la lista local
     const solped = this.solpedList.find(s => s.id === solpedId);
     if (solped) {
       const index = solped.items.indexOf(item);
       if (index > -1) {
-        solped.items.splice(index, 1); // Remove the item from the list
-        // Eliminar el item de Firestore (base de datos)
-        this.eliminarItemDeFirestore(solpedId, item.id);
+        solped.items.splice(index, 1); // Quitar de la lista visual
+        await this.eliminarItemDeFirestore(solpedId, item.id); // Eliminar de la BD
       }
     }
-}
+
+    // Subir el ítem a Firestore
+    await this.subirItemAFirestore();
+  }
+
 
 async eliminarItemDeFirestore(solpedId: string, itemId: string) {
     const solpedRef = this.firestore.collection('solpes').doc(solpedId);
@@ -71,7 +131,7 @@ async eliminarItemDeFirestore(solpedId: string, itemId: string) {
 
             const itemIndex = items.findIndex(i => i.id === itemId);
             if (itemIndex !== -1) {
-                items.splice(itemIndex, 1);  // Remove item from the list
+                items.splice(itemIndex, 1);
                 await solpedRef.update({ items });
             } else {
                 console.log('❌ Ítem no encontrado en Firestore');
@@ -83,41 +143,63 @@ async eliminarItemDeFirestore(solpedId: string, itemId: string) {
         console.error('Error al eliminar el item de Firestore:', error);
     }
 }
+obtenerItemsGuardados() {
+  this.firestore.collection('items').snapshotChanges().subscribe(snapshot => {
+    this.itemsGuardados = snapshot.map(doc => {
+      const data = doc.payload.doc.data() as any;
+      const id = doc.payload.doc.id;
+      return { id, ...data };
+    });
+  });
+}
+
+
 
 async subirItemAFirestore() {
-    try {
-        if (this.selectedItem) {
-            // Subir item a Firestore
-            const itemRef = this.firestore.collection('items').doc();
-
-            await itemRef.set({
-                item: this.selectedItem.item,
-                descripcion: this.selectedItem.descripcion,
-                codigo_referencial: this.selectedItem.codigo_referencial,
-                cantidad: this.selectedItem.cantidad,
-                // Agregar otros campos si es necesario
-            });
-
-            const alert = await this.alertCtrl.create({
-                header: 'Éxito',
-                message: 'El ítem ha sido subido a Firestore.',
-                buttons: ['OK'],
-            });
-            await alert.present();
-
-            // Limpiar la selección después de subir el ítem
-            this.selectedItem = null;
-        }
-    } catch (error) {
-        console.error('Error al subir el ítem:', error);
-        const errorAlert = await this.alertCtrl.create({
-            header: 'Error',
-            message: 'Hubo un problema al subir el ítem.',
-            buttons: ['OK'],
-        });
-        await errorAlert.present();
+  try {
+    if (!this.selectedItem.item || !this.selectedItem.descripcion || !this.selectedItem.codigo_referencial ||
+        this.selectedItem.cantidad == null || this.selectedItem.stock == null || !this.selectedItem.numero_interno) {
+      const alert = await this.alertCtrl.create({
+        header: 'Faltan datos',
+        message: 'Todos los campos del ítem son obligatorios.',
+        buttons: ['OK'],
+      });
+      await alert.present();
+      return;
     }
+
+    const itemRef = this.firestore.collection('items').doc();
+
+    await itemRef.set({
+      item: this.selectedItem.item,
+      descripcion: this.selectedItem.descripcion,
+      codigo_referencial: this.selectedItem.codigo_referencial,
+      cantidad: this.selectedItem.cantidad,
+      stock: this.selectedItem.stock,
+      numero_interno: this.selectedItem.numero_interno
+    });
+
+    const alert = await this.alertCtrl.create({
+      header: 'Éxito',
+      message: 'El ítem ha sido subido a Firestore.',
+      buttons: ['OK'],
+    });
+    await alert.present();
+    this.selectedItem = null;
+
+  } catch (error) {
+    console.error('Error al subir el ítem:', error);
+    const errorAlert = await this.alertCtrl.create({
+      header: 'Error',
+      message: 'Hubo un problema al subir el ítem.',
+      buttons: ['OK'],
+    });
+    await errorAlert.present();
+  }
 }
+
+
+
 
 
 

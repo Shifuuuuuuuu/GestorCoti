@@ -4,6 +4,9 @@
       <ion-back-button defaultHref="/home" style="color: white;"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Gestión de SOLPED</ion-title>
+    <ion-button slot="end" expand="Round" color="medium" (click)="mostrarItems = !mostrarItems">
+      {{ mostrarItems ? 'Ocultar Ítems Guardados' : 'Mostrar Ítems Guardados' }}
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
@@ -99,7 +102,6 @@
                         <ion-button fill="outline" size="small" color="primary" (click)="guardarItemTemporal(item, solped.id)">
                           Guardar
                         </ion-button>
-
                       </td>
                     </tr>
                   </tbody>
@@ -126,31 +128,61 @@
           </ion-col>
         </ion-row>
       </ion-card-content>
-    <div *ngIf="selectedItem">
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>Item Guardado Temporalmente</ion-card-title>
-        </ion-card-header>
-        <table class="styled-table">
-          <thead>
-            <th>Item</th>
-            <th>Descripción</th>
-            <th>Código</th>
-            <th>Cantidad</th>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{{ selectedItem.item }}</td>
-              <td>{{ selectedItem.descripcion }}</td>
-              <td>{{ selectedItem.codigo_referencial }}</td>
-              <td>{{ selectedItem.cantidad }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <ion-button color="success" (click)="subirItemAFirestore()">Subir a Firestore</ion-button>
-      </ion-card>
-    </div>
     </ion-card>
+
+    <ion-card *ngIf="itemsGuardados.length && mostrarItems" class="floating-card">
+      <ion-card-header>
+        <ion-card-title color="primary">Ítems Guardados</ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="12">
+              <table class="styled-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Descripción</th>
+                    <th>Código Referencial</th>
+                    <th>Cantidad</th>
+                    <th>Seleccionar</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of itemsGuardados">
+                    <td>{{ item.item }}</td>
+                    <td>{{ item.descripcion }}</td>
+                    <td>{{ item.codigo_referencial }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>
+                      <ion-radio-group [(ngModel)]="selectedItem">
+                        <ion-radio [value]="item"></ion-radio>
+                      </ion-radio-group>
+                    </td>
+                    <td>
+                      <ion-item lines="none">
+                        <ion-label>Seleccionar SOLPED</ion-label>
+                        <ion-select [(ngModel)]="solpedSeleccionadaId" interface="popover">
+                          <ion-select-option *ngFor="let solped of solpedList" [value]="solped.id">
+                            {{ solped.numero_solpe }} - {{ solped.usuario }}
+                          </ion-select-option>
+                        </ion-select>
+                      </ion-item>
+                      <ion-button color="success" (click)="agregarItemASolped()">
+                        Añadir a SOLPED
+                      </ion-button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
     <div *ngIf="solpedList.length === 0" class="no-solped-container">
       <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
     </div>
