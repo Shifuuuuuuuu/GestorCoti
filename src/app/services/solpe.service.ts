@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { map } from 'rxjs';
 
 @Injectable({
@@ -16,10 +17,12 @@ export class SolpeService {
   obtenerSolpes() {
     return this.firestore.collection('solpes').snapshotChanges();
   }
+
   obtenerUltimaSolpe() {
     return this.firestore.collection('solpes', ref => ref.orderBy('numero_solpe', 'desc').limit(1))
       .valueChanges();
   }
+
   obtenerTodasLasSolpes() {
     return this.firestore.collection('solpes').snapshotChanges().pipe(
       map(actions => actions.map(a => {

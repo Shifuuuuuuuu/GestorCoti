@@ -198,11 +198,6 @@ async subirItemAFirestore() {
   }
 }
 
-
-
-
-
-
   async aprobarSolped(solped: any) {
     if (!solped.comentario || solped.comentario.trim() === '') {
       const alert = await this.alertCtrl.create({

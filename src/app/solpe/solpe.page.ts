@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {  MenuController, ToastController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
-import { Item } from '../Interface/IItem';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 
@@ -28,6 +27,7 @@ export class SolpePage implements OnInit  {
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
     private menu: MenuController,
+
   ) {}
 
   ngOnInit() {
@@ -60,9 +60,12 @@ export class SolpePage implements OnInit  {
       cantidad: null,
       stock: null,
       numero_interno: '',
+      factura: null,
+      mp10: false,
       editando: true,
     });
   }
+
 
 
   eliminarItem(index: number) {
@@ -76,11 +79,33 @@ export class SolpePage implements OnInit  {
       item.codigo_referencial &&
       item.cantidad !== null &&
       item.stock !== null &&
-      item.numero_interno && item.numero_interno.trim() !== ''
+      item.numero_interno && item.numero_interno.trim() !== '' &&
+      item.subirFactura === true
     ) {
       this.guardarItem(index);
     }
   }
+
+  subirFactura(event: any, index: number | null) {
+    const archivo = event.target.files[0];
+    if (archivo && archivo.type === 'application/pdf') {
+      if (index === null) {
+        this.solpe.factura_general = archivo; // debes tener esta propiedad en tu objeto solpe
+        this.convertFileToBase64(archivo).then(base64 => {
+          this.solpe.factura_general_base64 = base64; // Guardamos el archivo PDF como base64
+        });
+      } else {
+        this.solpe.items[index].factura = archivo;
+        this.convertFileToBase64(archivo).then(base64 => {
+          this.solpe.items[index].factura_base64 = base64; // Guardamos el archivo PDF como base64
+        });
+      }
+      this.mostrarToast('Cotización subida correctamente', 'success');
+    } else {
+      this.mostrarToast('Solo se permiten archivos PDF', 'danger');
+    }
+  }
+
 
 
   guardarItem(index: number) {
@@ -136,21 +161,32 @@ export class SolpePage implements OnInit  {
       if (item.cantidad == null || item.cantidad === '') {
         item.cantidad = 0;
       }
-
       if (item.stock == null || item.stock === '') {
         item.stock = 0;
       }
     }
-    this.solpe.items = this.solpe.items.map((item: any, index: number) => ({
-      item: index + 1,
-      descripcion: item.descripcion,
-      codigo_referencial: item.codigo_referencial,
-      cantidad: item.cantidad,
-      stock: item.stock,
-      numero_interno: item.numero_interno
-    }));
 
-    this.solpeService.guardarSolpe(this.solpe).then(() => {
+    const { factura_general, ...restoSolpe } = this.solpe;
+
+    const solpeAGuardar = {
+      ...restoSolpe,
+      factura_general_base64: this.solpe.factura_general_base64 || null,
+      items: this.solpe.items.map((item: any, index: number) => ({
+        item: index + 1,
+        descripcion: item.descripcion,
+        codigo_referencial: item.codigo_referencial,
+        cantidad: item.cantidad,
+        stock: item.stock,
+        numero_interno: item.numero_interno,
+        factura_base64: item.factura_base64 || null,
+        mp10: item.mp10 || false
+      }))
+    };
+
+
+
+    // Guardamos la SOLPE en Firestore
+    this.firestore.collection('solpes').add(solpeAGuardar).then(() => {
       this.mostrarToast('SOLPE guardada con éxito', 'success');
       this.resetearFormulario();
     }).catch(err => {
@@ -160,6 +196,14 @@ export class SolpePage implements OnInit  {
   }
 
 
+  convertFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
 
   resetearFormulario() {
     this.solpe = {

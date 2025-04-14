@@ -4,8 +4,8 @@
       <ion-back-button defaultHref="/home" style="color: white;"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Gestión de SOLPED</ion-title>
-    <ion-button slot="end" expand="Round" color="medium" (click)="mostrarItems = !mostrarItems">
-      {{ mostrarItems ? 'Ocultar Ítems Guardados' : 'Mostrar Ítems Guardados' }}
+    <ion-button slot="end" fill="clear"  (click)="mostrarItems = !mostrarItems">
+      <ion-icon color="light" [name]="mostrarItems ? 'eye-off' : 'eye'" slot="icon-only"></ion-icon>
     </ion-button>
   </ion-toolbar>
 </ion-header>
@@ -63,6 +63,8 @@
                       <th>Descripción</th>
                       <th>Código</th>
                       <th>Cantidad</th>
+                      <th>Stock</th>
+                      <th>Patente/ N interno</th>
                       <th>Comparación Precios</th>
                       <th>Guardar</th>
                     </tr>
@@ -73,6 +75,8 @@
                       <td>{{ item.descripcion }}</td>
                       <td>{{ item.codigo_referencial }}</td>
                       <td>{{ item.cantidad }}</td>
+                      <td>{{ item.stock }}</td>
+                      <td>{{ item.numero_interno }}</td>
                       <td>
                         <div *ngIf="item.comparaciones?.length">
                           <h5>Comparaciones:</h5>
@@ -146,6 +150,8 @@
                     <th>Descripción</th>
                     <th>Código Referencial</th>
                     <th>Cantidad</th>
+                    <th>Stock</th>
+                    <th>Patente/ N interno</th>
                     <th>Seleccionar</th>
                     <th>Acción</th>
                   </tr>
@@ -156,23 +162,33 @@
                     <td>{{ item.descripcion }}</td>
                     <td>{{ item.codigo_referencial }}</td>
                     <td>{{ item.cantidad }}</td>
+                    <td>{{ item.stock }}</td>
+                    <td>{{ item.numero_interno }}</td>
                     <td>
                       <ion-radio-group [(ngModel)]="selectedItem">
                         <ion-radio [value]="item"></ion-radio>
                       </ion-radio-group>
                     </td>
                     <td>
-                      <ion-item lines="none">
-                        <ion-label>Seleccionar SOLPED</ion-label>
-                        <ion-select [(ngModel)]="solpedSeleccionadaId" interface="popover">
-                          <ion-select-option *ngFor="let solped of solpedList" [value]="solped.id">
-                            {{ solped.numero_solpe }} - {{ solped.usuario }}
-                          </ion-select-option>
-                        </ion-select>
-                      </ion-item>
-                      <ion-button color="success" (click)="agregarItemASolped()">
-                        Añadir a SOLPED
-                      </ion-button>
+                      <ion-grid>
+                        <ion-row class="ion-align-items-center">
+                          <ion-col size="9">
+                            <ion-item lines="none">
+                              <ion-label>Seleccionar SOLPED</ion-label>
+                              <ion-select [(ngModel)]="solpedSeleccionadaId" interface="popover">
+                                <ion-select-option *ngFor="let solped of solpedList" [value]="solped.id">
+                                  {{ solped.numero_solpe }} - {{ solped.usuario }}
+                                </ion-select-option>
+                              </ion-select>
+                            </ion-item>
+                          </ion-col>
+                          <ion-col size="3" class="ion-text-end">
+                            <ion-button color="success" (click)="agregarItemASolped()" fill="clear">
+                              <ion-icon name="add-circle" slot="icon-only"></ion-icon>
+                            </ion-button>
+                          </ion-col>
+                        </ion-row>
+                      </ion-grid>
                     </td>
                   </tr>
                 </tbody>

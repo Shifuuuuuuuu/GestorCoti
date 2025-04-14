@@ -9,5 +9,7 @@ export interface Solpes {
   descripcion: string;
   codigo_referencial: string;
   cantidad: number;
+  factura: string;
+  m10: string;
   estatus?:'Solicitado'|'Aprobado'|'Rechazado'|'Aprobación Pendiente'| 'Transito a faena';
 }
