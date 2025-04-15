@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title style="color: white;">Gestión de SOLPED</ion-title>
     <ion-button slot="end" fill="clear"  (click)="mostrarItems = !mostrarItems">
-      <ion-icon color="light" [name]="mostrarItems ? 'eye-off' : 'eye'" slot="icon-only"></ion-icon>
+      <ion-icon color="light" [name]="mostrarItems ? 'eye' : 'eye-off'" slot="icon-only"></ion-icon>
     </ion-button>
   </ion-toolbar>
 </ion-header>
@@ -65,6 +65,7 @@
                       <th>Cantidad</th>
                       <th>Stock</th>
                       <th>Patente/ N interno</th>
+                      <th>MP10</th>
                       <th>Comparación Precios</th>
                       <th>Guardar</th>
                     </tr>
@@ -77,6 +78,7 @@
                       <td>{{ item.cantidad }}</td>
                       <td>{{ item.stock }}</td>
                       <td>{{ item.numero_interno }}</td>
+                      <td>{{ item.mp10 }}</td>
                       <td>
                         <div *ngIf="item.comparaciones?.length">
                           <h5>Comparaciones:</h5>
@@ -152,6 +154,7 @@
                     <th>Cantidad</th>
                     <th>Stock</th>
                     <th>Patente/ N interno</th>
+                    <th>MP10</th>
                     <th>Seleccionar</th>
                     <th>Acción</th>
                   </tr>
@@ -164,6 +167,7 @@
                     <td>{{ item.cantidad }}</td>
                     <td>{{ item.stock }}</td>
                     <td>{{ item.numero_interno }}</td>
+                    <td>{{ item.mp10 }}</td>
                     <td>
                       <ion-radio-group [(ngModel)]="selectedItem">
                         <ion-radio [value]="item"></ion-radio>

@@ -108,7 +108,11 @@
                 </ion-input>
               </td>
               <td>
-                <ion-checkbox [(ngModel)]="item.mp10"></ion-checkbox>
+                <ion-input  type="number"
+                            [(ngModel)]="item.mp10"
+                            [readonly]="!item.editando"
+                            (ionBlur)="verificarYGuardarItem(i)">
+                </ion-input>
               </td>
               <td>
                 <ion-button fill="clear" color="primary" *ngIf="!item.editando" (click)="editarItem(i)">

@@ -1,0 +1,153 @@
+
+
+.table-container {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.styled-table th, .styled-table td {
+  padding: 14px;
+  text-align: left;
+  font-size: 1.1rem;
+}
+
+.styled-table th {
+  background-color: red;
+  color: white;
+}
+
+.card-header h3 {
+  font-size: 1.8em;
+  color: #333;
+  font-weight: bold;
+}
+
+.search-btn {
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 10px;
+}
+
+
+.header-row {
+background-color: red;
+  font-weight: bold;
+}
+ion-col {
+  text-align: center;
+}
+ion-segment-button {
+  --indicator-color: red;
+}
+
+ion-segment-button.md {
+  --color: dark;
+  --color-checked: red;
+  --indicator-height: 4px;
+}
+
+ion-segment-button.ios {
+  --color: red;
+  --color-checked: #fff;
+  --border-radius: 20px;
+}
+
+.no-solped-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh;
+  text-align: center;
+}
+.no-solped-icon {
+  font-size: 48px;
+  color: white;
+  margin-top: 20px;
+}
+.no-solped-container,
+.no-solped-container p {
+  font-size: 1.2rem;
+}
+ion-content {
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.main-card {
+  border-radius: 25px;
+  padding: 10px;
+  margin: 0 5%;
+}
+
+.solpe-container {
+  margin-bottom: 30px;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.inner-card {
+  border-radius: 15px;
+  padding: 10px;
+}
+
+.table-container {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  border: 1px solid #ddd; /* Borde general para la tabla */
+}
+
+.styled-table th, .styled-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid #ddd; /* Borde para cada celda */
+}
+
+.styled-table th {
+  background-color: red;
+  color: white;
+}
+
+
+
+@media screen and (max-width: 600px) {
+  .styled-table th, .styled-table td {
+    padding: 6px 8px;
+  }
+
+  .main-card {
+    margin: 0 2%;
+    padding: 5px;
+  }
+
+  .solpe-container {
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+
+  .inner-card {
+    padding: 5px;
+  }
+
+  ion-button {
+    font-size: 12px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    margin-left: 2%;
+  }
+}

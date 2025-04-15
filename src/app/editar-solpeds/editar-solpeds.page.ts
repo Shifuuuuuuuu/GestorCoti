@@ -2,17 +2,16 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { ActivatedRoute } from '@angular/router';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
-import { Comparaciones } from '../Interface/Icompara';
 import { Solpes } from '../Interface/ISolpes';
 import { Item } from '../Interface/IItem';
+import { Comparaciones } from '../Interface/Icompara';
 
 @Component({
-  selector: 'app-editar-solped',
-  templateUrl: './editar-solped.page.html',
-  styleUrls: ['./editar-solped.page.scss'],
+  selector: 'app-editar-solpeds',
+  templateUrl: './editar-solpeds.page.html',
+  styleUrls: ['./editar-solpeds.page.scss'],
 })
-
-export class EditarSolpedPage implements OnInit {
+export class EditarSolpedsPage implements OnInit {
   segmentoSeleccionado: string = 'historial';
   numeroBusqueda: number | undefined;
   solpeEncontrada: any = null;
@@ -339,6 +338,11 @@ export class EditarSolpedPage implements OnInit {
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',
       inputs: [
+        { name: 'estatus', type: 'radio', label: 'Aprobado', value: 'Aprobado' },
+        { name: 'estatus', type: 'radio', label: 'Rechazado', value: 'Rechazado' },
+        { name: 'estatus', type: 'radio', label: 'Solicitado', value: 'Solicitado' },
+        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Tránsito a Faena' },
+        { name: 'estatus', type: 'radio', label: 'Pre Aprobado', value: 'Pre Aprobado' },
         { name: 'estatus', type: 'radio', label: 'Oc enviada a Proveedor', value: 'Oc enviada a Proveedor' },
         { name: 'estatus', type: 'radio', label: 'Por Importación', value: 'Por Importación' },
       ],
@@ -375,3 +379,4 @@ export class EditarSolpedPage implements OnInit {
     toast.present();
   }
 }
+

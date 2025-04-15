@@ -51,6 +51,10 @@ const routes: Routes = [
     path: 'editar-solped',
     loadChildren: () => import('./editar-solped/editar-solped.module').then( m => m.EditarSolpedPageModule)
   },
+  {
+    path: 'editar-solpeds',
+    loadChildren: () => import('./editar-solpeds/editar-solpeds.module').then( m => m.EditarSolpedsPageModule)
+  },
 
 
 

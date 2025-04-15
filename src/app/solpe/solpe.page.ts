@@ -61,7 +61,7 @@ export class SolpePage implements OnInit  {
       stock: null,
       numero_interno: '',
       factura: null,
-      mp10: false,
+      mp10: null,
       editando: true,
     });
   }
@@ -80,6 +80,7 @@ export class SolpePage implements OnInit  {
       item.cantidad !== null &&
       item.stock !== null &&
       item.numero_interno && item.numero_interno.trim() !== '' &&
+      item.mp10 !== null &&
       item.subirFactura === true
     ) {
       this.guardarItem(index);
@@ -179,13 +180,10 @@ export class SolpePage implements OnInit  {
         stock: item.stock,
         numero_interno: item.numero_interno,
         factura_base64: item.factura_base64 || null,
-        mp10: item.mp10 || false
+        mp10: item.mp10
       }))
     };
 
-
-
-    // Guardamos la SOLPE en Firestore
     this.firestore.collection('solpes').add(solpeAGuardar).then(() => {
       this.mostrarToast('SOLPE guardada con éxito', 'success');
       this.resetearFormulario();
@@ -211,6 +209,7 @@ export class SolpePage implements OnInit  {
       fecha: '',
       numero_contrato: '',
       usuario: '',
+      factura:'',
       items: [],
       estatus: 'Solicitado',
     };

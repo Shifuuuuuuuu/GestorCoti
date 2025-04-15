@@ -14,14 +14,28 @@ export class PerfilUsuarioPage implements OnInit {
   defaultProfileImage: string = 'assets/icon/default-profile.png';
   user: AppUser | null = null;
   isEditing: boolean = false;
-  userEmail!: string | undefined;
   errorMessage: string | undefined;
+
   tempNombreCompleto: string = '';
   tempEmail: string = '';
   tempRut: string = '';
   tempTelefono: string = '';
-  unreadNotificationsCount: number = 0;
+
   usuario = {};
+
+  correosPermitidos: string[] = [
+    'gmanzor@xtrememining.cl',
+    'jcubillos@xtrememining.cl',
+    'tallerpmchs@xtrememining.cl',
+    'tallerxtreme17@gmail.com',
+    'ralfaro12344@xtrememining.cl',
+    'mmarchant@xtrememining.cl',
+    'bodegacaneche@xtremeservicios.cl',
+    'amartinez@xtrememining.cl',
+    'avacher@xtrememining.cl',
+    'rsanhueza@xtrememining.cl'
+  ];
+
   constructor(
     private authService: AuthService,
     private toastController: ToastController,
@@ -30,26 +44,36 @@ export class PerfilUsuarioPage implements OnInit {
     private menu: MenuController
   ) {}
 
-openMenu() {
-  this.menuController.open();
-}
   async ngOnInit() {
+    // OBTENER ID DEL USUARIO DESDE LOCALSTORAGE O FIREBASE
     const userId = localStorage.getItem('userId');
+    console.log('ID de usuario desde localStorage:', userId);
+
     if (userId) {
-      this.loadUserData(userId);
+      await this.loadUserData(userId);
     } else {
       this.errorMessage = 'Error: no se encontró el usuario.';
+      console.error(this.errorMessage);
     }
   }
 
   async loadUserData(userId: string) {
     try {
       const userResult = await this.authService.getUserById(userId);
+      console.log('Resultado de usuario obtenido:', userResult);
+
       if (userResult) {
-        this.user = userResult;
-        this.profileImageUrl = this.user.photoURL ? this.user.photoURL : this.defaultProfileImage;
+        // Validar si el correo está permitido
+        if (this.correosPermitidos.includes(userResult.email)) {
+          this.user = userResult;
+          this.profileImageUrl = this.user.photoURL ? this.user.photoURL : this.defaultProfileImage;
+        } else {
+          this.errorMessage = 'El correo del usuario no está permitido.';
+          console.warn(this.errorMessage);
+        }
       } else {
         this.errorMessage = 'No se encontró el usuario.';
+        console.warn(this.errorMessage);
       }
     } catch (error) {
       console.error('Error al cargar los datos del usuario:', error);
@@ -57,8 +81,13 @@ openMenu() {
     }
   }
 
+  openMenu() {
+    this.menuController.open();
+  }
 
-
+  ionViewWillEnter() {
+    this.menu.enable(false);
+  }
 
   async uploadProfileImage(event: any) {
     const file = event.target.files[0];
@@ -76,12 +105,8 @@ openMenu() {
         this.showToast('No se pudo actualizar la imagen de perfil.', 'danger');
       }
     } else {
-      console.error('No se seleccionó ningún archivo.');
       this.showToast('Por favor, selecciona una imagen para subir.', 'warning');
     }
-  }
-  ionViewWillEnter() {
-    this.menu.enable(false);
   }
 
   private convertToBase64(file: File): Promise<string> {
@@ -95,13 +120,11 @@ openMenu() {
 
   editProfile() {
     this.isEditing = true;
-    console.log('Editando perfil:', this.isEditing);
     this.tempNombreCompleto = this.user?.fullName || '';
     this.tempEmail = this.user?.email || '';
     this.tempRut = this.user?.rut || '';
     this.tempTelefono = this.user?.phone || '';
   }
-
 
   async saveProfile() {
     try {
@@ -137,6 +160,7 @@ openMenu() {
     });
     toast.present();
   }
+
   async openChat(usuario: any) {
     const modal = await this.modalController.create({
       component: ChatModalComponent,

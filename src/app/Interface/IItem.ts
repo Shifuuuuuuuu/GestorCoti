@@ -8,5 +8,6 @@ export interface Item {
   codigo_referencial: string;
   stock: number;
   numero_interno: string;
+  mp10: string;
   comparaciones: Comparaciones[];
 }

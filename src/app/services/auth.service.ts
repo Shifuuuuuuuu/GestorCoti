@@ -158,19 +158,19 @@ export class AuthService {
 
   async getUserById(userId: string): Promise<AppUser | null> {
     try {
-      const userDoc = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
-
-      if (userDoc && userDoc.exists) {
-        return userDoc.data() as AppUser;
+      const docSnapshot = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
+      if (docSnapshot && docSnapshot.exists) {
+        return docSnapshot.data() as AppUser;
       } else {
-        console.log('Documento no encontrado.');
+        console.warn('No se encontró el usuario con ID:', userId);
         return null;
       }
     } catch (error) {
-      console.error('Error al obtener usuario por ID:', error);
-      throw error;
+      console.error('Error al obtener el usuario por ID:', error);
+      return null;
     }
   }
+
 
 
   async updateUser(user: AppUser): Promise<void> {
