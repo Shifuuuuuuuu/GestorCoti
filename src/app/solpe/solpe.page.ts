@@ -80,8 +80,7 @@ export class SolpePage implements OnInit  {
       item.cantidad !== null &&
       item.stock !== null &&
       item.numero_interno && item.numero_interno.trim() !== '' &&
-      item.mp10 !== null &&
-      item.subirFactura === true
+      item.mp10 !== null
     ) {
       this.guardarItem(index);
     }
@@ -179,8 +178,7 @@ export class SolpePage implements OnInit  {
         cantidad: item.cantidad,
         stock: item.stock,
         numero_interno: item.numero_interno,
-        factura_base64: item.factura_base64 || null,
-        mp10: item.mp10
+        mp10: String(item.mp10)
       }))
     };
 

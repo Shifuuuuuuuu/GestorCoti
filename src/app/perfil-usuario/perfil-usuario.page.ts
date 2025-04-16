@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { MenuController, ModalController, ToastController } from '@ionic/angular';
+import { MenuController, ModalController, NavController, ToastController } from '@ionic/angular';
 import { AppUser } from '../Interface/IUser';
 import { ChatModalComponent } from '../chat-modal/chat-modal.component';
 
@@ -15,7 +15,7 @@ export class PerfilUsuarioPage implements OnInit {
   user: AppUser | null = null;
   isEditing: boolean = false;
   errorMessage: string | undefined;
-
+  isDarkMode = false;
   tempNombreCompleto: string = '';
   tempEmail: string = '';
   tempRut: string = '';
@@ -41,11 +41,13 @@ export class PerfilUsuarioPage implements OnInit {
     private toastController: ToastController,
     private menuController: MenuController,
     private modalController: ModalController,
-    private menu: MenuController
+    private menu: MenuController,
+    private navCtrl: NavController
   ) {}
 
   async ngOnInit() {
-    // OBTENER ID DEL USUARIO DESDE LOCALSTORAGE O FIREBASE
+    this.initializeDarkMode(); // Inicializa el modo oscuro al cargar la página
+
     const userId = localStorage.getItem('userId');
     console.log('ID de usuario desde localStorage:', userId);
 
@@ -55,6 +57,21 @@ export class PerfilUsuarioPage implements OnInit {
       this.errorMessage = 'Error: no se encontró el usuario.';
       console.error(this.errorMessage);
     }
+  }
+  initializeDarkMode() {
+    const storedMode = localStorage.getItem('darkMode');
+    this.isDarkMode = storedMode === 'true';
+    document.body.classList.toggle('dark', this.isDarkMode);
+  }
+
+  toggleDarkMode(event: any) {
+    this.isDarkMode = event.detail.checked;
+    document.body.classList.toggle('dark', this.isDarkMode);
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+  }
+
+  goBack() {
+    this.navCtrl.back(); // Esto no recarga la app
   }
 
   async loadUserData(userId: string) {

@@ -12,6 +12,7 @@ export class GestorsolpesPage implements OnInit {
   solpes: any[] = [];
   loading: boolean = true;
   solpesFiltradas: any[] = [];
+  dataFacturaPDF: string = '';
 
   constructor(
     private solpeService: SolpeService,
@@ -27,6 +28,50 @@ export class GestorsolpesPage implements OnInit {
       this.loading = false;
     }, 2000);
   }
+  verFactura(base64Data: string) {
+    const blob = this.base64ToBlob(base64Data, 'application/pdf');
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+
+  base64ToBlob(base64: string, contentType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: contentType });
+  }
+  mostrarFacturaComoImagen(base64Data: string) {
+    // Si fuera imagen (JPG o PNG), ajusta el mime type:
+    const imageUrl = 'data:image/jpeg;base64,' + base64Data; // O image/png
+
+    const nuevaVentana = window.open();
+    if (nuevaVentana) {
+      nuevaVentana.document.write(`
+        <html>
+          <head><title>Factura</title></head>
+          <body style="margin:0; display:flex; justify-content:center; align-items:center; height:100vh;">
+            <img src="${imageUrl}" style="max-width:100%; max-height:100%;">
+          </body>
+        </html>
+      `);
+    } else {
+      console.error("No se pudo abrir una nueva ventana.");
+    }
+  }
+
+
 
   cargarSolpes() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {

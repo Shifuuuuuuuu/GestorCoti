@@ -27,6 +27,7 @@ export class IniciarSesionPage implements OnInit {
     const userId = localStorage.getItem('userId'); // Verifica si hay un usuario guardado
     if (userId) {
       try {
+        console.log('Usuario recuperado del localStorage:', userId);
         const userDoc = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
         if (userDoc && userDoc.exists) {
           const userData = userDoc.data() as any;
@@ -42,7 +43,9 @@ export class IniciarSesionPage implements OnInit {
   async login() {
     const email = (document.getElementById('email') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
-    const recordarSesion = (document.getElementById('recordarSesion') as HTMLInputElement).checked;
+
+    // El checkbox puede estar presente, pero no lo usamos para guardar la sesión
+    const recordarSesion = (document.getElementById('recordarSesion') as HTMLInputElement)?.checked;
 
     if (!email || !password) {
       this.presentToast('Por favor, ingrese un correo y una contraseña válidos', 'warning');
@@ -59,9 +62,14 @@ export class IniciarSesionPage implements OnInit {
 
           if (userDoc && userDoc.exists) {
             const userData = userDoc.data() as any;
-            if (recordarSesion) {
-              localStorage.setItem('userId', user.uid); // Guarda el usuario en localStorage
-            }
+
+            // ✅ Guardamos SIEMPRE el userId en localStorage
+            localStorage.setItem('userId', user.uid);
+            console.log('Guardado userId:', user.uid);
+
+            // 🔄 Aquí podrías guardar otra info adicional si lo necesitas para el perfil
+            localStorage.setItem('userEmail', user.email || '');
+
             this.redirigirPorRol(userData.role);
           } else {
             this.presentToast('Usuario no encontrado en la base de datos.', 'danger');
@@ -74,6 +82,8 @@ export class IniciarSesionPage implements OnInit {
       this.presentToast(error.message || 'Error al iniciar sesión.', 'danger');
     }
   }
+
+
 
   redirigirPorRol(userRole: string) {
     if (userRole === 'Editor') {

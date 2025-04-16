@@ -19,9 +19,8 @@ export class AuthService {
   }
 
   getUserId(): string | null {
-    return localStorage.getItem('id') || null;
+    return localStorage.getItem('userId') || null;
   }
-
 
   obtenerUsuarios(): Observable<AppUser[]> {
     return this.usersCollection.snapshotChanges().pipe(

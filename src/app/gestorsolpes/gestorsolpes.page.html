@@ -44,6 +44,7 @@
                   <th>Contrato</th>
                   <th>Usuario</th>
                   <th>Estado</th>
+                  <th>Factura</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -53,6 +54,11 @@
                   <td>{{ solpe.numero_contrato }}</td>
                   <td>{{ solpe.usuario }}</td>
                   <td>{{ solpe.estatus }}</td>
+                  <td>
+                    <ion-button *ngIf="solpe.factura_general_base64" fill="clear" size="small" (click)="mostrarFacturaComoImagen(solpe.factura_general_base64)">
+                      <ion-icon name="image-outline"></ion-icon>
+                    </ion-button>
+                  </td>
                   <td>
                     <ion-button color="secondary" size="small" (click)="cambiarEstatus(solpe)">
                       Cambiar Estatus
