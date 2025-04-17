@@ -44,7 +44,6 @@
                   <th>Contrato</th>
                   <th>Usuario</th>
                   <th>Estado</th>
-                  <th>Factura</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -54,11 +53,6 @@
                   <td>{{ solpe.numero_contrato }}</td>
                   <td>{{ solpe.usuario }}</td>
                   <td>{{ solpe.estatus }}</td>
-                  <td>
-                    <ion-button *ngIf="solpe.factura_general_base64" fill="clear" size="small" (click)="mostrarFacturaComoImagen(solpe.factura_general_base64)">
-                      <ion-icon name="image-outline"></ion-icon>
-                    </ion-button>
-                  </td>
                   <td>
                     <ion-button color="secondary" size="small" (click)="cambiarEstatus(solpe)">
                       Cambiar Estatus
@@ -80,6 +74,7 @@
                   <th>Cantidad</th>
                   <th>stock</th>
                   <th>Patente / Nº Interno</th>
+                  <th>Imagen</th>
                   <th>Comparación Precios</th>
                 </tr>
               </thead>
@@ -92,6 +87,13 @@
                   <td>{{ item.stock }}</td>
                   <td>{{ item.numero_interno }}</td>
                   <td>
+                    <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
+                      <img *ngIf="item.imagen_referencia_base64"
+                      [src]="item.imagen_referencia_base64"
+                      alt="Imagen" width="50" height="50">
+                    </div>
+                  </td>
+                  <td>
                     <div *ngIf="item.comparaciones?.length">
                       <h5>Comparaciones:</h5>
                       <table class="styled-table">
@@ -99,12 +101,14 @@
                           <tr>
                             <th>Empresa</th>
                             <th>Precio</th>
+                            <th>N Cotización</th>
                             <th>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr *ngFor="let comp of item.comparaciones; let i = index">
                             <td>{{ comp.empresa?.toUpperCase() }}</td>
+                            <td>{{ comp.numeroCotizacion }}</td>
                             <td>{{ comp.precio | currency }}</td>
                             <td>
                               <ion-button color="danger" size="small" fill="clear" (click)="eliminarComparacion(item, i)">
@@ -133,6 +137,12 @@
                 </tr>
               </tbody>
             </table>
+            <div style="text-align: left; margin-top: 10px;">
+              <ion-button fill="clear" size="small" color="danger" (click)="fileInput.click()">
+                <ion-icon name="document-attach-outline" slot="start"></ion-icon>
+              </ion-button>
+              <input type="file" #fileInput (change)="subirPDFs($event)" accept="application/pdf" multiple hidden />
+            </div>
           </div>
         </ion-card>
       </div>

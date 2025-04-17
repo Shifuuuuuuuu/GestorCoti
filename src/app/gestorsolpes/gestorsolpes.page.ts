@@ -29,10 +29,12 @@ export class GestorsolpesPage implements OnInit {
     }, 2000);
   }
   verFactura(base64Data: string) {
-    const blob = this.base64ToBlob(base64Data, 'application/pdf');
+    const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
+    const blob = this.base64ToBlob(base64Clean, 'application/pdf');
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
   }
+
 
   base64ToBlob(base64: string, contentType: string): Blob {
     const byteCharacters = atob(base64);
@@ -52,39 +54,23 @@ export class GestorsolpesPage implements OnInit {
 
     return new Blob(byteArrays, { type: contentType });
   }
-  mostrarFacturaComoImagen(base64Data: string) {
-    // Si fuera imagen (JPG o PNG), ajusta el mime type:
-    const imageUrl = 'data:image/jpeg;base64,' + base64Data; // O image/png
-
-    const nuevaVentana = window.open();
-    if (nuevaVentana) {
-      nuevaVentana.document.write(`
-        <html>
-          <head><title>Factura</title></head>
-          <body style="margin:0; display:flex; justify-content:center; align-items:center; height:100vh;">
-            <img src="${imageUrl}" style="max-width:100%; max-height:100%;">
-          </body>
-        </html>
-      `);
-    } else {
-      console.error("No se pudo abrir una nueva ventana.");
-    }
-  }
-
-
 
   cargarSolpes() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
       const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
       this.solpes = filtradas.map((solpe: any) => {
-        solpe.items = solpe.items.map((item: any) => ({
-          ...item,
-          comparaciones: item.comparaciones || [],
-        }));
+        solpe.items = solpe.items.map((item: any) => {
+          console.log('Imagen base64:', item.imagen_referencia_base64); // 👈 Agregado
+          return {
+            ...item,
+            comparaciones: item.comparaciones || [],
+          };
+        });
         return solpe;
       });
     });
   }
+
   ionViewWillEnter() {
     this.menu.enable(false);
   }
@@ -123,12 +109,39 @@ export class GestorsolpesPage implements OnInit {
     await alert.present();
   }
 
+  subirPDFs(event: any) {
+    const archivos: FileList = event.target.files;
+
+    if (archivos.length > 0) {
+      Array.from(archivos).forEach((archivo: File) => {
+        const reader = new FileReader();
+
+        reader.onload = async () => {
+          const base64 = (reader.result as string).split(',')[1];
+          const nombreArchivo = archivo.name;
+
+          console.log('Nombre:', nombreArchivo);
+          console.log('Base64:', base64.slice(0, 100) + '...'); // Muestra solo un trozo
+
+          // Aquí puedes guardarlo en Firestore o asociarlo a una SOLPE si corresponde
+          this.mostrarToast(`PDF "${nombreArchivo}" cargado correctamente`, 'success');
+        };
+
+        reader.onerror = () => {
+          this.mostrarToast(`Error al leer archivo "${archivo.name}"`, 'danger');
+        };
+
+        reader.readAsDataURL(archivo);
+      });
+    }
+  }
 
   async abrirComparacion(item: any) {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
       inputs: [
         { name: 'empresa', type: 'text', placeholder: 'Nombre de la Empresa' },
+        { name: 'numeroCotizacion', type: 'number', placeholder: 'Número de Cotización' },
         { name: 'precio', type: 'number', placeholder: 'Precio' },
       ],
       buttons: [
@@ -136,13 +149,13 @@ export class GestorsolpesPage implements OnInit {
         {
           text: 'Agregar',
           handler: (data) => {
-            if (data.empresa && data.precio) {
-
+            if (data.empresa && data.precio && data.numeroCotizacion) {
               const nuevoId = Date.now();
               item.comparaciones.push({
                 id: nuevoId,
                 empresa: data.empresa,
-                precio: Number(data.precio)
+                precio: Number(data.precio),
+                numeroCotizacion: Number(data.numeroCotizacion)
               });
             }
           },
@@ -151,6 +164,7 @@ export class GestorsolpesPage implements OnInit {
     });
     await alert.present();
   }
+
 
   guardarComparacion(item: any, solpeId: string) {
     const solpeRef = this.firestore.collection('solpes').doc(solpeId);

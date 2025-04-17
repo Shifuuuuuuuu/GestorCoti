@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { AlertController } from '@ionic/angular';
+import { AlertController, ToastController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
 import { Solpes } from '../Interface/ISolpes';
 import { Comparaciones } from '../Interface/Icompara';
@@ -17,11 +17,12 @@ export class VisualizacionSolpedPage implements OnInit {
   itemsGuardados: any[] = [];
   solpedSeleccionadaId: string = '';
   mostrarItems = false;
-
+  dataFacturaPDF: string = '';
   constructor(
     private firestore: AngularFirestore,
     private alertCtrl: AlertController,
-    private solpeService: SolpeService
+    private solpeService: SolpeService,
+    private toastController: ToastController
   ) {}
 
   ngOnInit() {
@@ -71,6 +72,67 @@ export class VisualizacionSolpedPage implements OnInit {
     } catch (error) {
       console.error('Error al agregar el ítem a la SOLPED:', error);
     }
+  }
+
+  verFactura(base64Data: string) {
+    const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
+    const blob = this.base64ToBlob(base64Clean, 'application/pdf');
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
+
+
+  base64ToBlob(base64: string, contentType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: contentType });
+  }
+  descargarFactura(base64Data: string, numeroSolped: number) {
+    if (!base64Data) {
+      this.mostrarToast('Factura no disponible', 'danger');
+      return;
+    }
+
+    try {
+      const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
+      const blob = this.base64ToBlob(base64Clean, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      const fileName = `Cotización - N° SOLPED ${numeroSolped}.pdf`;
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al descargar la cotización:', error);
+      this.mostrarToast('Error al descargar la cotización', 'danger');
+    }
+  }
+  async mostrarToast(mensaje: string, color: 'success' | 'warning' | 'danger' | 'primary' = 'primary') {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 3000,
+      position: 'bottom',
+      color: color
+    });
+    await toast.present();
   }
 
 

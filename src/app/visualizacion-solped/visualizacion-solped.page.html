@@ -45,12 +45,24 @@
   <ng-container *ngIf="!loading">
     <ion-card *ngFor="let solped of solpedList">
       <ion-card-header>
-        <ion-card-title color="secondary">N° SOLPED: {{ solped.numero_solpe }}</ion-card-title>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <ion-card-title color="secondary" style="margin: 0; font-size: 1rem;">
+            N° SOLPED: {{ solped.numero_solpe }}
+          </ion-card-title>
+
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <ion-button *ngIf="solped.factura_general_base64" fill="clear" size="small" (click)="verFactura(solped.factura_general_base64)">
+              <ion-icon name="document-outline"></ion-icon>
+            </ion-button>
+            <ion-button *ngIf="solped.factura_general_base64" fill="clear" color="primary" size="small" (click)="descargarFactura(solped.factura_general_base64, solped.numero_solpe)">
+              <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+            </ion-button>
+          </div>
+        </div>
         <ion-card-subtitle>Fecha: {{ solped.fecha }}</ion-card-subtitle>
         <ion-card-subtitle>Usuario: {{ solped.usuario }}</ion-card-subtitle>
         <ion-card-subtitle>Estado: {{ solped.estatus }}</ion-card-subtitle>
       </ion-card-header>
-
       <ion-card-content>
         <ion-card class="inner-card">
           <ion-grid>

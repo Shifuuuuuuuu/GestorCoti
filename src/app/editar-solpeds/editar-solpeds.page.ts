@@ -25,8 +25,8 @@ export class EditarSolpedsPage implements OnInit {
   mostrarFiltros: boolean = false;
   solpe: any;
   solpes: any[] = [];
-  solpedId: string = '';  // O null, si prefieres
-
+  solpedId: string = '';
+  dataFacturaPDF: string = '';
   items: any[] = [];
   listaUsuarios: any[] = [];
   listaEstatus: string[] = ['Aprobado', 'Rechazado', 'Solicitado', 'Tránsito a Faena', 'Pre Aprobado'];
@@ -242,14 +242,11 @@ export class EditarSolpedsPage implements OnInit {
         solpe.id = doc.id;
         solpesTemp.push(solpe);
       });
-      console.log(solpesTemp);
       this.solpesOriginal = solpesTemp;
       this.solpesFiltradas = [...this.solpesOriginal];
       this.loading = false;
     });
   }
-
-
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
       this.listaUsuarios = snapshot.docs.map(doc => {
@@ -263,8 +260,6 @@ export class EditarSolpedsPage implements OnInit {
       console.error('Error recuperando usuarios:', error);
     });
   }
-
-
   filtrarSolpes() {
     const normalize = (str: string) => str?.toLowerCase().trim();
 
@@ -333,7 +328,32 @@ export class EditarSolpedsPage implements OnInit {
         return '#6c757d';
     }
   }
+  verFactura(base64Data: string) {
+    const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
+    const blob = this.base64ToBlob(base64Clean, 'application/pdf');
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+  }
 
+
+  base64ToBlob(base64: string, contentType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: contentType });
+  }
   async cambiarEstatus(solpe: any) {
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',

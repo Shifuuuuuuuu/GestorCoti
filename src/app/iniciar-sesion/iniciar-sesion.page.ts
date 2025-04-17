@@ -24,18 +24,16 @@ export class IniciarSesionPage implements OnInit {
   }
 
   async verificarSesion() {
-    const userId = localStorage.getItem('userId'); // Verifica si hay un usuario guardado
+    const userId = localStorage.getItem('userId');
     if (userId) {
       try {
-        console.log('Usuario recuperado del localStorage:', userId);
         const userDoc = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
         if (userDoc && userDoc.exists) {
           const userData = userDoc.data() as any;
           this.redirigirPorRol(userData.role);
         }
       } catch (error) {
-        console.error('Error al verificar sesión:', error);
-        localStorage.removeItem('userId'); // Si hay un error, limpiar sesión
+        localStorage.removeItem('userId');
       }
     }
   }
@@ -43,8 +41,6 @@ export class IniciarSesionPage implements OnInit {
   async login() {
     const email = (document.getElementById('email') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
-
-    // El checkbox puede estar presente, pero no lo usamos para guardar la sesión
     const recordarSesion = (document.getElementById('recordarSesion') as HTMLInputElement)?.checked;
 
     if (!email || !password) {
@@ -62,14 +58,8 @@ export class IniciarSesionPage implements OnInit {
 
           if (userDoc && userDoc.exists) {
             const userData = userDoc.data() as any;
-
-            // ✅ Guardamos SIEMPRE el userId en localStorage
             localStorage.setItem('userId', user.uid);
-            console.log('Guardado userId:', user.uid);
-
-            // 🔄 Aquí podrías guardar otra info adicional si lo necesitas para el perfil
             localStorage.setItem('userEmail', user.email || '');
-
             this.redirigirPorRol(userData.role);
           } else {
             this.presentToast('Usuario no encontrado en la base de datos.', 'danger');

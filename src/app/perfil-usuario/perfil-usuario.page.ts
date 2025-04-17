@@ -46,11 +46,9 @@ export class PerfilUsuarioPage implements OnInit {
   ) {}
 
   async ngOnInit() {
-    this.initializeDarkMode(); // Inicializa el modo oscuro al cargar la página
+    this.initializeDarkMode();
 
     const userId = localStorage.getItem('userId');
-    console.log('ID de usuario desde localStorage:', userId);
-
     if (userId) {
       await this.loadUserData(userId);
     } else {
@@ -71,16 +69,13 @@ export class PerfilUsuarioPage implements OnInit {
   }
 
   goBack() {
-    this.navCtrl.back(); // Esto no recarga la app
+    this.navCtrl.back();
   }
-
   async loadUserData(userId: string) {
     try {
       const userResult = await this.authService.getUserById(userId);
-      console.log('Resultado de usuario obtenido:', userResult);
 
       if (userResult) {
-        // Validar si el correo está permitido
         if (this.correosPermitidos.includes(userResult.email)) {
           this.user = userResult;
           this.profileImageUrl = this.user.photoURL ? this.user.photoURL : this.defaultProfileImage;

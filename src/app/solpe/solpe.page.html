@@ -48,13 +48,7 @@
         <ion-label position="floating">Usuario</ion-label>
         <ion-input [(ngModel)]="solpe.usuario" readonly></ion-input>
       </ion-item>
-      <ion-item>
-        <ion-label>Guarda la cotización en PDF</ion-label>
-        <input type="file" (change)="subirFactura($event, null)" accept=".pdf" />
-      </ion-item>
-
       <h5>Tabla de Items</h5>
-
       <div class="table-container">
         <table class="styled-table">
           <thead style="color: white;">
@@ -64,8 +58,8 @@
               <th>Código Referencial</th>
               <th>Cantidad</th>
               <th>Stock</th>
-              <th>Patente de ejemplo o Numero interno</th>
-              <th>MP10</th>
+              <th>Patente / N interno</th>
+              <th>Imagen</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -108,12 +102,10 @@
                 </ion-input>
               </td>
               <td>
-                <ion-input  type="number"
-                            [(ngModel)]="item.mp10"
-                            [readonly]="!item.editando"
-                            (ionBlur)="verificarYGuardarItem(i)">
-                </ion-input>
+                <ion-icon name="image-outline" size="large" style="cursor: pointer;" (click)="seleccionarArchivo(i)"></ion-icon>
+                <input type="file" accept="image/*" #inputImagenRef style="display: none;" (change)="subirImagenReferencia($event, i)">
               </td>
+
               <td>
                 <ion-button fill="clear" color="primary" *ngIf="!item.editando" (click)="editarItem(i)">
                   <ion-icon color="secondary" name="create-outline"></ion-icon>

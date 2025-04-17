@@ -3,6 +3,9 @@ import {  MenuController, ToastController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { ViewChildren, QueryList, ElementRef } from '@angular/core';
+
+
 
 @Component({
   selector: 'app-solpe',
@@ -10,8 +13,8 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
   styleUrls: ['./solpe.page.scss'],
 })
 export class SolpePage implements OnInit  {
+  @ViewChildren('inputImagenRef') inputsImagenes!: QueryList<ElementRef>;
   modoSeleccionado: string = 'formulario';
-
   solpe: any = {
     numero_solpe: null,
     fecha: '',
@@ -60,11 +63,11 @@ export class SolpePage implements OnInit  {
       cantidad: null,
       stock: null,
       numero_interno: '',
-      factura: null,
-      mp10: null,
+      imagen_referencia_base64: '',
       editando: true,
     });
   }
+
 
 
 
@@ -79,43 +82,39 @@ export class SolpePage implements OnInit  {
       item.codigo_referencial &&
       item.cantidad !== null &&
       item.stock !== null &&
-      item.numero_interno && item.numero_interno.trim() !== '' &&
-      item.mp10 !== null
+      item.numero_interno && item.numero_interno.trim() !== ''&&
+      item.imagen_referencia_base64
     ) {
       this.guardarItem(index);
     }
   }
-
-  subirFactura(event: any, index: number | null) {
+  subirImagenReferencia(event: any, index: number) {
     const archivo = event.target.files[0];
-    if (archivo && archivo.type === 'application/pdf') {
-      if (index === null) {
-        this.solpe.factura_general = archivo; // debes tener esta propiedad en tu objeto solpe
-        this.convertFileToBase64(archivo).then(base64 => {
-          this.solpe.factura_general_base64 = base64; // Guardamos el archivo PDF como base64
-        });
-      } else {
-        this.solpe.items[index].factura = archivo;
-        this.convertFileToBase64(archivo).then(base64 => {
-          this.solpe.items[index].factura_base64 = base64; // Guardamos el archivo PDF como base64
-        });
-      }
-      this.mostrarToast('Cotización subida correctamente', 'success');
+    if (archivo && archivo.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        this.solpe.items[index].imagen_referencia_base64 = base64;
+        this.mostrarToast('Imagen de referencia guardada', 'success');
+      };
+      reader.readAsDataURL(archivo);
     } else {
-      this.mostrarToast('Solo se permiten archivos PDF', 'danger');
+      this.mostrarToast('Solo se permiten archivos de imagen', 'danger');
     }
+  }
+  seleccionarArchivo(index: number) {
+    const input = this.inputsImagenes.toArray()[index];
+    input.nativeElement.click();
   }
 
 
 
   guardarItem(index: number) {
-
     this.solpe.items[index].editando = false;
     this.mostrarToast('Item guardado correctamente', 'success');
   }
 
   editarItem(index: number) {
-
     this.solpe.items[index].editando = true;
   }
 
@@ -178,7 +177,7 @@ export class SolpePage implements OnInit  {
         cantidad: item.cantidad,
         stock: item.stock,
         numero_interno: item.numero_interno,
-        mp10: String(item.mp10)
+        imagen_referencia_base64: item.imagen_referencia_base64 || null,
       }))
     };
 
@@ -190,6 +189,7 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Error al guardar la SOLPE', 'danger');
     });
   }
+
 
 
   convertFileToBase64(file: File): Promise<string> {
@@ -207,9 +207,9 @@ export class SolpePage implements OnInit  {
       fecha: '',
       numero_contrato: '',
       usuario: '',
-      factura:'',
       items: [],
       estatus: 'Solicitado',
+      imagen_referencia_base64: ''
     };
     this.obtenerUltimoNumeroSolpe();
   }
