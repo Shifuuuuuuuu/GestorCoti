@@ -49,13 +49,12 @@
           <ion-card-title color="secondary" style="margin: 0; font-size: 1rem;">
             N° SOLPED: {{ solped.numero_solpe }}
           </ion-card-title>
-
           <div style="display: flex; align-items: center; gap: 4px;">
-            <ion-button *ngIf="solped.factura_general_base64" fill="clear" size="small" (click)="verFactura(solped.factura_general_base64)">
-              <ion-icon name="document-outline"></ion-icon>
+            <ion-button *ngIf="solped.factura_general_base64" fill="clear" size="small" (click)="verPDF(solped.factura_general_base64)">
+              <ion-icon name="eye-outline"></ion-icon>
             </ion-button>
-            <ion-button *ngIf="solped.factura_general_base64" fill="clear" color="primary" size="small" (click)="descargarFactura(solped.factura_general_base64, solped.numero_solpe)">
-              <ion-icon slot="icon-only" name="download-outline"></ion-icon>
+            <ion-button *ngIf="solped.factura_general_base64" fill="clear" color="primary" size="small" (click)="descargarPDF(solped.factura_general_base64, solped.numero_solpe)">
+              <ion-icon slot="download-outlin" name="download-outline"></ion-icon>
             </ion-button>
           </div>
         </div>
@@ -77,7 +76,7 @@
                       <th>Cantidad</th>
                       <th>Stock</th>
                       <th>Patente/ N interno</th>
-                      <th>MP10</th>
+                      <th>Imagen</th>
                       <th>Comparación Precios</th>
                       <th>Guardar</th>
                     </tr>
@@ -90,7 +89,13 @@
                       <td>{{ item.cantidad }}</td>
                       <td>{{ item.stock }}</td>
                       <td>{{ item.numero_interno }}</td>
-                      <td>{{ item.mp10 }}</td>
+                      <td>
+                        <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
+                          <img *ngIf="item.imagen_referencia_base64"
+                          [src]="item.imagen_referencia_base64"
+                          alt="Imagen" width="200" height="200">
+                        </div>
+                      </td>
                       <td>
                         <div *ngIf="item.comparaciones?.length">
                           <h5>Comparaciones:</h5>
@@ -99,6 +104,7 @@
                               <tr>
                                 <th>Empresa</th>
                                 <th>Precio</th>
+                                <th>N cotización</th>
                                 <th>Acción</th>
                               </tr>
                             </thead>
@@ -106,6 +112,7 @@
                               <tr *ngFor="let comp of item.comparaciones">
                                 <td [ngClass]="{ 'destacada': comp.destacado }">{{ comp.empresa }}</td>
                                 <td>{{ comp.precio | currency }}</td>
+                                <td>{{ comp.numeroCotizacion }}</td>
                                 <td>
                                   <ion-button color="danger" fill="clear" (click)="eliminarComparacion(solped.id, item.id, comp.id)">
                                     <ion-icon color="danger" name="close-circle"></ion-icon>

@@ -90,7 +90,7 @@
                     <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
                       <img *ngIf="item.imagen_referencia_base64"
                       [src]="item.imagen_referencia_base64"
-                      alt="Imagen" width="50" height="50">
+                      alt="Imagen" width="200" height="200">
                     </div>
                   </td>
                   <td>
@@ -137,11 +137,17 @@
                 </tr>
               </tbody>
             </table>
-            <div style="text-align: left; margin-top: 10px;">
+            <div style="text-align: left; margin-top: 10px;" *ngFor="let solpe of solpes">
               <ion-button fill="clear" size="small" color="danger" (click)="fileInput.click()">
                 <ion-icon name="document-attach-outline" slot="start"></ion-icon>
               </ion-button>
-              <input type="file" #fileInput (change)="subirPDFs($event)" accept="application/pdf" multiple hidden />
+              <input type="file" #fileInput (change)="subirPDFs($event, solpe.id)" accept="application/pdf" multiple hidden />
+
+              <div *ngIf="pdfsCargados[solpe.id]?.length">
+                <ion-chip *ngFor="let pdfNombre of pdfsCargados[solpe.id]">
+                  <ion-label>{{ pdfNombre }}</ion-label>
+                </ion-chip>
+              </div>
             </div>
           </div>
         </ion-card>

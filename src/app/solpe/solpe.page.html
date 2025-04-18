@@ -102,8 +102,26 @@
                 </ion-input>
               </td>
               <td>
-                <ion-icon name="image-outline" size="large" style="cursor: pointer;" (click)="seleccionarArchivo(i)"></ion-icon>
-                <input type="file" accept="image/*" #inputImagenRef style="display: none;" (change)="subirImagenReferencia($event, i)">
+                <ion-icon
+                  *ngIf="!item.imagen_referencia_base64"
+                  name="image-outline"
+                  size="large"
+                  style="cursor: pointer;"
+                  (click)="seleccionarArchivo(i)">
+                </ion-icon>
+                <input
+                  type="file"
+                  accept="image/*"
+                  #inputImagenRef
+                  style="display: none;"
+                  (change)="subirImagenReferencia($event, i)">
+                <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
+                  <img
+                    [src]="item.imagen_referencia_base64"
+                    alt="Imagen"
+                    width="200"
+                    height="200">
+                </div>
               </td>
 
               <td>

@@ -4,6 +4,7 @@ import { AlertController, ToastController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
 import { Solpes } from '../Interface/ISolpes';
 import { Comparaciones } from '../Interface/Icompara';
+import { ArchivoPDF } from '../Interface/IArchivoPDF';
 
 @Component({
   selector: 'app-visualizacion-solped',
@@ -74,12 +75,32 @@ export class VisualizacionSolpedPage implements OnInit {
     }
   }
 
-  verFactura(base64Data: string) {
-    const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
-    const blob = this.base64ToBlob(base64Clean, 'application/pdf');
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+  verPDF(idPdf: string) {
+    if (!idPdf) {
+      this.mostrarToast('No hay PDF disponible', 'warning');
+      return;
+    }
+
+    this.firestore.collection('pdfs').doc(idPdf).get().subscribe(doc => {
+      if (!doc.exists) {
+        this.mostrarToast('El PDF no fue encontrado', 'danger');
+        return;
+      }
+
+      const data = doc.data() as ArchivoPDF;
+      const base64 = data.base64;
+
+      if (!base64) {
+        this.mostrarToast('El archivo está vacío', 'warning');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
   }
+
 
 
   base64ToBlob(base64: string, contentType: string): Blob {
@@ -100,17 +121,17 @@ export class VisualizacionSolpedPage implements OnInit {
 
     return new Blob(byteArrays, { type: contentType });
   }
-  descargarFactura(base64Data: string, numeroSolped: number) {
-    if (!base64Data) {
+  descargarPDF(base64: string, nombre:string) {
+    if (!base64) {
       this.mostrarToast('Factura no disponible', 'danger');
       return;
     }
 
     try {
-      const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
+      const base64Clean = base64.replace(/^data:application\/pdf;base64,/, '');
       const blob = this.base64ToBlob(base64Clean, 'application/pdf');
       const url = URL.createObjectURL(blob);
-      const fileName = `Cotización - N° SOLPED ${numeroSolped}.pdf`;
+      const fileName = `Cotización - N° SOLPED ${nombre}.pdf`;
 
       const link = document.createElement('a');
       link.href = url;

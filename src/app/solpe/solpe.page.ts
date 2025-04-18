@@ -169,7 +169,6 @@ export class SolpePage implements OnInit  {
 
     const solpeAGuardar = {
       ...restoSolpe,
-      factura_general_base64: this.solpe.factura_general_base64 || null,
       items: this.solpe.items.map((item: any, index: number) => ({
         item: index + 1,
         descripcion: item.descripcion,

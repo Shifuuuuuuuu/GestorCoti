@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { SolpeService } from '../services/solpe.service';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { ArchivoPDF } from '../Interface/IArchivoPDF';
 
 @Component({
   selector: 'app-gestorsolpes',
@@ -13,6 +14,11 @@ export class GestorsolpesPage implements OnInit {
   loading: boolean = true;
   solpesFiltradas: any[] = [];
   dataFacturaPDF: string = '';
+  // Asegúrate de que `archivosPDF` sea un objeto que almacene un array de `ArchivoPDF` para cada `solpeId`
+  archivosPDF: { [solpeId: string]: ArchivoPDF[] } = {};
+  pdfsCargados: { [solpeId: string]: string[] } = {};
+
+  @ViewChildren('fileInput') fileInputs!: QueryList<ElementRef>;
 
   constructor(
     private solpeService: SolpeService,
@@ -60,7 +66,6 @@ export class GestorsolpesPage implements OnInit {
       const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
       this.solpes = filtradas.map((solpe: any) => {
         solpe.items = solpe.items.map((item: any) => {
-          console.log('Imagen base64:', item.imagen_referencia_base64); // 👈 Agregado
           return {
             ...item,
             comparaciones: item.comparaciones || [],
@@ -80,7 +85,7 @@ export class GestorsolpesPage implements OnInit {
       header: 'Cambiar Estado de la SOLPE',
       inputs: [
         { name: 'estatus', type: 'radio', label: 'Pre Aprobado', value: 'Pre Aprobado' },
-        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Rechazado' },
+        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Tránsito a Faena' },
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
@@ -88,15 +93,36 @@ export class GestorsolpesPage implements OnInit {
           text: 'Siguiente',
           handler: async (estatusSeleccionado) => {
             if (estatusSeleccionado) {
-              if (estatusSeleccionado === 'Pre Aprobado') {
-                await this.subirComparaciones(solpe, true);
-              }
-
+              // Actualiza el estatus
               this.firestore.collection('solpes').doc(solpe.id).update({
                 estatus: estatusSeleccionado,
-              }).then(() => {
+              }).then(async () => {
                 solpe.estatus = estatusSeleccionado;
                 this.mostrarToast(`SOLPE marcada como "${estatusSeleccionado}"`, 'success');
+
+                // Si hay PDFs y el estado es uno de los dos permitidos, los subimos
+                if (
+                  this.archivosPDF[solpe.id]?.length > 0 &&
+                  (estatusSeleccionado === 'Pre Aprobado' || estatusSeleccionado === 'Tránsito a Faena')
+                ) {
+                  try {
+                    // Subimos el archivo PDF en base64 a Firestore
+                    const pdfsParaSubir = this.archivosPDF[solpe.id].map(pdf => ({
+                      nombre: pdf.nombre,
+                      base64: pdf.base64, // Guardamos el archivo en base64
+                    }));
+
+                    await this.firestore.collection('solpes').doc(solpe.id).update({
+                      pdfs: pdfsParaSubir
+                    });
+
+                    this.archivosPDF[solpe.id] = []; // Limpiar la lista después de subir
+                    this.mostrarToast('PDFs cargados en la SOLPE', 'success');
+                  } catch (error) {
+                    console.error('Error al subir PDFs:', error);
+                    this.mostrarToast('Error al subir PDFs', 'danger');
+                  }
+                }
               }).catch(err => {
                 this.mostrarToast('Error al actualizar estatus', 'danger');
                 console.error(err);
@@ -109,7 +135,10 @@ export class GestorsolpesPage implements OnInit {
     await alert.present();
   }
 
-  subirPDFs(event: any) {
+
+
+
+  subirPDFs(event: any, solpeId: string) {
     const archivos: FileList = event.target.files;
 
     if (archivos.length > 0) {
@@ -120,10 +149,21 @@ export class GestorsolpesPage implements OnInit {
           const base64 = (reader.result as string).split(',')[1];
           const nombreArchivo = archivo.name;
 
-          console.log('Nombre:', nombreArchivo);
-          console.log('Base64:', base64.slice(0, 100) + '...'); // Muestra solo un trozo
+          // Guardamos el PDF en la estructura local
+          if (!this.pdfsCargados[solpeId]) {
+            this.pdfsCargados[solpeId] = [];
+          }
+          this.pdfsCargados[solpeId].push(nombreArchivo);
 
-          // Aquí puedes guardarlo en Firestore o asociarlo a una SOLPE si corresponde
+          // Guardar en Firestore
+          const pdfData = {
+            nombre: nombreArchivo,
+            base64: base64,
+          };
+
+          const pdfRef = this.firestore.collection('solpes').doc(solpeId).collection('pdfs');
+          await pdfRef.add(pdfData);
+
           this.mostrarToast(`PDF "${nombreArchivo}" cargado correctamente`, 'success');
         };
 
@@ -135,6 +175,9 @@ export class GestorsolpesPage implements OnInit {
       });
     }
   }
+
+
+
 
   async abrirComparacion(item: any) {
     const alert = await this.alertController.create({
