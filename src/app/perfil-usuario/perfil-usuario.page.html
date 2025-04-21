@@ -90,10 +90,16 @@
       </div>
     </form>
 
-    <ion-item>
-      <ion-icon name="moon" slot="start"></ion-icon>
-      <ion-label>Modo oscuro</ion-label>
-      <ion-toggle slot="end" [checked]="isDarkMode" (ionChange)="toggleDarkMode($event)"></ion-toggle>
-    </ion-item>
+    <div class="modo-oscuro-toggle igual-margin">
+      <ion-button fill="clear" (click)="toggleDarkModeManualmente()">
+        <ion-icon
+          [name]="isDarkMode ? 'sunny-outline' : 'moon-outline'"
+          [style.color]="isDarkMode ? '#FFD700' : '#000000'"
+          slot="icon-only">
+        </ion-icon>
+      </ion-button>
+    </div>
+
+
   </ion-card>
 </ion-content>

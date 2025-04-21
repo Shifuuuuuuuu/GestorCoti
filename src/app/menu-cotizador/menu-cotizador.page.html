@@ -17,10 +17,16 @@
   <div class="menu-grid">
 
     <div class="menu-item" (click)="navigateTo('gestorsolpes')">
-      <ion-icon name="book-outline" class="menu-icon"></ion-icon>
+      <div class="icon-wrapper">
+        <ion-icon name="book-outline" class="menu-icon"></ion-icon>
+        <ion-badge *ngIf="comparacionesPendientesCount > 0" class="contador-comparaciones">
+          {{ comparacionesPendientesCount }}
+        </ion-badge>
+      </div>
       <p>Comparativa de precios</p>
-      <span>Comparativa de precios de item de solpes</span>
+      <span>Comparativa de precios de ítems de solpeds</span>
     </div>
+
 
     <div class="menu-item" (click)="navigateTo('historial-solpe')">
       <ion-icon name="file-tray-outline" class="menu-icon"></ion-icon>

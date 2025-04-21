@@ -15,7 +15,19 @@
   padding: 16px;
 }
 .large-icon {
-  font-size: 100px; /* Ajusta el tamaño a lo que necesites */
+  font-size: 100px;
+}
+.icon-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.contador-comparaciones {
+  background-color: red;
+  color: white;
 }
 
 .menu-item {

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ChatModalComponent } from '../chat-modal/chat-modal.component';
 import { MenuController, ModalController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
   selector: 'app-menu-cotizador',
@@ -22,7 +23,8 @@ export class MenuCotizadorPage implements OnInit {
     private router: Router,
     private modalController: ModalController,
     private menu: MenuController,
-    private authService: AuthService
+    private authService: AuthService,
+    private firestore: AngularFirestore
   ) {}
 
   navigateTo(page: string) {
@@ -30,6 +32,7 @@ export class MenuCotizadorPage implements OnInit {
   }
 
   ngOnInit() {
+    this.contarComparacionesSolicitadas();
 
   }
   goToProfile() {
@@ -56,4 +59,12 @@ export class MenuCotizadorPage implements OnInit {
     });
     return await modal.present();
   }
+  contarComparacionesSolicitadas() {
+    this.firestore.collection('solpes', ref =>
+      ref.where('estatus', '==', 'Solicitado')
+    ).get().subscribe(snapshot => {
+      this.comparacionesPendientesCount = snapshot.size;
+    });
+  }
+
 }

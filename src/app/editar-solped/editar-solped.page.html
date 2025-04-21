@@ -98,7 +98,6 @@
         <ion-col><b>Estatus</b></ion-col>
       </ion-row>
       <ion-row
-        style="color: black;"
         (click)="toggleDetalle(solpe.id)">
         <ion-col><b>{{ solpe.numero_solpe }}</b></ion-col>
         <ion-col>{{ solpe.fecha }}</ion-col>
@@ -118,7 +117,6 @@
                     <th>Contrato</th>
                     <th>Usuario</th>
                     <th>Estado</th>
-                    <th>Cotización</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -128,11 +126,6 @@
                     <td>{{ solpe.numero_contrato }}</td>
                     <td>{{ solpe.usuario }}</td>
                     <td>{{ solpe.estatus }}</td>
-                    <td>
-                      <ion-button *ngIf="solpe.factura_general_base64" fill="clear" size="small" (click)="verFactura(solpe.factura_general_base64)">
-                        <ion-icon name="document-outline"></ion-icon>
-                      </ion-button>
-                    </td>
                     <td>
                       <ion-button color="secondary" size="small" (click)="cambiarEstatus(solpe)">
                         Cambiar Estatus
@@ -154,7 +147,7 @@
                     <th>Cantidad</th>
                     <th>Stock</th>
                     <th>Patente / Nº Interno</th>
-                    <th>MP10</th>
+                    <th>Imagen</th>
                     <th>Comparaciones</th>
                   </tr>
                 </thead>
@@ -166,7 +159,11 @@
                     <td>{{ item.cantidad }}</td>
                     <td>{{ item.stock }}</td>
                     <td>{{ item.numero_interno }}</td>
-                    <td>{{ item.mp10 }}</td>
+                    <td>
+                      <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
+                        <img [src]="item.imagen_referencia_base64" alt="Imagen" width="200" height="200">
+                      </div>
+                    </td>
                     <td>
                       <div *ngIf="item.comparaciones?.length">
                         <table class="styled-table">
@@ -174,6 +171,7 @@
                             <tr>
                               <th>Empresa</th>
                               <th>Precio</th>
+                              <th>PDF</th>
                               <th>Acciones</th>
                             </tr>
                           </thead>
@@ -182,11 +180,22 @@
                               <td>{{ comp.empresa?.toUpperCase() }}</td>
                               <td>{{ comp.precio | currency }}</td>
                               <td>
-                                <ion-button color="danger" fill="clear" (click)="eliminarComparacionFirestore(solpe.id, item.id, comp.id)">
-                                  <ion-icon color="danger" name="close-circle"></ion-icon>
+                                <ion-button *ngIf="comp.pdfId" fill="clear" color="primary" size="small"
+                                  (click)="verPDFComparacion(solpe.id, comp.pdfId)">
+                                  <ion-icon name="eye-outline"></ion-icon>
                                 </ion-button>
-                                <ion-button color="warning" size="small" fill="clear" (click)="destacarComparacion(item, i)">
-                                  <ion-icon color="warning" [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
+                                <ion-button *ngIf="comp.pdfId" fill="clear" color="success" size="small"
+                                  (click)="descargarPDFComparacion(solpe.id, comp.pdfId)">
+                                  <ion-icon name="download-outline"></ion-icon>
+                                </ion-button>
+                              </td>
+                              <td>
+                                <ion-button color="danger" fill="clear"
+                                  (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id, item, i)">
+                                  <ion-icon name="close-circle"></ion-icon>
+                                </ion-button>
+                                <ion-button color="warning" fill="clear" (click)="destacarComparacion(item, i)">
+                                  <ion-icon [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
                                 </ion-button>
                               </td>
                             </tr>

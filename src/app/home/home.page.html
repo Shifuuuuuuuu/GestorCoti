@@ -11,7 +11,12 @@
   <div class="menu-grid">
     <div class="menu-item" (click)="navigateTo('visualizacion-solped')">
       <ion-icon name="eye-outline" class="menu-icon"></ion-icon>
-      <p>Aprobacion de solped</p>
+      <div class="icon-wrapper">
+        <ion-badge *ngIf="preAprobadasCount > 0" class="contador-preaprobado">
+          {{ preAprobadasCount }}
+        </ion-badge>
+      </div>
+      <p>Aprobación de solped</p>
       <span>Podrás aprobar o rechazar solped</span>
     </div>
     <div class="menu-item" (click)="navigateTo('historial-solpe')">

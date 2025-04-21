@@ -113,8 +113,10 @@ export class EditarSolpedPage implements OnInit {
 
   async eliminarComparacionCompleta(solpedId: string, itemId: string, comparacionId: number, item: any, index: number) {
     await this.eliminarComparacionFirestore(solpedId, itemId, comparacionId);
-    this.eliminarComparacionLocal(item, index);
+    item.comparaciones.splice(index, 1);
+    this.cdRef.detectChanges();
   }
+
 
   destacarComparacion(item: any, index: number) {
     item.comparaciones[index].destacado = !item.comparaciones[index].destacado;
@@ -248,8 +250,6 @@ export class EditarSolpedPage implements OnInit {
       this.loading = false;
     });
   }
-
-
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
       this.listaUsuarios = snapshot.docs.map(doc => {
@@ -263,8 +263,6 @@ export class EditarSolpedPage implements OnInit {
       console.error('Error recuperando usuarios:', error);
     });
   }
-
-
   filtrarSolpes() {
     const normalize = (str: string) => str?.toLowerCase().trim();
 
@@ -333,13 +331,58 @@ export class EditarSolpedPage implements OnInit {
         return '#6c757d';
     }
   }
-  verFactura(base64Data: string) {
-    const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
-    const blob = this.base64ToBlob(base64Clean, 'application/pdf');
-    const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+
+
+  verPDFComparacion(solpedId: string, pdfId: string) {
+    this.firestore.collection('solpes').doc(solpedId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
+      if (!doc.exists) {
+        this.mostrarToast('El PDF no fue encontrado', 'danger');
+        return;
+      }
+
+      const data = doc.data() as { base64: string };
+      const base64 = data.base64;
+
+      if (!base64) {
+        this.mostrarToast('El archivo está vacío', 'danger');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
   }
 
+  descargarPDFComparacion(solpedId: string, pdfId: string) {
+    this.firestore.collection('solpes').doc(solpedId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
+      if (!doc.exists) {
+        this.mostrarToast('El PDF no fue encontrado', 'danger');
+        return;
+      }
+
+      const data = doc.data() as { base64: string, nombre: string };
+      const base64 = data.base64;
+
+      if (!base64) {
+        this.mostrarToast('El archivo está vacío', 'danger');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      const fileName = data.nombre || 'Comparacion.pdf';
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+  }
 
   base64ToBlob(base64: string, contentType: string): Blob {
     const byteCharacters = atob(base64);
@@ -359,11 +402,15 @@ export class EditarSolpedPage implements OnInit {
 
     return new Blob(byteArrays, { type: contentType });
   }
-
   async cambiarEstatus(solpe: any) {
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',
       inputs: [
+        { name: 'estatus', type: 'radio', label: 'Aprobado', value: 'Aprobado' },
+        { name: 'estatus', type: 'radio', label: 'Rechazado', value: 'Rechazado' },
+        { name: 'estatus', type: 'radio', label: 'Solicitado', value: 'Solicitado' },
+        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Tránsito a Faena' },
+        { name: 'estatus', type: 'radio', label: 'Pre Aprobado', value: 'Pre Aprobado' },
         { name: 'estatus', type: 'radio', label: 'Oc enviada a Proveedor', value: 'Oc enviada a Proveedor' },
         { name: 'estatus', type: 'radio', label: 'Por Importación', value: 'Por Importación' },
       ],

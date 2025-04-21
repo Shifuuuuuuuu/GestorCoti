@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { MenuController } from '@ionic/angular';
+import { MenuController, ToastController } from '@ionic/angular';
+import { ArchivoPDF } from '../Interface/IArchivoPDF';
 
 @Component({
   selector: 'app-historial-solpe',
@@ -24,7 +25,9 @@ export class HistorialSolpePage implements OnInit {
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
-  constructor(private firestore: AngularFirestore,private menu: MenuController) {}
+  constructor(private firestore: AngularFirestore,private menu: MenuController,
+    private toastController: ToastController
+  ) {}
 
   ngOnInit() {
     this.cargarSolpes();
@@ -45,6 +48,7 @@ export class HistorialSolpePage implements OnInit {
       this.solpesFiltradas = [...this.solpesOriginal];
     });
   }
+
   ionViewWillEnter() {
     this.menu.enable(false);
   }
@@ -61,19 +65,111 @@ export class HistorialSolpePage implements OnInit {
       console.error('Error recuperando usuarios:', error);
     });
   }
+  verPDFComparacion(solpedId: string, pdfId: string) {
+    this.firestore.collection('solpes').doc(solpedId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
+      if (!doc.exists) {
+        this.mostrarToast('El PDF no fue encontrado', 'danger');
+        return;
+      }
+
+      const data = doc.data() as ArchivoPDF;
+      const base64 = data.base64;
+
+      if (!base64) {
+        this.mostrarToast('El archivo está vacío', 'danger');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
+
+  async descargarPDFComparacion(solpedId: string, pdfId: string, nombreEmpresa: string) {
+    try {
+      const doc = await this.firestore
+        .collection('solpes')
+        .doc(solpedId)
+        .collection('pdfs')
+        .doc(pdfId)
+        .ref.get();
+
+      if (!doc.exists) {
+        this.mostrarToast('El PDF no fue encontrado', 'danger');
+        return;
+      }
+
+      const data = doc.data() as ArchivoPDF;
+      const base64 = data.base64;
+
+      if (!base64) {
+        this.mostrarToast('El PDF está vacío', 'danger');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      const fileName = data.nombre || 'Comparacion';
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al descargar PDF:', error);
+      this.mostrarToast('Error al descargar el PDF', 'danger');
+    }
+  }
+
+
+  base64ToBlob(base64: string, contentType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
+
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
+
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+
+    return new Blob(byteArrays, { type: contentType });
+  }
+
+  async mostrarToast(mensaje: string, color: 'success' | 'warning' | 'danger' | 'primary' = 'primary') {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 3000,
+      position: 'bottom',
+      color: color
+    });
+    await toast.present();
+  }
+
   buscarSolpe() {
     this.firestore
       .collection('solpes', ref => ref.where('numero_solpe', '==', this.numeroBusqueda))
       .get()
       .subscribe(snapshot => {
         if (!snapshot.empty) {
-          this.solpeEncontrada = snapshot.docs[0].data();
+          const doc = snapshot.docs[0];
+          const data = doc.data() as any; // o usa tu interfaz si la tienes: as Solpes
+          this.solpeEncontrada = { id: doc.id, ...data };
         } else {
           this.solpeEncontrada = null;
         }
         this.buscado = true;
       });
   }
+
   filtrarSolpes() {
     this.solpesFiltradas = this.solpesOriginal.filter(solpe => {
       let fechaSolpe = '';

@@ -1,12 +1,14 @@
 <ion-header [translucent]="true">
-  <ion-toolbar style="--background: red;" >
+  <ion-toolbar style="--background: red;">
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/menu-cotizador" style="color: white;"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Gestor SOLPES</ion-title>
   </ion-toolbar>
 </ion-header>
-<br>
+
+<br />
+
 <ion-content [fullscreen]="true">
   <ng-container *ngIf="loading; else contentLoaded">
     <ion-list>
@@ -18,23 +20,20 @@
           <ion-skeleton-text [animated]="true"></ion-skeleton-text>
         </ion-thumbnail>
         <ion-label>
-          <h3>
-            <ion-skeleton-text [animated]="true" style="width: 80%;"></ion-skeleton-text>
-          </h3>
-          <p>
-            <ion-skeleton-text [animated]="true" style="width: 60%;"></ion-skeleton-text>
-          </p>
-          <p>
-            <ion-skeleton-text [animated]="true" style="width: 30%;"></ion-skeleton-text>
-          </p>
+          <h3><ion-skeleton-text [animated]="true" style="width: 80%;"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text [animated]="true" style="width: 60%;"></ion-skeleton-text></p>
+          <p><ion-skeleton-text [animated]="true" style="width: 30%;"></ion-skeleton-text></p>
         </ion-label>
       </ion-item>
     </ion-list>
   </ng-container>
+
   <ng-template #contentLoaded>
-    <ion-card class="main-card" >
-      <div *ngFor="let solpe of solpes" class="solpe-container">
+    <ion-card class="main-card">
+      <div *ngFor="let solpe of solpes; let idx = index" class="solpe-container">
         <h3 style="margin-left: 1%;">SOLPE N° {{ solpe.numero_solpe }}</h3>
+
+        <!-- Información general -->
         <ion-card class="inner-card">
           <div class="table-container">
             <table class="styled-table">
@@ -63,8 +62,10 @@
             </table>
           </div>
         </ion-card>
+
+        <!-- Lista de ítems -->
         <ion-card class="inner-card">
-          <div class="table-container" >
+          <div class="table-container">
             <table class="styled-table">
               <thead>
                 <tr>
@@ -72,7 +73,7 @@
                   <th>Descripción</th>
                   <th>Código</th>
                   <th>Cantidad</th>
-                  <th>stock</th>
+                  <th>Stock</th>
                   <th>Patente / Nº Interno</th>
                   <th>Imagen</th>
                   <th>Comparación Precios</th>
@@ -88,9 +89,7 @@
                   <td>{{ item.numero_interno }}</td>
                   <td>
                     <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
-                      <img *ngIf="item.imagen_referencia_base64"
-                      [src]="item.imagen_referencia_base64"
-                      alt="Imagen" width="200" height="200">
+                      <img [src]="item.imagen_referencia_base64" alt="Imagen" width="200" height="200" />
                     </div>
                   </td>
                   <td>
@@ -100,36 +99,44 @@
                         <thead>
                           <tr>
                             <th>Empresa</th>
+                            <th>Cotización</th>
                             <th>Precio</th>
-                            <th>N Cotización</th>
                             <th>Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
                           <tr *ngFor="let comp of item.comparaciones; let i = index">
                             <td>{{ comp.empresa?.toUpperCase() }}</td>
-                            <td>{{ comp.numeroCotizacion }}</td>
+                            <td>
+                              <ion-select interface="popover" [(ngModel)]="comp.pdfId" placeholder="Selecciona PDF">
+                                <ion-select-option *ngFor="let pdf of pdfsCargados[solpe.id]" [value]="pdf.id">
+                                  {{ pdf.nombre }}
+                                </ion-select-option>
+                              </ion-select>
+                            </td>
                             <td>{{ comp.precio | currency }}</td>
                             <td>
+                              <ion-button size="small" color="primary" fill="clear" *ngIf="comp.pdfId" (click)="verPDFComparacion(solpe.id, comp.pdfId)">
+                                <ion-icon name="eye-outline"></ion-icon>
+                              </ion-button>
                               <ion-button color="danger" size="small" fill="clear" (click)="eliminarComparacion(item, i)">
                                 <ion-icon name="close-outline"></ion-icon>
                               </ion-button>
-
                               <ion-button color="warning" size="small" fill="clear" (click)="destacarComparacion(item, i)">
-                                <ion-icon color="warning" [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
+                                <ion-icon [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
                               </ion-button>
+                              <input type="file" (change)="subirPDFs($event, solpe.id, item)" accept="application/pdf" multiple hidden />
                             </td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
-                    <br>
 
                     <ion-buttons>
                       <ion-button size="small" (click)="abrirComparacion(item)">
                         <ion-icon color="secondary" name="add-circle-outline"></ion-icon>
                       </ion-button>
-                      <ion-button  size="small" (click)="subirComparaciones(solpe)">
+                      <ion-button size="small" (click)="subirComparaciones(solpe)">
                         <ion-icon color="success" name="send-outline"></ion-icon>
                       </ion-button>
                     </ion-buttons>
@@ -137,20 +144,30 @@
                 </tr>
               </tbody>
             </table>
-            <div style="text-align: left; margin-top: 10px;" *ngFor="let solpe of solpes">
-              <ion-button fill="clear" size="small" color="danger" (click)="fileInput.click()">
-                <ion-icon name="document-attach-outline" slot="start"></ion-icon>
-              </ion-button>
-              <input type="file" #fileInput (change)="subirPDFs($event, solpe.id)" accept="application/pdf" multiple hidden />
-
-              <div *ngIf="pdfsCargados[solpe.id]?.length">
-                <ion-chip *ngFor="let pdfNombre of pdfsCargados[solpe.id]">
-                  <ion-label>{{ pdfNombre }}</ion-label>
-                </ion-chip>
-              </div>
-            </div>
           </div>
         </ion-card>
+
+        <!-- 🔽 Botón y input oculto para subir PDF por SOLPE -->
+        <div class="ion-padding-start">
+          <ion-button fill="clear" color="dark" (click)="abrirInputArchivos(solpe.id)">
+            <ion-icon slot="icon-only" name="document-attach-outline"></ion-icon>
+          </ion-button>
+        </div>
+        <input type="file"
+        #fileInputPDF
+        (change)="subirPDFsGlobal($event, solpe.id)"
+        accept="application/pdf"
+        multiple
+        hidden />
+
+
+        <!-- Lista visual de archivos cargados con opción de eliminar -->
+        <div *ngIf="pdfsCargados[solpe.id]?.length">
+          <ion-chip *ngFor="let pdf of pdfsCargados[solpe.id]">
+            <ion-label>{{ pdf.nombre }}</ion-label>
+            <ion-icon name="close-circle" color="danger" (click)="eliminarPDF(solpe.id, pdf.id, pdf.nombre)"></ion-icon>
+          </ion-chip>
+        </div>
       </div>
     </ion-card>
   </ng-template>

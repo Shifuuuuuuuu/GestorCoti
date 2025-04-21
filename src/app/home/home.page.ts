@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuController, ModalController } from '@ionic/angular';
 import { ChatModalComponent } from '../chat-modal/chat-modal.component';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
   selector: 'app-home',
@@ -14,6 +15,7 @@ export class HomePage implements OnInit  {
   cotizacionesAceptadasCount: number = 0;
   comparacionesAceptadasCount: number = 0;
   totalAceptadas: number = 0;
+  preAprobadasCount: number = 0;
 
   usuario = {};
 
@@ -21,16 +23,30 @@ export class HomePage implements OnInit  {
     private router: Router,
     private modalController: ModalController,
     private menu: MenuController,
+    private firestore: AngularFirestore,
   ) {}
 
   navigateTo(page: string) {
+    if (page === 'visualizacion-solped') {
+      this.preAprobadasCount = 0; // Se resetea el contador cuando entra a verlas
+    }
     this.router.navigate([`/${page}`]);
   }
 
   ngOnInit() {
+    this.contarPreAprobadas();
   }
+
   ionViewWillEnter() {
     this.menu.enable(true);
+  }
+
+  contarPreAprobadas() {
+    this.firestore.collection('solpes', ref => ref.where('estatus', '==', 'Pre Aprobado'))
+      .get()
+      .subscribe(snapshot => {
+        this.preAprobadasCount = snapshot.size;
+      });
   }
 
   async openChat(usuario: any) {

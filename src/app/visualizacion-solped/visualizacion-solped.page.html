@@ -4,7 +4,7 @@
       <ion-back-button defaultHref="/home" style="color: white;"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Gestión de SOLPED</ion-title>
-    <ion-button slot="end" fill="clear"  (click)="mostrarItems = !mostrarItems">
+    <ion-button slot="end" fill="clear" (click)="mostrarItems = !mostrarItems">
       <ion-icon color="light" [name]="mostrarItems ? 'eye' : 'eye-off'" slot="icon-only"></ion-icon>
     </ion-button>
   </ion-toolbar>
@@ -17,28 +17,7 @@
         <ion-card-title>
           <ion-skeleton-text [animated]="true" style="width: 50%"></ion-skeleton-text>
         </ion-card-title>
-        <ion-card-subtitle>
-          <ion-skeleton-text [animated]="true" style="width: 30%"></ion-skeleton-text>
-        </ion-card-subtitle>
-        <ion-card-subtitle>
-          <ion-skeleton-text [animated]="true" style="width: 40%"></ion-skeleton-text>
-        </ion-card-subtitle>
-        <ion-card-subtitle>
-          <ion-skeleton-text [animated]="true" style="width: 40%"></ion-skeleton-text>
-        </ion-card-subtitle>
       </ion-card-header>
-
-      <ion-card-content>
-        <ion-card class="inner-card">
-          <ion-grid>
-            <ion-row>
-              <ion-col size="12">
-                <ion-skeleton-text [animated]="true" style="width: 100%; height: 200px;"></ion-skeleton-text>
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-        </ion-card>
-      </ion-card-content>
     </ion-card>
   </ng-container>
 
@@ -49,14 +28,6 @@
           <ion-card-title color="secondary" style="margin: 0; font-size: 1rem;">
             N° SOLPED: {{ solped.numero_solpe }}
           </ion-card-title>
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <ion-button *ngIf="solped.factura_general_base64" fill="clear" size="small" (click)="verPDF(solped.factura_general_base64)">
-              <ion-icon name="eye-outline"></ion-icon>
-            </ion-button>
-            <ion-button *ngIf="solped.factura_general_base64" fill="clear" color="primary" size="small" (click)="descargarPDF(solped.factura_general_base64, solped.numero_solpe)">
-              <ion-icon slot="download-outlin" name="download-outline"></ion-icon>
-            </ion-button>
-          </div>
         </div>
         <ion-card-subtitle>Fecha: {{ solped.fecha }}</ion-card-subtitle>
         <ion-card-subtitle>Usuario: {{ solped.usuario }}</ion-card-subtitle>
@@ -78,7 +49,6 @@
                       <th>Patente/ N interno</th>
                       <th>Imagen</th>
                       <th>Comparación Precios</th>
-                      <th>Guardar</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -91,20 +61,16 @@
                       <td>{{ item.numero_interno }}</td>
                       <td>
                         <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
-                          <img *ngIf="item.imagen_referencia_base64"
-                          [src]="item.imagen_referencia_base64"
-                          alt="Imagen" width="200" height="200">
+                          <img [src]="item.imagen_referencia_base64" alt="Imagen" width="200" height="200">
                         </div>
                       </td>
                       <td>
                         <div *ngIf="item.comparaciones?.length">
-                          <h5>Comparaciones:</h5>
                           <table class="styled-table">
                             <thead>
                               <tr>
                                 <th>Empresa</th>
                                 <th>Precio</th>
-                                <th>N cotización</th>
                                 <th>Acción</th>
                               </tr>
                             </thead>
@@ -112,21 +78,21 @@
                               <tr *ngFor="let comp of item.comparaciones">
                                 <td [ngClass]="{ 'destacada': comp.destacado }">{{ comp.empresa }}</td>
                                 <td>{{ comp.precio | currency }}</td>
-                                <td>{{ comp.numeroCotizacion }}</td>
                                 <td>
+                                  <ion-button *ngIf="comp.pdfId" size="small" fill="clear" color="primary" (click)="verPDFComparacion(solped.id, comp.pdfId)">
+                                    <ion-icon name="eye-outline"></ion-icon>
+                                  </ion-button>
+                                  <ion-button *ngIf="comp.pdfId" size="small" fill="clear" color="success" (click)="descargarPDFComparacion(solped.id, comp.pdfId)">
+                                    <ion-icon name="download-outline"></ion-icon>
+                                  </ion-button>
                                   <ion-button color="danger" fill="clear" (click)="eliminarComparacion(solped.id, item.id, comp.id)">
-                                    <ion-icon color="danger" name="close-circle"></ion-icon>
+                                    <ion-icon name="close-circle"></ion-icon>
                                   </ion-button>
                                 </td>
                               </tr>
                             </tbody>
                           </table>
                         </div>
-                      </td>
-                      <td>
-                        <ion-button fill="outline" size="small" color="primary" (click)="guardarItemTemporal(item, solped.id)">
-                          Guardar
-                        </ion-button>
                       </td>
                     </tr>
                   </tbody>
@@ -154,76 +120,5 @@
         </ion-row>
       </ion-card-content>
     </ion-card>
-
-    <ion-card *ngIf="itemsGuardados.length && mostrarItems" class="floating-card">
-      <ion-card-header>
-        <ion-card-title color="primary">Ítems Guardados</ion-card-title>
-      </ion-card-header>
-
-      <ion-card-content>
-        <ion-grid>
-          <ion-row>
-            <ion-col size="12">
-              <table class="styled-table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Descripción</th>
-                    <th>Código Referencial</th>
-                    <th>Cantidad</th>
-                    <th>Stock</th>
-                    <th>Patente/ N interno</th>
-                    <th>MP10</th>
-                    <th>Seleccionar</th>
-                    <th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of itemsGuardados">
-                    <td>{{ item.item }}</td>
-                    <td>{{ item.descripcion }}</td>
-                    <td>{{ item.codigo_referencial }}</td>
-                    <td>{{ item.cantidad }}</td>
-                    <td>{{ item.stock }}</td>
-                    <td>{{ item.numero_interno }}</td>
-                    <td>{{ item.mp10 }}</td>
-                    <td>
-                      <ion-radio-group [(ngModel)]="selectedItem">
-                        <ion-radio [value]="item"></ion-radio>
-                      </ion-radio-group>
-                    </td>
-                    <td>
-                      <ion-grid>
-                        <ion-row class="ion-align-items-center">
-                          <ion-col size="9">
-                            <ion-item lines="none">
-                              <ion-label>Seleccionar SOLPED</ion-label>
-                              <ion-select [(ngModel)]="solpedSeleccionadaId" interface="popover">
-                                <ion-select-option *ngFor="let solped of solpedList" [value]="solped.id">
-                                  {{ solped.numero_solpe }} - {{ solped.usuario }}
-                                </ion-select-option>
-                              </ion-select>
-                            </ion-item>
-                          </ion-col>
-                          <ion-col size="3" class="ion-text-end">
-                            <ion-button color="success" (click)="agregarItemASolped()" fill="clear">
-                              <ion-icon name="add-circle" slot="icon-only"></ion-icon>
-                            </ion-button>
-                          </ion-col>
-                        </ion-row>
-                      </ion-grid>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
-    </ion-card>
-
-    <div *ngIf="solpedList.length === 0" class="no-solped-container">
-      <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
-    </div>
   </ng-container>
 </ion-content>

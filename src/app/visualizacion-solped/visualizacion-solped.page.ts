@@ -75,13 +75,8 @@ export class VisualizacionSolpedPage implements OnInit {
     }
   }
 
-  verPDF(idPdf: string) {
-    if (!idPdf) {
-      this.mostrarToast('No hay PDF disponible', 'warning');
-      return;
-    }
-
-    this.firestore.collection('pdfs').doc(idPdf).get().subscribe(doc => {
+  verPDFComparacion(solpedId: string, pdfId: string) {
+    this.firestore.collection('solpes').doc(solpedId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
       if (!doc.exists) {
         this.mostrarToast('El PDF no fue encontrado', 'danger');
         return;
@@ -91,7 +86,7 @@ export class VisualizacionSolpedPage implements OnInit {
       const base64 = data.base64;
 
       if (!base64) {
-        this.mostrarToast('El archivo está vacío', 'warning');
+        this.mostrarToast('El archivo está vacío', 'danger');
         return;
       }
 
@@ -100,6 +95,38 @@ export class VisualizacionSolpedPage implements OnInit {
       window.open(url, '_blank');
     });
   }
+
+  descargarPDFComparacion(solpedId: string, pdfId: string) {
+    this.firestore.collection('solpes').doc(solpedId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
+      if (!doc.exists) {
+        this.mostrarToast('El PDF no fue encontrado', 'danger');
+        return;
+      }
+
+      const data = doc.data() as ArchivoPDF;
+      const base64 = data.base64;
+      const nombreArchivo = data.nombre || 'Comparacion';
+
+      if (!base64) {
+        this.mostrarToast('El archivo está vacío', 'danger');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      const fileName = `${nombreArchivo}.pdf`;
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+  }
+
 
 
 
@@ -121,31 +148,7 @@ export class VisualizacionSolpedPage implements OnInit {
 
     return new Blob(byteArrays, { type: contentType });
   }
-  descargarPDF(base64: string, nombre:string) {
-    if (!base64) {
-      this.mostrarToast('Factura no disponible', 'danger');
-      return;
-    }
 
-    try {
-      const base64Clean = base64.replace(/^data:application\/pdf;base64,/, '');
-      const blob = this.base64ToBlob(base64Clean, 'application/pdf');
-      const url = URL.createObjectURL(blob);
-      const fileName = `Cotización - N° SOLPED ${nombre}.pdf`;
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error al descargar la cotización:', error);
-      this.mostrarToast('Error al descargar la cotización', 'danger');
-    }
-  }
   async mostrarToast(mensaje: string, color: 'success' | 'warning' | 'danger' | 'primary' = 'primary') {
     const toast = await this.toastController.create({
       message: mensaje,
@@ -172,7 +175,6 @@ export class VisualizacionSolpedPage implements OnInit {
     });
   }
   async guardarItemTemporal(item: any, solpedId: string) {
-    // Validar que todos los campos estén completos
     if (!item.item || !item.descripcion || !item.codigo_referencial ||
         item.cantidad == null || item.stock == null || !item.numero_interno) {
       const alert = await this.alertCtrl.create({
@@ -183,21 +185,15 @@ export class VisualizacionSolpedPage implements OnInit {
       await alert.present();
       return;
     }
-
-    // Set the selected item
     this.selectedItem = item;
-
-    // Remover el item de la lista local
     const solped = this.solpedList.find(s => s.id === solpedId);
     if (solped) {
       const index = solped.items.indexOf(item);
       if (index > -1) {
-        solped.items.splice(index, 1); // Quitar de la lista visual
-        await this.eliminarItemDeFirestore(solpedId, item.id); // Eliminar de la BD
+        solped.items.splice(index, 1);
+        await this.eliminarItemDeFirestore(solpedId, item.id);
       }
     }
-
-    // Subir el ítem a Firestore
     await this.subirItemAFirestore();
   }
 

@@ -67,6 +67,11 @@ export class PerfilUsuarioPage implements OnInit {
     document.body.classList.toggle('dark', this.isDarkMode);
     localStorage.setItem('darkMode', this.isDarkMode.toString());
   }
+  toggleDarkModeManualmente() {
+    this.isDarkMode = !this.isDarkMode;
+    document.body.classList.toggle('dark', this.isDarkMode);
+    localStorage.setItem('darkMode', this.isDarkMode.toString());
+  }
 
   goBack() {
     this.navCtrl.back();

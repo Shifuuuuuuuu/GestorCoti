@@ -16,7 +16,8 @@ export class GestorsolpesPage implements OnInit {
   dataFacturaPDF: string = '';
   // Asegúrate de que `archivosPDF` sea un objeto que almacene un array de `ArchivoPDF` para cada `solpeId`
   archivosPDF: { [solpeId: string]: ArchivoPDF[] } = {};
-  pdfsCargados: { [solpeId: string]: string[] } = {};
+  pdfsCargados: { [solpeId: string]: { id: string; nombre: string }[] } = {};
+  @ViewChildren('fileInputPDF') fileInputsPDF!: QueryList<ElementRef>;
 
   @ViewChildren('fileInput') fileInputs!: QueryList<ElementRef>;
 
@@ -134,37 +135,93 @@ export class GestorsolpesPage implements OnInit {
     });
     await alert.present();
   }
+  abrirInputArchivos(solpeId: string) {
+    const index = this.solpes.findIndex(s => s.id === solpeId);
+    if (index !== -1 && this.fileInputsPDF && this.fileInputsPDF.toArray()[index]) {
+      this.fileInputsPDF.toArray()[index].nativeElement.click();
+    }
+  }
 
 
+  verPDFComparacion(solpeId: string, pdfId: string) {
+    this.firestore.collection('solpes').doc(solpeId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
+      if (!doc.exists) {
+        this.mostrarToast('El PDF no fue encontrado', 'danger');
+        return;
+      }
+
+      const data = doc.data() as ArchivoPDF;
+      const base64 = data.base64;
+
+      if (!base64) {
+        this.mostrarToast('El archivo está vacío', 'danger');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
 
 
-  subirPDFs(event: any, solpeId: string) {
+  async subirPDFs(event: any, solpeId: string, item: any) {
     const archivos: FileList = event.target.files;
 
     if (archivos.length > 0) {
-      Array.from(archivos).forEach((archivo: File) => {
+      for (let i = 0; i < archivos.length; i++) {
+        const archivo = archivos[i];
         const reader = new FileReader();
 
         reader.onload = async () => {
           const base64 = (reader.result as string).split(',')[1];
           const nombreArchivo = archivo.name;
 
-          // Guardamos el PDF en la estructura local
-          if (!this.pdfsCargados[solpeId]) {
-            this.pdfsCargados[solpeId] = [];
-          }
-          this.pdfsCargados[solpeId].push(nombreArchivo);
+          // Preguntar a qué comparación se quiere asociar el PDF
+          const inputOptions = item.comparaciones.map((comp: any, index: number) => ({
+            name: 'comparacion',
+            type: 'radio',
+            label: `Empresa: ${comp.empresa} | N° Cot: ${comp.numeroCotizacion}`,
+            value: index.toString()
+          }));
 
-          // Guardar en Firestore
-          const pdfData = {
-            nombre: nombreArchivo,
-            base64: base64,
-          };
+          const alert = await this.alertController.create({
+            header: 'Selecciona la comparación',
+            inputs: inputOptions,
+            buttons: [
+              {
+                text: 'Cancelar',
+                role: 'cancel'
+              },
+              {
+                text: 'Asignar',
+                handler: async (selectedIndex: string) => {
+                  const index = parseInt(selectedIndex, 10);
+                  const pdfRef = this.firestore.collection('solpes').doc(solpeId).collection('pdfs');
+                  const docRef = await pdfRef.add({
+                    nombre: nombreArchivo,
+                    base64: base64
+                  });
 
-          const pdfRef = this.firestore.collection('solpes').doc(solpeId).collection('pdfs');
-          await pdfRef.add(pdfData);
+                  item.comparaciones[index].pdfId = docRef.id;
 
-          this.mostrarToast(`PDF "${nombreArchivo}" cargado correctamente`, 'success');
+                  // Guardar cambios en Firestore
+                  await this.firestore.collection('solpes').doc(solpeId).update({
+                    items: [...item.solpe.items]
+                  });
+                  if (!this.pdfsCargados[solpeId]) {
+                    this.pdfsCargados[solpeId] = [];
+                  }
+                  this.pdfsCargados[solpeId].push({ id: docRef.id, nombre: nombreArchivo });
+
+
+                  this.mostrarToast(`PDF "${nombreArchivo}" asignado correctamente`, 'success');
+                }
+              }
+            ]
+          });
+
+          await alert.present();
         };
 
         reader.onerror = () => {
@@ -172,11 +229,43 @@ export class GestorsolpesPage implements OnInit {
         };
 
         reader.readAsDataURL(archivo);
-      });
+      }
     }
   }
 
+  subirPDFsGlobal(event: any, solpeId: string) {
+    const archivos: FileList = event.target.files;
 
+    if (archivos.length > 0) {
+      for (let i = 0; i < archivos.length; i++) {
+        const archivo = archivos[i];
+        const reader = new FileReader();
+
+        reader.onload = async () => {
+          const base64 = (reader.result as string).split(',')[1];
+          const nombreArchivo = archivo.name;
+
+          const pdfRef = this.firestore.collection('solpes').doc(solpeId).collection('pdfs');
+          const docRef = await pdfRef.add({ nombre: nombreArchivo, base64 });
+
+          // Asegúrate de que el array sea de objetos con id y nombre
+          if (!this.pdfsCargados[solpeId]) {
+            this.pdfsCargados[solpeId] = [];
+          }
+
+          this.pdfsCargados[solpeId].push({ id: docRef.id, nombre: nombreArchivo });
+
+          this.mostrarToast(`PDF "${nombreArchivo}" subido correctamente`, 'success');
+        };
+
+        reader.onerror = () => {
+          this.mostrarToast(`Error al leer archivo "${archivo.name}"`, 'danger');
+        };
+
+        reader.readAsDataURL(archivo);
+      }
+    }
+  }
 
 
   async abrirComparacion(item: any) {
@@ -184,29 +273,51 @@ export class GestorsolpesPage implements OnInit {
       header: 'Agregar Comparación de Precios',
       inputs: [
         { name: 'empresa', type: 'text', placeholder: 'Nombre de la Empresa' },
-        { name: 'numeroCotizacion', type: 'number', placeholder: 'Número de Cotización' },
-        { name: 'precio', type: 'number', placeholder: 'Precio' },
+        { name: 'precio', type: 'number', placeholder: 'Precio' }
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Agregar',
           handler: (data) => {
-            if (data.empresa && data.precio && data.numeroCotizacion) {
+            if (data.empresa && data.precio) {
               const nuevoId = Date.now();
               item.comparaciones.push({
                 id: nuevoId,
                 empresa: data.empresa,
                 precio: Number(data.precio),
-                numeroCotizacion: Number(data.numeroCotizacion)
+                numeroCotizacion: '',
+                pdfId: ''
               });
+              this.mostrarToast('Comparación agregada correctamente', 'success');
+              return true;
+            } else {
+              this.mostrarToast('Debes completar empresa y precio', 'danger');
+              return false;
             }
-          },
-        },
-      ],
+          }
+        }
+      ]
     });
+
     await alert.present();
   }
+  async eliminarPDF(solpeId: string, pdfId: string, nombre: string) {
+    try {
+      await this.firestore.collection('solpes').doc(solpeId).collection('pdfs').doc(pdfId).delete();
+
+      // Eliminar de la lista visual
+      this.pdfsCargados[solpeId] = this.pdfsCargados[solpeId].filter(pdf => pdf.id !== pdfId);
+
+      this.mostrarToast(`PDF "${nombre}" eliminado correctamente`, 'success');
+    } catch (error) {
+      console.error('Error al eliminar PDF:', error);
+      this.mostrarToast('No se pudo eliminar el PDF', 'danger');
+    }
+  }
+
+
+
 
 
   guardarComparacion(item: any, solpeId: string) {

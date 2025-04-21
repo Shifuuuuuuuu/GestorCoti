@@ -121,10 +121,13 @@ ion-input {
   color: #000;
 }
 
-.ion-input-custom:hover,
-ion-item:hover {
-  background-color: #e6e6e6;
+.modo-oscuro-toggle.igual-margin {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding-left: 16px; /* Este es el padding horizontal estándar de ion-item */
 }
+
 
 
 ion-input:focus {
