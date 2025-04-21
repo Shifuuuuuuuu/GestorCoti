@@ -1,11 +1,11 @@
 <ion-header>
-  <ion-toolbar style="--background: red;" >
+  <ion-toolbar style="--background: red;">
     <ion-buttons slot="start" style="color: white;">
-      <ion-back-button defaultHref="/" ></ion-back-button>
+      <ion-back-button defaultHref="/"></ion-back-button>
     </ion-buttons>
-    <ion-title style="color: white;" >Historial de SOLPED</ion-title>
+    <ion-title style="color: white;">Historial de SOLPED</ion-title>
     <ion-button slot="end" size="large" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
-      <ion-icon color="light"  name="filter">{{ mostrarFiltros ? 'Ocultar Filtros' : 'Mostrar Filtros' }}</ion-icon>
+      <ion-icon color="light" name="filter">{{ mostrarFiltros ? 'Ocultar filtros' : 'Mostrar filtros' }}</ion-icon>
     </ion-button>
     <ion-button style="color: white;" slot="end" size="large" fill="clean" (click)="ordenarSolpes()">
       {{ ordenAscendente ? '↓' : '↑' }}
@@ -13,26 +13,27 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding"  >
-  <ion-segment [(ngModel)]="segmentoSeleccionado" >
+<ion-content class="ion-padding">
+  <ion-segment [(ngModel)]="segmentoSeleccionado">
     <ion-segment-button value="historial">
-      <ion-label>Historial de SOLPES</ion-label>
-    </ion-segment-button >
+      <ion-label>Historial de SOLPED</ion-label>
+    </ion-segment-button>
     <ion-segment-button value="buscar">
       <ion-label>Buscar por número</ion-label>
     </ion-segment-button>
   </ion-segment>
+
   <div *ngIf="segmentoSeleccionado === 'buscar'">
     <ion-grid>
       <ion-row>
         <ion-col size="10">
           <ion-item>
-            <ion-label position="floating">Número de SOLPE</ion-label>
+            <ion-label position="floating">Número de SOLPED</ion-label>
             <ion-input [(ngModel)]="numeroBusqueda" type="number"></ion-input>
           </ion-item>
         </ion-col>
         <ion-col size="2">
-          <ion-button expand="block" shape="Round" style="--background: red;" (click)="buscarSolpe()">
+          <ion-button expand="block" shape="round" style="--background: red;" (click)="buscarSolpe()">
             <ion-icon color="light" name="search-outline"></ion-icon>
           </ion-button>
         </ion-col>
@@ -41,19 +42,20 @@
 
     <ion-card *ngIf="solpeEncontrada">
       <ion-card-header>
-        <ion-card-title>Detalles SOLPE #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
+        <ion-card-title>Detalles SOLPED #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
         <ion-card-subtitle>Fecha: {{ solpeEncontrada.fecha }}</ion-card-subtitle>
         <ion-card-subtitle>Usuario: {{ solpeEncontrada.usuario }}</ion-card-subtitle>
-        <ion-card-subtitle>Estatus: {{ solpeEncontrada.estatus }}</ion-card-subtitle>
+        <ion-card-subtitle>Estado: {{ solpeEncontrada.estatus }}</ion-card-subtitle>
       </ion-card-header>
+
       <ion-card-content *ngFor="let item of solpeEncontrada.items">
         <ion-card>
           <ion-card-header>
-            <ion-card-title>Item {{ item.item }} - {{ item.descripcion }}</ion-card-title>
+            <ion-card-title>Ítem {{ item.item }} - {{ item.descripcion }}</ion-card-title>
             <ion-card-subtitle>Cantidad: {{ item.cantidad }}</ion-card-subtitle>
             <ion-card-subtitle>Código: {{ item.codigo_referencial }}</ion-card-subtitle>
             <ion-card-subtitle>Stock: {{ item.stock }}</ion-card-subtitle>
-            <ion-card-subtitle>Patente /N interno: {{ item.numero_interno }}</ion-card-subtitle>
+            <ion-card-subtitle>Patente / N.º interno: {{ item.numero_interno }}</ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
             <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
@@ -70,27 +72,16 @@
                 <ion-col>{{ comp.empresa }}</ion-col>
                 <ion-col>${{ comp.precio }}</ion-col>
                 <ion-col>
-                  <ion-button
-                  *ngIf="comp.pdfId"
-                  size="small"
-                  fill="clear"
-                  color="primary"
-                  (click)="verPDFComparacion(solpeEncontrada.id, comp.pdfId)">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </ion-button>
-
-                <ion-button
-                  *ngIf="comp.pdfId"
-                  size="small"
-                  fill="clear"
-                  color="success"
-                  (click)="descargarPDFComparacion(solpeEncontrada.id, comp.pdfId, comp.empresa)">
-                  <ion-icon name="download-outline"></ion-icon>
-                </ion-button>
+                  <ion-button *ngIf="comp.pdfId" size="small" fill="clear" color="primary" (click)="verPDFComparacion(solpeEncontrada.id, comp.pdfId)">
+                    <ion-icon name="eye-outline"></ion-icon>
+                  </ion-button>
+                  <ion-button *ngIf="comp.pdfId" size="small" fill="clear" color="success" (click)="descargarPDFComparacion(solpeEncontrada.id, comp.pdfId, comp.empresa)">
+                    <ion-icon name="download-outline"></ion-icon>
+                  </ion-button>
                 </ion-col>
               </ion-row>
             </ion-grid>
-            <ion-text *ngIf="!item.comparaciones || item.comparaciones.length === 0" color="medium"> Sin productos</ion-text>
+            <ion-text *ngIf="!item.comparaciones || item.comparaciones.length === 0" color="medium">Sin productos</ion-text>
           </ion-card-content>
         </ion-card>
       </ion-card-content>
@@ -98,28 +89,28 @@
 
     <div *ngIf="buscado && !solpeEncontrada">
       <ion-text color="danger">
-        <p>No se encontró la SOLPE con ese número.</p>
+        <p>No se encontró la SOLPED con ese número.</p>
       </ion-text>
     </div>
   </div>
 
-
   <div *ngIf="segmentoSeleccionado === 'historial'">
 
     <div *ngIf="mostrarFiltros">
-      <ion-card >
-        <ion-grid >
-          <ion-row class="ion-align-items-center" >
+      <ion-card>
+        <ion-grid>
+          <ion-row class="ion-align-items-center">
 
-            <ion-col  size="12" size-md="3">
+            <ion-col size="12" size-md="3">
               <ion-item>
                 <ion-label position="floating">Fecha</ion-label>
                 <ion-input [(ngModel)]="filtroFecha" type="date"></ion-input>
               </ion-item>
             </ion-col>
+
             <ion-col size="12" size-md="3">
               <ion-item>
-                <ion-label>F. Estatus</ion-label>
+                <ion-label>F. Estado</ion-label>
                 <ion-select [(ngModel)]="filtroEstatus">
                   <ion-select-option *ngFor="let estatus of listaEstatus" [value]="estatus">
                     {{ estatus }}
@@ -127,28 +118,30 @@
                 </ion-select>
               </ion-item>
             </ion-col>
+
             <ion-col size="12" size-md="3">
-                <ion-item>
-                  <ion-label>F. Número de Contrato</ion-label>
-                  <ion-select [(ngModel)]="filtroContrato">
-                    <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
-                    <ion-select-option value="20-10-01">BENITEZ</ion-select-option>
-                    <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-                    <ion-select-option value="30-10-07">30-10-07</ion-select-option>
-                    <ion-select-option value="30-10-08">ARIDOS SAN JOAQUIN</ion-select-option>
-                    <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
-                    <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
-                    <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
-                    <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
-                    <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
-                    <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-                    <ion-select-option value="30-10-58">GASTON CASTILLO</ion-select-option>
-                    <ion-select-option value="30-10-59">30-10-59</ion-select-option>
-                    <ion-select-option value="30-10-60">30-10-60</ion-select-option>
-                    <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
-                  </ion-select>
-                </ion-item>
+              <ion-item>
+                <ion-label>F. N.º de contrato</ion-label>
+                <ion-select [(ngModel)]="filtroContrato">
+                  <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
+                  <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
+                  <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
+                  <ion-select-option value="30-10-07">30-10-07</ion-select-option>
+                  <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
+                  <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
+                  <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
+                  <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
+                  <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
+                  <ion-select-option value="30-10-57">CALAMA</ion-select-option>
+                  <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
+                  <ion-select-option value="30-10-59">30-10-59</ion-select-option>
+                  <ion-select-option value="30-10-60">30-10-60</ion-select-option>
+                  <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
+                </ion-select>
+              </ion-item>
             </ion-col>
+
             <ion-col size="12" size-md="3">
               <ion-item>
                 <ion-label>F. Usuario</ion-label>
@@ -159,16 +152,18 @@
                 </ion-select>
               </ion-item>
             </ion-col>
+
           </ion-row>
+
           <ion-row>
             <ion-col size="6">
-              <ion-button style="--background: rgb(87, 189, 132)" expand="block"  (click)="filtrarSolpes()">
-                Aplicar Filtros
+              <ion-button style="--background: rgb(87, 189, 132)" expand="block" (click)="filtrarSolpes()">
+                Aplicar filtros
               </ion-button>
             </ion-col>
             <ion-col size="6">
               <ion-button expand="block" color="danger" (click)="limpiarFiltros()">
-                Limpiar Filtros
+                Limpiar filtros
               </ion-button>
             </ion-col>
           </ion-row>
@@ -177,29 +172,27 @@
     </div>
 
     <ion-grid *ngFor="let solpe of solpesFiltradas">
-      <ion-row style="color: white;" class="header-row "[ngStyle]="{ 'background-color': getColorByStatus(solpe.estatus) }">
-        <ion-col><b>N° SOLPE</b></ion-col>
+      <ion-row style="color: white;" class="header-row" [ngStyle]="{ 'background-color': getColorByStatus(solpe.estatus) }">
+        <ion-col><b>N.º SOLPED</b></ion-col>
         <ion-col><b>Fecha</b></ion-col>
-        <ion-col><b>Numero de contrato</b></ion-col>
+        <ion-col><b>N.º de contrato</b></ion-col>
         <ion-col><b>Usuario</b></ion-col>
-        <ion-col><b>Estatus</b></ion-col>
+        <ion-col><b>Estado</b></ion-col>
       </ion-row>
       <ion-row>
         <ion-col>{{ solpe.numero_solpe }}</ion-col>
         <ion-col>{{ solpe.fecha }}</ion-col>
         <ion-col>{{ solpe.numero_contrato }}</ion-col>
         <ion-col>{{ solpe.usuario }}</ion-col>
-        <ion-col >
-          {{ solpe.estatus }}
-        </ion-col>
+        <ion-col>{{ solpe.estatus }}</ion-col>
       </ion-row>
     </ion-grid>
 
-  <br><br><br><br>
+    <br><br><br><br>
 
-  <ion-text *ngIf="solpesFiltradas.length === 0" class="no-solped-container">
-    <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
-  </ion-text>
+    <ion-text *ngIf="solpesFiltradas.length === 0" class="no-solped-container">
+      <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
+    </ion-text>
 
   </div>
 </ion-content>

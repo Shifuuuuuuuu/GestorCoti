@@ -26,7 +26,7 @@
       <ion-card-header>
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
           <ion-card-title color="secondary" style="margin: 0; font-size: 1rem;">
-            N° SOLPED: {{ solped.numero_solpe }}
+            N.º SOLPED: {{ solped.numero_solpe }}
           </ion-card-title>
         </div>
         <ion-card-subtitle>Fecha: {{ solped.fecha }}</ion-card-subtitle>
@@ -41,14 +41,14 @@
                 <table class="styled-table">
                   <thead>
                     <tr>
-                      <th>Item</th>
+                      <th>Ítem</th>
                       <th>Descripción</th>
                       <th>Código</th>
                       <th>Cantidad</th>
                       <th>Stock</th>
-                      <th>Patente/ N interno</th>
+                      <th>Patente/N.º interno</th>
                       <th>Imagen</th>
-                      <th>Comparación Precios</th>
+                      <th>Comparación de precios</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -113,7 +113,7 @@
             </ion-button>
           </ion-col>
           <ion-col size="6">
-            <ion-button shape="Round" color="danger" expand="block" (click)="rechazarSolped(solped)">
+            <ion-button  color="danger" expand="block" (click)="rechazarSolped(solped)">
               Rechazar
             </ion-button>
           </ion-col>

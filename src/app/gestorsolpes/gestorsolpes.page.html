@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/menu-cotizador" style="color: white;"></ion-back-button>
     </ion-buttons>
-    <ion-title style="color: white;">Gestor SOLPES</ion-title>
+    <ion-title style="color: white;">Gestor de SOLPED</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -31,9 +31,7 @@
   <ng-template #contentLoaded>
     <ion-card class="main-card">
       <div *ngFor="let solpe of solpes; let idx = index" class="solpe-container">
-        <h3 style="margin-left: 1%;">SOLPE N° {{ solpe.numero_solpe }}</h3>
-
-        <!-- Información general -->
+        <h3 style="margin-left: 1%;">SOLPED N.º {{ solpe.numero_solpe }}</h3>
         <ion-card class="inner-card">
           <div class="table-container">
             <table class="styled-table">
@@ -54,7 +52,7 @@
                   <td>{{ solpe.estatus }}</td>
                   <td>
                     <ion-button color="secondary" size="small" (click)="cambiarEstatus(solpe)">
-                      Cambiar Estatus
+                      Cambiar estado
                     </ion-button>
                   </td>
                 </tr>
@@ -62,21 +60,19 @@
             </table>
           </div>
         </ion-card>
-
-        <!-- Lista de ítems -->
         <ion-card class="inner-card">
           <div class="table-container">
             <table class="styled-table">
               <thead>
                 <tr>
-                  <th>Item</th>
+                  <th>Ítem</th>
                   <th>Descripción</th>
                   <th>Código</th>
                   <th>Cantidad</th>
                   <th>Stock</th>
-                  <th>Patente / Nº Interno</th>
+                  <th>Patente / N.º interno</th>
                   <th>Imagen</th>
-                  <th>Comparación Precios</th>
+                  <th>Comparación de precios</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,21 +143,20 @@
           </div>
         </ion-card>
 
-        <!-- 🔽 Botón y input oculto para subir PDF por SOLPE -->
         <div class="ion-padding-start">
           <ion-button fill="clear" color="dark" (click)="abrirInputArchivos(solpe.id)">
             <ion-icon slot="icon-only" name="document-attach-outline"></ion-icon>
           </ion-button>
         </div>
-        <input type="file"
-        #fileInputPDF
-        (change)="subirPDFsGlobal($event, solpe.id)"
-        accept="application/pdf"
-        multiple
-        hidden />
+        <input
+          type="file"
+          #fileInputPDF
+          (change)="subirPDFsGlobal($event, solpe.id)"
+          accept="application/pdf"
+          multiple
+          hidden
+        />
 
-
-        <!-- Lista visual de archivos cargados con opción de eliminar -->
         <div *ngIf="pdfsCargados[solpe.id]?.length">
           <ion-chip *ngFor="let pdf of pdfsCargados[solpe.id]">
             <ion-label>{{ pdf.nombre }}</ion-label>

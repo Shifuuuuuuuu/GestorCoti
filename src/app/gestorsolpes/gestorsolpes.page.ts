@@ -85,7 +85,7 @@ export class GestorsolpesPage implements OnInit {
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',
       inputs: [
-        { name: 'estatus', type: 'radio', label: 'Pre Aprobado', value: 'Pre Aprobado' },
+        { name: 'estatus', type: 'radio', label: 'Preaprobado', value: 'Preaprobado' },
         { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Tránsito a Faena' },
       ],
       buttons: [
@@ -94,30 +94,26 @@ export class GestorsolpesPage implements OnInit {
           text: 'Siguiente',
           handler: async (estatusSeleccionado) => {
             if (estatusSeleccionado) {
-              // Actualiza el estatus
               this.firestore.collection('solpes').doc(solpe.id).update({
                 estatus: estatusSeleccionado,
               }).then(async () => {
                 solpe.estatus = estatusSeleccionado;
                 this.mostrarToast(`SOLPE marcada como "${estatusSeleccionado}"`, 'success');
-
-                // Si hay PDFs y el estado es uno de los dos permitidos, los subimos
                 if (
                   this.archivosPDF[solpe.id]?.length > 0 &&
                   (estatusSeleccionado === 'Pre Aprobado' || estatusSeleccionado === 'Tránsito a Faena')
                 ) {
                   try {
-                    // Subimos el archivo PDF en base64 a Firestore
                     const pdfsParaSubir = this.archivosPDF[solpe.id].map(pdf => ({
                       nombre: pdf.nombre,
-                      base64: pdf.base64, // Guardamos el archivo en base64
+                      base64: pdf.base64,
                     }));
 
                     await this.firestore.collection('solpes').doc(solpe.id).update({
                       pdfs: pdfsParaSubir
                     });
 
-                    this.archivosPDF[solpe.id] = []; // Limpiar la lista después de subir
+                    this.archivosPDF[solpe.id] = [];
                     this.mostrarToast('PDFs cargados en la SOLPE', 'success');
                   } catch (error) {
                     console.error('Error al subir PDFs:', error);
@@ -176,8 +172,6 @@ export class GestorsolpesPage implements OnInit {
         reader.onload = async () => {
           const base64 = (reader.result as string).split(',')[1];
           const nombreArchivo = archivo.name;
-
-          // Preguntar a qué comparación se quiere asociar el PDF
           const inputOptions = item.comparaciones.map((comp: any, index: number) => ({
             name: 'comparacion',
             type: 'radio',
@@ -204,8 +198,6 @@ export class GestorsolpesPage implements OnInit {
                   });
 
                   item.comparaciones[index].pdfId = docRef.id;
-
-                  // Guardar cambios en Firestore
                   await this.firestore.collection('solpes').doc(solpeId).update({
                     items: [...item.solpe.items]
                   });
@@ -247,8 +239,6 @@ export class GestorsolpesPage implements OnInit {
 
           const pdfRef = this.firestore.collection('solpes').doc(solpeId).collection('pdfs');
           const docRef = await pdfRef.add({ nombre: nombreArchivo, base64 });
-
-          // Asegúrate de que el array sea de objetos con id y nombre
           if (!this.pdfsCargados[solpeId]) {
             this.pdfsCargados[solpeId] = [];
           }
@@ -305,8 +295,6 @@ export class GestorsolpesPage implements OnInit {
   async eliminarPDF(solpeId: string, pdfId: string, nombre: string) {
     try {
       await this.firestore.collection('solpes').doc(solpeId).collection('pdfs').doc(pdfId).delete();
-
-      // Eliminar de la lista visual
       this.pdfsCargados[solpeId] = this.pdfsCargados[solpeId].filter(pdf => pdf.id !== pdfId);
 
       this.mostrarToast(`PDF "${nombre}" eliminado correctamente`, 'success');
@@ -315,10 +303,6 @@ export class GestorsolpesPage implements OnInit {
       this.mostrarToast('No se pudo eliminar el PDF', 'danger');
     }
   }
-
-
-
-
 
   guardarComparacion(item: any, solpeId: string) {
     const solpeRef = this.firestore.collection('solpes').doc(solpeId);

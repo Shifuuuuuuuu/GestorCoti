@@ -1,7 +1,7 @@
-<ion-header >
-  <ion-toolbar style="--background: red;" >
+<ion-header>
+  <ion-toolbar style="--background: red;">
     <ion-buttons slot="start">
-      <ion-back-button style="color: white;" defaultHref="/menu-solpe" ></ion-back-button>
+      <ion-back-button style="color: white;" defaultHref="/menu-solpe"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Creación de SOLPED</ion-title>
   </ion-toolbar>
@@ -15,7 +15,7 @@
 
     <div *ngIf="modoSeleccionado === 'formulario'" class="form-container">
       <ion-item>
-        <ion-label position="floating">Número de SOLPE</ion-label>
+        <ion-label position="floating">Número de SOLPED</ion-label>
         <ion-input [(ngModel)]="solpe.numero_solpe" type="number" readonly></ion-input>
       </ion-item>
 
@@ -25,40 +25,42 @@
       </ion-item>
 
       <ion-item>
-        <ion-label position="floating">Responsable Correctivo</ion-label>
-        <ion-select [(ngModel)]="solpe.numero_contrato" >
+        <ion-label position="floating">Responsable correctivo</ion-label>
+        <ion-select [(ngModel)]="solpe.numero_contrato">
           <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
-          <ion-select-option value="20-10-01">BENITEZ</ion-select-option>
+          <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
           <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
           <ion-select-option value="30-10-07">30-10-07</ion-select-option>
-          <ion-select-option value="30-10-08">ARIDOS SAN JOAQUIN</ion-select-option>
-          <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
+          <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
+          <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
           <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
           <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
           <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
           <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
           <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-          <ion-select-option value="30-10-58">GASTON CASTILLO</ion-select-option>
+          <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
           <ion-select-option value="30-10-59">30-10-59</ion-select-option>
           <ion-select-option value="30-10-60">30-10-60</ion-select-option>
           <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
         </ion-select>
       </ion-item>
+
       <ion-item>
         <ion-label position="floating">Usuario</ion-label>
         <ion-input [(ngModel)]="solpe.usuario" readonly></ion-input>
       </ion-item>
-      <h5>Tabla de Items</h5>
+
+      <h5>Tabla de ítems</h5>
       <div class="table-container">
         <table class="styled-table">
           <thead style="color: white;">
             <tr>
-              <th>Item</th>
+              <th>Ítem</th>
               <th>Descripción</th>
-              <th>Código Referencial</th>
+              <th>Código referencial</th>
               <th>Cantidad</th>
               <th>Stock</th>
-              <th>Patente / N interno</th>
+              <th>Patente / N.º interno</th>
               <th>Imagen</th>
               <th>Acciones</th>
             </tr>
@@ -123,7 +125,6 @@
                     height="200">
                 </div>
               </td>
-
               <td>
                 <ion-button fill="clear" color="primary" *ngIf="!item.editando" (click)="editarItem(i)">
                   <ion-icon color="secondary" name="create-outline"></ion-icon>
@@ -141,14 +142,13 @@
 
         <ion-buttons class="botones-flex">
           <ion-button expand="full" (click)="agregarFila()">
-            <ion-icon color="secondary" name="add-outline"></ion-icon> Agregar Fila
+            <ion-icon color="secondary" name="add-outline"></ion-icon> Agregar fila
           </ion-button>
           <ion-button expand="block" color="success" (click)="guardarSolpe()">
             <ion-icon color="success" name="send-outline"></ion-icon> Enviar
           </ion-button>
         </ion-buttons>
       </div>
-
     </div>
   </div>
 </ion-content>

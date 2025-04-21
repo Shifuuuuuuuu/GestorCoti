@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/iniciar-sesion" style="color: white;"></ion-back-button>
     </ion-buttons>
-    <ion-title style="color: white;">Registrar Usuario</ion-title>
+    <ion-title style="color: white;">Registrar usuario</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -17,7 +17,7 @@
 
     <div class="input-field">
       <input required class="input" type="text" id="fullName" />
-      <label class="label" for="fullName">Escribe tu Nombre</label>
+      <label class="label" for="fullName">Escribe tu nombre</label>
     </div>
 
     <div class="input-field">
@@ -29,8 +29,8 @@
 
     <div class="input-field">
       <input required class="input" type="email" id="email"
-             pattern="^[a-zA-Z0-9._%+-]+@xtrememining\.cl$"/>
-      <label class="label" for="email">Email (solo &#64;xtrememining.cl)</label>
+             pattern="^[a-zA-Z0-9._%+-]+@xtrememining\.cl$" />
+      <label class="label" for="email">Correo electrónico (solo &#64;xtrememining.cl)</label>
     </div>
 
     <div class="input-field">
@@ -41,12 +41,12 @@
                maxlength="8" pattern="^\d{8}$"
                placeholder="Ej: 48096007" style="flex: 1;" />
       </div>
-      <label class="label" for="phone"></label>
+      <label class="label" for="phone">Teléfono</label>
     </div>
 
     <div class="input-field">
       <select id="role" class="input" required>
-        <option value="Generador solped">Generador de solped</option>
+        <option value="Generador solped">Generador de SOLPED</option>
         <option value="Editor">Editor</option>
         <option value="Aprobador/Editor">Aprobador/Editor</option>
       </select>
@@ -57,8 +57,8 @@
       <input required class="input" type="password" id="password"
              maxlength="10" minlength="5"
              pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,10}$"
-             placeholder="Mín 5 - Máx 10 caracteres" />
-      <label class="label" for="password"></label>
+             placeholder="Mín. 5 - Máx. 10 caracteres" />
+      <label class="label" for="password">Contraseña</label>
     </div>
 
     <button type="submit" class="submit-btn">Registrar</button>

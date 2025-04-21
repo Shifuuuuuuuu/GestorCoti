@@ -162,7 +162,7 @@ export class VisualizacionSolpedPage implements OnInit {
 
   cargarSolped() {
     this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
-      const filtradas = data.filter(solpe => solpe.estatus === 'Pre Aprobado');
+      const filtradas = data.filter(solpe => solpe.estatus === 'Preaprobado');
       this.solpedList = filtradas.map((solpe: any) => {
         solpe.items = solpe.items
           ? solpe.items.map((item: any) => ({

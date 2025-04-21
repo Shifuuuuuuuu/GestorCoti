@@ -13,15 +13,15 @@
   <div *ngIf="errorMessage" class="ion-padding">
     <ion-card class="error-card">
       <ion-card-header class="pb-0">
-        <h2 class="text-center">Error al mostrar datos</h2>
+        <h2 class="text-center">Error al mostrar los datos</h2>
       </ion-card-header>
       <ion-card-content>
-        <p style="font-weight:400;">Error: {{ errorMessage }}</p>
+        <p style="font-weight: 400;">Error: {{ errorMessage }}</p>
       </ion-card-content>
     </ion-card>
   </div>
 
-  <ion-card class="ion-padding" style="border-radius:1rem;">
+  <ion-card class="ion-padding" style="border-radius: 1rem;">
     <ion-grid>
       <ion-row class="ion-align-items-center justify-content-space-between mb-1">
         <ion-col>
@@ -30,8 +30,8 @@
         <ion-col size="auto">
           <div class="icon-container">
             <ion-icon color="primary" class="ion-icon-custom" size="large" *ngIf="!isEditing" name="create-outline" (click)="editProfile()"></ion-icon>
-            <ion-icon color="success" class="ion-icon-custom"  size="large" *ngIf="isEditing" name="checkmark-outline" (click)="saveProfile()"></ion-icon>
-            <ion-icon color="danger" class="ion-icon-custom"  size="large" *ngIf="isEditing" name="close-outline" (click)="cancelEdit()"></ion-icon>
+            <ion-icon color="success" class="ion-icon-custom" size="large" *ngIf="isEditing" name="checkmark-outline" (click)="saveProfile()"></ion-icon>
+            <ion-icon color="danger" class="ion-icon-custom" size="large" *ngIf="isEditing" name="close-outline" (click)="cancelEdit()"></ion-icon>
           </div>
         </ion-col>
       </ion-row>
@@ -53,7 +53,7 @@
       <div class="mb-3">
         <ion-item class="ion-input-custom ps-0" [ngClass]="{ 'ion-input-edit-custom': isEditing }">
           <ion-label [ngClass]="{ 'mb-0': isEditing }">
-            <h3 style="font-weight:400">Nombre Completo</h3>
+            <h3 style="font-weight: 400;">Nombre completo</h3>
             <p *ngIf="!isEditing">{{ user.fullName }}</p>
             <ion-input *ngIf="isEditing" [(ngModel)]="tempNombreCompleto" name="nombreCompleto" [placeholder]="user.fullName" [ngModelOptions]="{ standalone: true }"></ion-input>
           </ion-label>
@@ -63,7 +63,7 @@
       <div class="mb-3">
         <ion-item class="ion-input-custom">
           <ion-label>
-            <h3 style="font-weight:400">Correo Electrónico</h3>
+            <h3 style="font-weight: 400;">Correo electrónico</h3>
             <p>{{ user.email }}</p>
           </ion-label>
         </ion-item>
@@ -72,7 +72,7 @@
       <div class="mb-3">
         <ion-item class="ion-input-custom" [ngClass]="{ 'ion-input-edit-custom': isEditing }">
           <ion-label [ngClass]="{ 'mb-0': isEditing }">
-            <h3 style="font-weight:400">RUT</h3>
+            <h3 style="font-weight: 400;">RUT</h3>
             <p *ngIf="!isEditing">{{ user.rut }}</p>
             <ion-input *ngIf="isEditing" [(ngModel)]="tempRut" name="rut" [placeholder]="user.rut" [ngModelOptions]="{ standalone: true }"></ion-input>
           </ion-label>
@@ -82,7 +82,7 @@
       <div class="mb-3">
         <ion-item class="ion-input-custom" [ngClass]="{ 'ion-input-edit-custom': isEditing }">
           <ion-label [ngClass]="{ 'mb-0': isEditing }">
-            <h3 style="font-weight:400">Teléfono</h3>
+            <h3 style="font-weight: 400;">Teléfono</h3>
             <p *ngIf="!isEditing">{{ user.phone }}</p>
             <ion-input *ngIf="isEditing" [(ngModel)]="tempTelefono" name="telefono" [placeholder]="user.phone" [ngModelOptions]="{ standalone: true }"></ion-input>
           </ion-label>
@@ -99,7 +99,5 @@
         </ion-icon>
       </ion-button>
     </div>
-
-
   </ion-card>
 </ion-content>
