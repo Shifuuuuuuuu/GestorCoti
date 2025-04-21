@@ -185,7 +185,13 @@ export class VisualizacionSolpedPage implements OnInit {
       await alert.present();
       return;
     }
-    this.selectedItem = item;
+
+    this.selectedItem = {
+      ...item,
+      imagen_referencia_base64: item.imagen_referencia_base64 || null,
+      comparaciones: item.comparaciones || []
+    };
+
     const solped = this.solpedList.find(s => s.id === solpedId);
     if (solped) {
       const index = solped.items.indexOf(item);
@@ -194,8 +200,10 @@ export class VisualizacionSolpedPage implements OnInit {
         await this.eliminarItemDeFirestore(solpedId, item.id);
       }
     }
+
     await this.subirItemAFirestore();
   }
+
 
 
 async eliminarItemDeFirestore(solpedId: string, itemId: string) {
@@ -255,8 +263,11 @@ async subirItemAFirestore() {
       codigo_referencial: this.selectedItem.codigo_referencial,
       cantidad: this.selectedItem.cantidad,
       stock: this.selectedItem.stock,
-      numero_interno: this.selectedItem.numero_interno
+      numero_interno: this.selectedItem.numero_interno,
+      imagen_referencia_base64: this.selectedItem.imagen_referencia_base64 || null,
+      comparaciones: this.selectedItem.comparaciones || []
     });
+
 
     const alert = await this.alertCtrl.create({
       header: 'Éxito',

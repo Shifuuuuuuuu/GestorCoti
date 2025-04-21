@@ -224,8 +224,12 @@ export class HistorialSolpePage implements OnInit {
         return '#fd7e14';
       case 'Tránsito a Faena':
         return '#007bff';
-      case 'Pre Aprobado':
+      case 'Preaprobado':
         return '#ffc107';
+      case 'Oc enviada a Proveedor':
+        return '#17a2b8';
+      case 'Por Importación':
+        return '#6f42c1';
       default:
         return '#6c757d';
     }

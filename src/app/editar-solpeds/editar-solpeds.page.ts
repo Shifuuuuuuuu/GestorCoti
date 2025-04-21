@@ -320,7 +320,7 @@ export class EditarSolpedsPage implements OnInit {
         return '#fd7e14';
       case 'Tránsito a Faena':
         return '#007bff';
-      case 'Pre Aprobado':
+      case 'Preaprobado':
         return '#ffc107';
       case 'Oc enviada a Proveedor':
         return '#17a2b8';

@@ -28,7 +28,7 @@ export class HomePage implements OnInit  {
 
   navigateTo(page: string) {
     if (page === 'visualizacion-solped') {
-      this.preAprobadasCount = 0; // Se resetea el contador cuando entra a verlas
+      this.preAprobadasCount = 0;
     }
     this.router.navigate([`/${page}`]);
   }
@@ -42,7 +42,7 @@ export class HomePage implements OnInit  {
   }
 
   contarPreAprobadas() {
-    this.firestore.collection('solpes', ref => ref.where('estatus', '==', 'Pre Aprobado'))
+    this.firestore.collection('solpes', ref => ref.where('estatus', '==', 'Preaprobado'))
       .get()
       .subscribe(snapshot => {
         this.preAprobadasCount = snapshot.size;
