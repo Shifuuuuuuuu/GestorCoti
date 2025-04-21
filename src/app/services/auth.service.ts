@@ -13,7 +13,8 @@ export class AuthService {
   private usersCollection: AngularFirestoreCollection<AppUser>;
   private currentUserEmailSubject: BehaviorSubject<string | undefined> = new BehaviorSubject<string | undefined>(this.getStoredUserEmail());
   public currentUserEmail$: Observable<string | undefined> = this.currentUserEmailSubject.asObservable();
-
+  private userRoleSubject = new BehaviorSubject<string | null>(localStorage.getItem('userRole'));
+  public userRole$ = this.userRoleSubject.asObservable();
   constructor(private firestore: AngularFirestore, private afAuth: AngularFireAuth) {
     this.usersCollection = this.firestore.collection<AppUser>('Usuarios');
   }
@@ -111,6 +112,11 @@ export class AuthService {
     return null;
   }
 
+
+  setUserRole(role: string) {
+    localStorage.setItem('userRole', role);
+    this.userRoleSubject.next(role);
+  }
 
   async verifyUserByEmail(email: string): Promise<boolean> {
     try {

@@ -3,6 +3,7 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Router } from '@angular/router';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-iniciar-sesion',
@@ -16,7 +17,8 @@ export class IniciarSesionPage implements OnInit {
     private toastController: ToastController,
     private alertController: AlertController,
     private firestore: AngularFirestore,
-    private menu: MenuController
+    private menu: MenuController,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -30,8 +32,11 @@ export class IniciarSesionPage implements OnInit {
         const userDoc = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
         if (userDoc && userDoc.exists) {
           const userData = userDoc.data() as any;
+          localStorage.setItem('userRole', userData.role);
+          this.authService.setUserRole(userData.role); // 👈 nuevo
           this.redirigirPorRol(userData.role);
         }
+
       } catch (error) {
         localStorage.removeItem('userId');
       }
@@ -60,6 +65,8 @@ export class IniciarSesionPage implements OnInit {
             const userData = userDoc.data() as any;
             localStorage.setItem('userId', user.uid);
             localStorage.setItem('userEmail', user.email || '');
+            localStorage.setItem('userRole', userData.role);
+            this.authService.setUserRole(userData.role);
             this.redirigirPorRol(userData.role);
           } else {
             this.presentToast('Usuario no encontrado en la base de datos.', 'danger');

@@ -25,7 +25,7 @@
             <ion-label class="menu-header-label">Navegación</ion-label>
           </ion-list-header>
 
-          <ion-menu-toggle auto-hide="false" *ngFor="let p of appPages">
+          <ion-menu-toggle auto-hide="false" *ngFor="let p of filteredPages">
             <ion-item routerDirection="root" [routerLink]="[p.url]" lines="none" detail="false" routerLinkActive="selected" class="menu-item">
               <ion-icon aria-hidden="true" slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'" class="menu-item-icon"></ion-icon>
               <ion-label class="menu-item-label">{{ p.title }}</ion-label>

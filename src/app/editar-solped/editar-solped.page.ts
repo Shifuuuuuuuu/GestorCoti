@@ -406,11 +406,6 @@ export class EditarSolpedPage implements OnInit {
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPE',
       inputs: [
-        { name: 'estatus', type: 'radio', label: 'Aprobado', value: 'Aprobado' },
-        { name: 'estatus', type: 'radio', label: 'Rechazado', value: 'Rechazado' },
-        { name: 'estatus', type: 'radio', label: 'Solicitado', value: 'Solicitado' },
-        { name: 'estatus', type: 'radio', label: 'Tránsito a Faena', value: 'Tránsito a Faena' },
-        { name: 'estatus', type: 'radio', label: 'Pre Aprobado', value: 'Pre Aprobado' },
         { name: 'estatus', type: 'radio', label: 'Oc enviada a Proveedor', value: 'Oc enviada a Proveedor' },
         { name: 'estatus', type: 'radio', label: 'Por Importación', value: 'Por Importación' },
       ],
