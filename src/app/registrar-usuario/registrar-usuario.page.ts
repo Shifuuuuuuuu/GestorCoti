@@ -39,7 +39,8 @@ export class RegistrarUsuarioPage implements OnInit {
       'bodegacaneche@xtremeservicios.cl',
       'amartinez@xtrememining.cl',
       'avacher@xtrememining.cl',
-      'rsanhueza@xtrememining.cl'
+      'rsanhueza@xtrememining.cl',
+      'pbustos@xtrememining.cl'
     ];
 
     if (!correosPermitidos.includes(email.toLowerCase())) {

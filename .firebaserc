@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "baseprueba-6427f"
-  }
+    "default": "baseprueba-6427f",
+    "xtremesolped": "xtremesolped"
+  },
+  "targets": {},
+  "etags": {}
 }
