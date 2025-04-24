@@ -35,6 +35,7 @@ export class EditarSolpedPage implements OnInit {
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
   loading: boolean = true;
+  ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
 
   constructor(
     private firestore: AngularFirestore,
@@ -63,6 +64,74 @@ export class EditarSolpedPage implements OnInit {
   ionViewWillEnter() {
     this.menu.enable(false);
   }
+  abrirInputOC(solpeId: string) {
+    const input = document.getElementById(`ocInput-${solpeId}`) as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
+  }
+
+  subirOC(event: any, solpeId: string) {
+    const archivo: File = event.target.files[0];
+
+    if (archivo) {
+      const reader = new FileReader();
+
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        const nombreArchivo = archivo.name;
+
+        const ocRef = this.firestore.collection('solpes').doc(solpeId).collection('ocs');
+        const docRef = await ocRef.add({ nombre: nombreArchivo, base64 });
+
+        if (!this.ocsCargadas[solpeId]) {
+          this.ocsCargadas[solpeId] = [];
+        }
+
+        this.ocsCargadas[solpeId].push({ id: docRef.id, nombre: nombreArchivo });
+
+        this.mostrarToast(`OC "${nombreArchivo}" subida correctamente`, 'success');
+      };
+
+      reader.onerror = () => {
+        this.mostrarToast(`Error al leer archivo "${archivo.name}"`, 'danger');
+      };
+
+      reader.readAsDataURL(archivo);
+    }
+  }
+
+  async eliminarOC(solpeId: string, ocId: string, nombre: string) {
+    try {
+      await this.firestore.collection('solpes').doc(solpeId).collection('ocs').doc(ocId).delete();
+      this.ocsCargadas[solpeId] = this.ocsCargadas[solpeId].filter(oc => oc.id !== ocId);
+      this.mostrarToast(`OC "${nombre}" eliminada correctamente`, 'success');
+    } catch (error) {
+      console.error('Error al eliminar OC:', error);
+      this.mostrarToast('No se pudo eliminar la OC', 'danger');
+    }
+  }
+  verOC(solpedId: string, ocId: string) {
+    this.firestore.collection('solpes').doc(solpedId).collection('ocs').doc(ocId).get().subscribe(doc => {
+      if (!doc.exists) {
+        this.mostrarToast('La OC no fue encontrada', 'danger');
+        return;
+      }
+
+      const data = doc.data() as { base64: string, nombre?: string };
+      const base64 = data.base64;
+
+      if (!base64) {
+        this.mostrarToast('El archivo está vacío', 'danger');
+        return;
+      }
+
+      const blob = this.base64ToBlob(base64, 'application/pdf');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    });
+  }
+
 
   toggleDetalle(solpeId: string) {
     this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;

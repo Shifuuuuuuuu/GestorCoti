@@ -149,6 +149,10 @@ export class PerfilUsuarioPage implements OnInit {
         this.user.fullName = this.tempNombreCompleto;
         this.user.rut = this.tempRut;
         this.user.phone = this.tempTelefono;
+        if (!this.user.photoURL) {
+          delete this.user.photoURL;
+        }
+
         await this.authService.updateUser(this.user);
         this.showToast('Los cambios se guardaron correctamente.', 'success');
         this.isEditing = false;
@@ -158,6 +162,7 @@ export class PerfilUsuarioPage implements OnInit {
       this.showToast('Hubo un problema al guardar los cambios.', 'danger');
     }
   }
+
 
   cancelEdit() {
     this.isEditing = false;

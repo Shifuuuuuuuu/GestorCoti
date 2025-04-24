@@ -180,18 +180,24 @@ export class AuthService {
 
   async updateUser(user: AppUser): Promise<void> {
     try {
+      const updateData: any = {};
 
-      await this.firestore.collection('Usuarios').doc(user.uid).update({
-        photoURL: user.photoURL,
-        email: user.email,
-      });
+      if (user.photoURL !== undefined) {
+        updateData.photoURL = user.photoURL;
+      }
 
-      console.log('Usuario actualizado en Firestore.');
+      if (user.email !== undefined) {
+        updateData.email = user.email;
+      }
+
+      await this.firestore.collection('Usuarios').doc(user.uid).update(updateData);
+      console.log('✅ Usuario actualizado en Firestore.');
     } catch (error) {
-      console.error('Error al actualizar el usuario:', error);
+      console.error('❌ Error al actualizar el usuario:', error);
       throw error;
     }
   }
+
 
   async logout() {
     return this.afAuth.signOut();

@@ -3,7 +3,7 @@ import { SolpeService } from '../services/solpe.service';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { ArchivoPDF } from '../Interface/IArchivoPDF';
-
+import * as XLSX from 'xlsx';
 @Component({
   selector: 'app-gestorsolpes',
   templateUrl: './gestorsolpes.page.html',
@@ -41,8 +41,30 @@ export class GestorsolpesPage implements OnInit {
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
   }
+  descargarExcel(solpe: any) {
+    const data = solpe.items.map((item: any) => ({
+      item: item.item,
+      descripcion: item.descripcion || '',
+      cantidad: item.cantidad,
+      stock: item.stock,
+      codigo_referencial: item.codigo_referencial || '',
+      numero_interno: item.numero_interno || '',
+    }));
 
+    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+    const workbook: XLSX.WorkBook = XLSX.utils.book_new();
+    const sheetName = `SOLPED_${solpe.numero_solpe}`;
 
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+    // 🕒 Fecha actual formateada (ej. 2025-04-24)
+    const fechaActual = new Date().toISOString().split('T')[0];
+
+    // 🧾 Nombre del archivo personalizado
+    const nombreArchivo = `SOLPED_${solpe.numero_solpe}_${solpe.usuario}_${fechaActual}.xlsx`;
+
+    XLSX.writeFile(workbook, nombreArchivo);
+  }
   base64ToBlob(base64: string, contentType: string): Blob {
     const byteCharacters = atob(base64);
     const byteArrays = [];

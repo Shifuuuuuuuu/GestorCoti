@@ -127,13 +127,15 @@
                         </tbody>
                       </table>
                     </div>
-
+                    <br>
                     <ion-buttons>
-                      <ion-button size="small" (click)="abrirComparacion(item)">
-                        <ion-icon color="secondary" name="add-circle-outline"></ion-icon>
+                      <ion-button size="small"  color="primary" (click)="abrirComparacion(item)">
+                        <ion-icon color="ligth" name="add-circle-outline" slot="start"></ion-icon>
+                        <ion-label class="ion-text-wrap" style="font-size: 12px;">Agregar</ion-label>
                       </ion-button>
-                      <ion-button size="small" (click)="subirComparaciones(solpe)">
-                        <ion-icon color="success" name="send-outline"></ion-icon>
+                      <ion-button size="small" color="success" (click)="subirComparaciones(solpe)">
+                        <ion-icon color="ligth" name="send-outline" slot="start"></ion-icon>
+                        <ion-label class="ion-text-wrap" style="font-size: 12px;">Subir</ion-label>
                       </ion-button>
                     </ion-buttons>
                   </td>
@@ -141,12 +143,16 @@
               </tbody>
             </table>
           </div>
+          <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
+            <ion-label style="font-size: 12px;">Excel</ion-label>
+          </ion-button>
         </ion-card>
 
         <div class="ion-padding-start">
-          <ion-button fill="clear" color="dark" (click)="abrirInputArchivos(solpe.id)">
-            <ion-icon slot="icon-only" name="document-attach-outline"></ion-icon>
+          <ion-button fill="solid" color="secondary" size="small" (click)="abrirInputArchivos(solpe.id)">
+            <ion-label style="font-size: 12px;">PDF</ion-label>
           </ion-button>
+
         </div>
         <input
           type="file"

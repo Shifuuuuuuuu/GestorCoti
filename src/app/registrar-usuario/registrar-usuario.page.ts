@@ -43,11 +43,14 @@ export class RegistrarUsuarioPage implements OnInit {
       'pbustos@xtrememining.cl'
     ];
 
-    if (!correosPermitidos.includes(email.toLowerCase())) {
+    const emailLimpio = email.trim().toLowerCase();
+    console.log('Correo ingresado:', emailLimpio);
+    console.log('Está en la lista?', correosPermitidos.map(c => c.toLowerCase()).includes(emailLimpio));
+
+    if (!correosPermitidos.map(c => c.toLowerCase()).includes(emailLimpio)) {
       this.presentToast('Este correo no está autorizado para registrarse.', 'danger');
       return;
     }
-
 
     const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{5,12}$/;
     if (!passwordPattern.test(password)) {
@@ -64,9 +67,9 @@ export class RegistrarUsuarioPage implements OnInit {
     phone = this.formatPhoneForSave(phone);
 
     try {
-      console.log('Registrando usuario con correo:', email, 'y contraseña:', password);
+      console.log('Registrando usuario con correo:', emailLimpio, 'y contraseña:', password);
 
-      const userCredential = await this.afAuth.createUserWithEmailAndPassword(email, password);
+      const userCredential = await this.afAuth.createUserWithEmailAndPassword(emailLimpio, password);
       const user = userCredential.user;
 
       if (user) {
@@ -77,7 +80,7 @@ export class RegistrarUsuarioPage implements OnInit {
           uid: user.uid,
           fullName,
           rut,
-          email,
+          email: emailLimpio,
           phone,
           role,
           createdAt: new Date(),
@@ -102,6 +105,7 @@ export class RegistrarUsuarioPage implements OnInit {
       }
     }
   }
+
 
 
   formatRUTForSave(rut: string): string {
