@@ -4,6 +4,8 @@ import { AlertController, MenuController, ToastController } from '@ionic/angular
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { ArchivoPDF } from '../Interface/IArchivoPDF';
 import * as XLSX from 'xlsx';
+import { Item } from '../Interface/IItem';
+import { Comparaciones } from '../Interface/Icompara';
 @Component({
   selector: 'app-gestorsolpes',
   templateUrl: './gestorsolpes.page.html',
@@ -14,7 +16,8 @@ export class GestorsolpesPage implements OnInit {
   loading: boolean = true;
   solpesFiltradas: any[] = [];
   dataFacturaPDF: string = '';
-  // Asegúrate de que `archivosPDF` sea un objeto que almacene un array de `ArchivoPDF` para cada `solpeId`
+  imagenSeleccionada: string = '';
+  imagenAmpliadaVisible: boolean = false;
   archivosPDF: { [solpeId: string]: ArchivoPDF[] } = {};
   pdfsCargados: { [solpeId: string]: { id: string; nombre: string }[] } = {};
   @ViewChildren('fileInputPDF') fileInputsPDF!: QueryList<ElementRef>;
@@ -159,8 +162,42 @@ export class GestorsolpesPage implements OnInit {
       this.fileInputsPDF.toArray()[index].nativeElement.click();
     }
   }
+  groupComparacionesPorEmpresa(item: any): { [empresa: string]: any[] } {
+    const agrupadas: { [empresa: string]: any[] } = {};
+    for (const comp of item.comparaciones) {
+      const empresa = comp.empresa?.toUpperCase() || 'SIN NOMBRE';
+      if (!agrupadas[empresa]) agrupadas[empresa] = [];
+      agrupadas[empresa].push(comp);
+    }
+    return agrupadas;
+  }
 
+  getEmpresas(item: any): string[] {
+    return Object.keys(this.groupComparacionesPorEmpresa(item));
+  }
 
+  getEmpresasSugeridas(): string[] {
+    const empresas = new Set<string>();
+
+    this.solpes.forEach((solpe: { items: Item[] }) =>
+      solpe.items.forEach((item: Item) =>
+        item.comparaciones?.forEach((comp: Comparaciones) => {
+          if (comp.empresa) empresas.add(comp.empresa.toUpperCase());
+        })
+      )
+    );
+
+    return Array.from(empresas);
+  }
+
+  verImagenAmpliada(base64: string) {
+    this.imagenSeleccionada = base64;
+    this.imagenAmpliadaVisible = true;
+  }
+
+  cerrarImagenAmpliada() {
+    this.imagenAmpliadaVisible = false;
+  }
   verPDFComparacion(solpeId: string, pdfId: string) {
     this.firestore.collection('solpes').doc(solpeId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
       if (!doc.exists) {
@@ -280,12 +317,25 @@ export class GestorsolpesPage implements OnInit {
   }
 
 
-  async abrirComparacion(item: any) {
+  async abrirComparacion(item: Item) {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
       inputs: [
-        { name: 'empresa', type: 'text', placeholder: 'Nombre de la Empresa' },
-        { name: 'precio', type: 'number', placeholder: 'Precio' }
+        {
+          name: 'empresa',
+          type: 'text' as const,
+          placeholder: 'Nombre de la empresa'
+        },
+        {
+          name: 'precio',
+          type: 'number' as const,
+          placeholder: 'Precio base'
+        },
+        {
+          name: 'descuento',
+          type: 'number' as const,
+          placeholder: 'Descuento (%) - opcional'
+        }
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
@@ -293,18 +343,27 @@ export class GestorsolpesPage implements OnInit {
           text: 'Agregar',
           handler: (data) => {
             if (data.empresa && data.precio) {
+              const precioBase = Number(data.precio);
+              const porcentajeDescuento = Number(data.descuento) || 0;
+              const descuento = precioBase * (porcentajeDescuento / 100);
+              const precioFinal = precioBase - descuento;
+
               const nuevoId = Date.now();
+
               item.comparaciones.push({
                 id: nuevoId,
                 empresa: data.empresa,
-                precio: Number(data.precio),
-                numeroCotizacion: '',
-                pdfId: ''
+                precio: precioFinal,
+                precioBase: precioBase,
+                descuento: porcentajeDescuento,
+                pdfId: '',
+                destacado: false
               });
-              this.mostrarToast('Comparación agregada correctamente', 'success');
+
+              this.mostrarToast(`Comparación agregada con ${porcentajeDescuento}% de descuento`, 'success');
               return true;
             } else {
-              this.mostrarToast('Debes completar empresa y precio', 'danger');
+              this.mostrarToast('Debes ingresar empresa y precio', 'danger');
               return false;
             }
           }
@@ -314,6 +373,8 @@ export class GestorsolpesPage implements OnInit {
 
     await alert.present();
   }
+
+
   async eliminarPDF(solpeId: string, pdfId: string, nombre: string) {
     try {
       await this.firestore.collection('solpes').doc(solpeId).collection('pdfs').doc(pdfId).delete();

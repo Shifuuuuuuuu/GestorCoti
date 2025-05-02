@@ -30,7 +30,6 @@ export class SolpePage implements OnInit  {
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
     private menu: MenuController,
-
   ) {}
 
   ngOnInit() {
@@ -50,6 +49,7 @@ export class SolpePage implements OnInit  {
       }
     });
   }
+
   ionViewWillEnter() {
     this.menu.enable(false);
   }
@@ -68,13 +68,11 @@ export class SolpePage implements OnInit  {
     });
   }
 
-
-
-
   eliminarItem(index: number) {
     this.solpe.items.splice(index, 1);
     this.mostrarToast('Item eliminado', 'danger');
   }
+
   verificarYGuardarItem(index: number) {
     const item = this.solpe.items[index];
     if (
@@ -82,12 +80,13 @@ export class SolpePage implements OnInit  {
       item.codigo_referencial &&
       item.cantidad !== null &&
       item.stock !== null &&
-      item.numero_interno && item.numero_interno.trim() !== ''&&
+      item.numero_interno && item.numero_interno.trim() !== '' &&
       item.imagen_referencia_base64
     ) {
       this.guardarItem(index);
     }
   }
+
   subirImagenReferencia(event: any, index: number) {
     const archivo = event.target.files[0];
     if (archivo && archivo.type.startsWith('image/')) {
@@ -102,12 +101,11 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Solo se permiten archivos de imagen', 'danger');
     }
   }
+
   seleccionarArchivo(index: number) {
     const input = this.inputsImagenes.toArray()[index];
     input.nativeElement.click();
   }
-
-
 
   guardarItem(index: number) {
     this.solpe.items[index].editando = false;
@@ -117,8 +115,6 @@ export class SolpePage implements OnInit  {
   editarItem(index: number) {
     this.solpe.items[index].editando = true;
   }
-
-
 
   guardarEdicion(index: number) {
     this.solpe.items[index].editando = false;
@@ -144,6 +140,11 @@ export class SolpePage implements OnInit  {
   }
 
   guardarSolpe() {
+    if (!this.solpe.numero_contrato) {
+      this.mostrarToast('Debes seleccionar un Centro de Costo', 'warning');
+      return;
+    }
+
     if (this.solpe.items.length === 0) {
       this.mostrarToast('Debes agregar al menos un item', 'warning');
       return;
@@ -188,8 +189,6 @@ export class SolpePage implements OnInit  {
       this.mostrarToast('Error al guardar la SOLPE', 'danger');
     });
   }
-
-
 
   convertFileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
