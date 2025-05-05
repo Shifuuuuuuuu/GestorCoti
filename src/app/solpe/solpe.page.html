@@ -123,8 +123,15 @@
                     alt="Imagen"
                     width="200"
                     height="200">
+                  <ion-button
+                    fill="clear"
+                    color="danger"
+                    (click)="eliminarImagen(i)">
+                    <ion-icon color="danger" name="trash-outline"></ion-icon>
+                  </ion-button>
                 </div>
               </td>
+
               <td>
                 <ion-button fill="clear" color="primary" *ngIf="!item.editando" (click)="editarItem(i)">
                   <ion-icon color="secondary" name="create-outline"></ion-icon>

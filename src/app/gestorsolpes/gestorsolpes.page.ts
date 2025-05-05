@@ -44,30 +44,175 @@ export class GestorsolpesPage implements OnInit {
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
   }
-  descargarExcel(solpe: any) {
-    const data = solpe.items.map((item: any) => ({
-      item: item.item,
-      descripcion: item.descripcion || '',
-      cantidad: item.cantidad,
-      stock: item.stock,
-      codigo_referencial: item.codigo_referencial || '',
-      numero_interno: item.numero_interno || '',
-    }));
 
-    const worksheet: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
-    const workbook: XLSX.WorkBook = XLSX.utils.book_new();
-    const sheetName = `SOLPED_${solpe.numero_solpe}`;
+    abrirArchivoExcel() {
+      const inputFile: HTMLInputElement = document.createElement('input');
+      inputFile.type = 'file';
+      inputFile.accept = '.xlsx, .xls';
+      inputFile.click();
+      inputFile.onchange = (e) => this.leerArchivoExcel(e);
+    }
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
-    // 🕒 Fecha actual formateada (ej. 2025-04-24)
-    const fechaActual = new Date().toISOString().split('T')[0];
-
-    // 🧾 Nombre del archivo personalizado
-    const nombreArchivo = `SOLPED_${solpe.numero_solpe}_${solpe.usuario}_${fechaActual}.xlsx`;
-
-    XLSX.writeFile(workbook, nombreArchivo);
+  leerArchivoExcel(event: any) {
+    const archivo = event.target.files[0];
+    if (archivo) {
+      const reader = new FileReader();
+      reader.onload = (e) => this.procesarArchivoExcel(reader.result as string);
+      reader.readAsBinaryString(archivo);
+    }
   }
+
+  procesarArchivoExcel(data: string) {
+    const wb = XLSX.read(data, { type: 'binary' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+
+    const jsonData: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    this.cargarComparacionesDesdeExcel(jsonData);
+  }
+
+
+  cargarComparacionesDesdeExcel(data: any[][]): void {
+    let currentCompany = '';
+
+    // Iterar todas las filas
+    for (let r = 0; r < data.length; r++) {
+      const row = data[r];
+      if (!row || row.length === 0) continue;
+
+      const key = row[0]?.toString().trim().toLowerCase();
+
+      if (key === 'empresa') {
+        // Nueva sección: guardamos la empresa
+        currentCompany = row[1]?.toString().trim() ?? '';
+      }
+      else if (key === 'descripción') {
+        // Fila de detalle: descripción, cantidad y precio base
+        const descripcion = row[1]?.toString().trim() ?? '';
+        const cantidad    = Number(row[2]) || 0;
+        const precioBase  = Number(row[3]) || 0;
+        const precioFinal = precioBase;      // como pides, mismo valor
+        const descuento   = 0;               // siempre 0
+
+        if (!currentCompany || !descripcion) continue;
+
+        // Para cada SOLPE que tenga un ítem con esa descripción…
+        this.solpes
+          .filter(sol => sol.items.some((it: Item) =>
+            it.descripcion.trim().toLowerCase() === descripcion.toLowerCase()
+          ))
+          .forEach(sol => {
+            // Añadimos la comparativa a cada ítem coincidente
+            sol.items
+              .filter((it: Item) =>
+                it.descripcion.trim().toLowerCase() === descripcion.toLowerCase()
+              )
+              .forEach((it: Item) => {
+                it.comparaciones = it.comparaciones || [];
+                it.comparaciones.push({
+                  id:      Date.now(),
+                  empresa: currentCompany,
+                  precioBase,
+                  descuento,
+                  precio: precioFinal,
+                  pdfId:   '',
+                  destacado: false
+                });
+              });
+
+            // Y actualizamos Firestore para esta SOLPE
+            this.firestore
+              .collection('solpes')
+              .doc(sol.id)
+              .update({ items: sol.items })
+              .then(() => this.mostrarToast(`Comparaciones guardadas en SOLPE ${sol.id}`, 'success'))
+              .catch(err => {
+                console.error(err);
+                this.mostrarToast(`Error guardando comparaciones en SOLPE ${sol.id}`, 'danger');
+              });
+          });
+      }
+    }
+  }
+
+
+generarId(): string {
+  return 'id_' + Math.random().toString(36).substr(2, 9);
+}
+
+agregarComparacion(item: Item) {
+  const solpeId = 'id_del_solpe';  // Debes asegurarte de tener el solpeId correcto
+  const solpe = this.solpes.find(s => s.id === solpeId);
+
+  if (solpe) {
+    const itemIndex = solpe.items.findIndex((i: Item) => i.id === item.id);
+
+    if (itemIndex !== -1) {
+      solpe.items[itemIndex].comparaciones.push(...item.comparaciones);  // Agrega las comparaciones al item
+      this.firestore.collection('solpes').doc(solpeId).update({
+        items: solpe.items,
+      }).then(() => {
+        this.mostrarToast('Comparación agregada desde Excel', 'success');
+      }).catch(err => {
+        console.error(err);
+        this.mostrarToast('Error al agregar comparación', 'danger');
+      });
+    }
+  }
+}
+
+
+descargarExcel(solpe: any) {
+  const worksheetData: any[][] = [];
+
+  // Encabezado
+  worksheetData.push([
+    'Empresa',
+    '',
+    'Cantidad',
+    'Precio',
+  ]);
+
+  // Datos por ítem y comparaciones
+  solpe.items.forEach((item: Item) => {
+    if (item.comparaciones && item.comparaciones.length > 0) {
+      item.comparaciones.forEach((comp: Comparaciones) => {
+        const precioBase = comp.precioBase || 0;
+        const descuento = comp.descuento || 0;
+        const precioFinal = comp.precio || 0;
+
+        worksheetData.push([
+          item.descripcion || '',
+          item.cantidad || '',
+          comp.empresa || '',
+          precioBase,
+          descuento,
+          precioFinal
+        ]);
+      });
+    } else {
+      worksheetData.push([
+        'Descripción',
+        item.descripcion || '',
+        item.cantidad || '',
+        0,
+      ]);
+    }
+  });
+
+  const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const workbook: XLSX.WorkBook = XLSX.utils.book_new();
+  const sheetName = `SOLPED_${solpe.numero_solpe}`;
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  const fechaActual = new Date().toISOString().split('T')[0];
+  const nombreArchivo = `SOLPED_${solpe.numero_solpe}_${fechaActual}.xlsx`;
+
+  XLSX.writeFile(workbook, nombreArchivo);
+}
+
+
+
   base64ToBlob(base64: string, contentType: string): Blob {
     const byteCharacters = atob(base64);
     const byteArrays = [];
@@ -315,57 +460,45 @@ export class GestorsolpesPage implements OnInit {
       }
     }
   }
-
-
-  async abrirComparacion(item: Item) {
+  async abrirComparacion(item: Item, solpe: any) {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
       inputs: [
-        {
-          name: 'empresa',
-          type: 'text' as const,
-          placeholder: 'Nombre de la empresa'
-        },
-        {
-          name: 'precio',
-          type: 'number' as const,
-          placeholder: 'Precio base'
-        },
-        {
-          name: 'descuento',
-          type: 'number' as const,
-          placeholder: 'Descuento (%) - opcional'
-        }
+        { name: 'empresa', type: 'text', placeholder: 'Nombre de la empresa' },
+        { name: 'precio', type: 'number', placeholder: 'Precio base' },
+        { name: 'descuento', type: 'number', placeholder: 'Descuento (%) - opcional' }
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Agregar',
           handler: (data) => {
-            if (data.empresa && data.precio) {
-              const precioBase = Number(data.precio);
-              const porcentajeDescuento = Number(data.descuento) || 0;
-              const descuento = precioBase * (porcentajeDescuento / 100);
-              const precioFinal = precioBase - descuento;
-
-              const nuevoId = Date.now();
-
-              item.comparaciones.push({
-                id: nuevoId,
-                empresa: data.empresa,
-                precio: precioFinal,
-                precioBase: precioBase,
-                descuento: porcentajeDescuento,
-                pdfId: '',
-                destacado: false
-              });
-
-              this.mostrarToast(`Comparación agregada con ${porcentajeDescuento}% de descuento`, 'success');
-              return true;
-            } else {
+            // Validación básica
+            if (!data.empresa || !data.precio) {
               this.mostrarToast('Debes ingresar empresa y precio', 'danger');
               return false;
             }
+
+            // Cálculo de precios
+            const precioBase  = Number(data.precio);
+            const descuento   = Number(data.descuento) || 0;
+            const precioFinal = precioBase * (1 - descuento / 100);
+
+            // Agregar la nueva comparativa al ítem
+            item.comparaciones = item.comparaciones || [];
+            item.comparaciones.push({
+              id:         Date.now(),
+              empresa:    data.empresa,
+              precioBase,
+              descuento,
+              precio:     precioFinal,
+              pdfId:      '',
+              destacado:  false
+            });
+
+            // Guardar TODO el array de items de la SOLPE
+            this.guardarComparacionesEnFirestore(solpe);
+            return true;
           }
         }
       ]
@@ -373,6 +506,7 @@ export class GestorsolpesPage implements OnInit {
 
     await alert.present();
   }
+
 
 
   async eliminarPDF(solpeId: string, pdfId: string, nombre: string) {
@@ -394,9 +528,15 @@ export class GestorsolpesPage implements OnInit {
     itemRef.update({ comparaciones: item.comparaciones });
   }
 
-  eliminarComparacion(item: any, index: number) {
-    item.comparaciones.splice(index, 1);
+  eliminarComparacion(solpe: any, item: Item, comp: Comparaciones) {
+    const idx = item.comparaciones.findIndex(c => c.id === comp.id);
+    if (idx < 0) return;
+    item.comparaciones.splice(idx, 1);
+    this.saveSolpeItems(solpe.id, solpe.items);
   }
+
+
+
   destacarComparacion(item: any, index: number) {
     item.comparaciones[index].destacado = !item.comparaciones[index].destacado;
     const solpeRef = this.firestore.collection('solpes').doc(item.solpeId);
@@ -407,6 +547,15 @@ export class GestorsolpesPage implements OnInit {
     }).catch(err => {
       console.error('Error al actualizar comparación:', err);
     });
+  }
+  private async saveSolpeItems(solpeId: string, items: Item[]) {
+    try {
+      await this.firestore.collection('solpes').doc(solpeId).update({ items });
+      this.mostrarToast('Datos guardados', 'success');
+    } catch (err) {
+      console.error(err);
+      this.mostrarToast('Error al guardar', 'danger');
+    }
   }
 
   async subirComparaciones(solpe: any, auto: boolean = false) {

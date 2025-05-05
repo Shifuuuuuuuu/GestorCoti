@@ -31,6 +31,8 @@
     "@capacitor/status-bar": "6.0.2",
     "@ionic/angular": "^8.0.0",
     "axios": "^1.7.9",
+    "browser-image-compression": "^2.0.2",
+    "compress.js": "^1.1.0",
     "firebase": "^10.14.1",
     "gapi-client": "^0.0.3",
     "ionicons": "^7.0.0",

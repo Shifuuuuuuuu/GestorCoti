@@ -4,9 +4,9 @@ import { SolpeService } from '../services/solpe.service';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { ViewChildren, QueryList, ElementRef } from '@angular/core';
-
-
-
+import imageCompression from 'browser-image-compression';
+import { Item } from '../Interface/IItem';
+import { Comparaciones } from '../Interface/Icompara';
 @Component({
   selector: 'app-solpe',
   templateUrl: './solpe.page.html',
@@ -20,7 +20,7 @@ export class SolpePage implements OnInit  {
     fecha: '',
     numero_contrato: '',
     usuario: '',
-    items: [],
+    items: [] as Item[],
     estatus: 'Solicitado',
   };
 
@@ -34,10 +34,60 @@ export class SolpePage implements OnInit  {
 
   ngOnInit() {
     const hoy = new Date();
-    this.solpe.fecha = hoy.toISOString().split('T')[0];
+    this.solpe.fecha = this.formatDate(hoy);
     this.obtenerUltimoNumeroSolpe();
     this.obtenerNombreUsuario();
+  if (!this.solpe.numero_solpe) {
+    this.cargarDatosDeLocalStorage();
   }
+  }
+formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+
+cargarDatosDeLocalStorage() {
+  const solpeGuardado = localStorage.getItem('solpe');
+  if (solpeGuardado) {
+    const datos = JSON.parse(solpeGuardado);
+    console.log('Datos cargados de localStorage:', datos);
+
+    if (datos.items && datos.items.length > 0) {
+      this.solpe = { ...datos };
+      this.solpe.items = this.solpe.items.map((item: Item) => ({
+        ...item,
+        descripcion: item.descripcion || '',
+        codigo_referencial: item.codigo_referencial || '',
+        cantidad: item.cantidad || 0,
+        stock: item.stock || 0,
+        numero_interno: item.numero_interno || '',
+        imagen_referencia_base64: item.imagen_referencia_base64 || '',
+        comparaciones: item.comparaciones || [],
+      }));
+    } else {
+      this.solpe.items = [];
+    }
+  } else {
+    this.solpe.numero_solpe = 1;
+    this.solpe.items = [];
+  }
+}
+
+guardarDatosEnLocalStorage() {
+  if (this.solpe.numero_solpe) {
+    if (this.solpe.items && this.solpe.items.length > 0) {
+      localStorage.setItem('solpe', JSON.stringify(this.solpe));
+    } else {
+      this.mostrarToast('No hay ítems para guardar', 'warning');
+    }
+  }
+}
+
+
+
 
   obtenerUltimoNumeroSolpe() {
     this.solpeService.obtenerUltimaSolpe().subscribe((solpes: any[]) => {
@@ -47,6 +97,7 @@ export class SolpePage implements OnInit  {
       } else {
         this.solpe.numero_solpe = 1;
       }
+      this.guardarDatosEnLocalStorage();
     });
   }
 
@@ -66,11 +117,13 @@ export class SolpePage implements OnInit  {
       imagen_referencia_base64: '',
       editando: true,
     });
+  this.guardarDatosEnLocalStorage();
   }
+
 
   eliminarItem(index: number) {
     this.solpe.items.splice(index, 1);
-    this.mostrarToast('Item eliminado', 'danger');
+    this.guardarDatosEnLocalStorage();
   }
 
   verificarYGuardarItem(index: number) {
@@ -87,29 +140,46 @@ export class SolpePage implements OnInit  {
     }
   }
 
+
   subirImagenReferencia(event: any, index: number) {
     const archivo = event.target.files[0];
-    if (archivo && archivo.type.startsWith('image/')) {
+    if (!archivo || !archivo.type || !archivo.type.startsWith('image/')) {
+      this.mostrarToast('Archivo no válido. Solo se permiten imágenes.', 'danger');
+      return;
+    }
+
+    const options = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 800,
+      useWebWorker: true,
+    };
+
+    imageCompression(archivo, options).then((compressedFile: Blob) => {
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onloadend = () => {
         const base64 = reader.result as string;
         this.solpe.items[index].imagen_referencia_base64 = base64;
-        this.mostrarToast('Imagen de referencia guardada', 'success');
       };
-      reader.readAsDataURL(archivo);
+      reader.readAsDataURL(compressedFile);
+    }).catch((err) => {
+      this.mostrarToast('Error al comprimir la imagen', 'danger');
+      console.error(err);
+    });
+  }
+
+
+  seleccionarArchivo(index: number) {
+    const inputs = this.inputsImagenes.toArray();
+    if (inputs[index]) {
+      inputs[index].nativeElement.click();
     } else {
-      this.mostrarToast('Solo se permiten archivos de imagen', 'danger');
+      console.warn('Input de imagen no disponible');
     }
   }
 
-  seleccionarArchivo(index: number) {
-    const input = this.inputsImagenes.toArray()[index];
-    input.nativeElement.click();
-  }
 
   guardarItem(index: number) {
     this.solpe.items[index].editando = false;
-    this.mostrarToast('Item guardado correctamente', 'success');
   }
 
   editarItem(index: number) {
@@ -118,7 +188,6 @@ export class SolpePage implements OnInit  {
 
   guardarEdicion(index: number) {
     this.solpe.items[index].editando = false;
-    this.mostrarToast('Item actualizado', 'success');
   }
 
   obtenerNombreUsuario() {
@@ -166,10 +235,8 @@ export class SolpePage implements OnInit  {
       }
     }
 
-    const { factura_general, ...restoSolpe } = this.solpe;
-
     const solpeAGuardar = {
-      ...restoSolpe,
+      ...this.solpe,
       items: this.solpe.items.map((item: any, index: number) => ({
         item: index + 1,
         descripcion: item.descripcion,
@@ -180,15 +247,23 @@ export class SolpePage implements OnInit  {
         imagen_referencia_base64: item.imagen_referencia_base64 || null,
       }))
     };
-
     this.firestore.collection('solpes').add(solpeAGuardar).then(() => {
       this.mostrarToast('SOLPE guardada con éxito', 'success');
       this.resetearFormulario();
+      this.eliminarDatosDeLocalStorage();
     }).catch(err => {
       console.error(err);
       this.mostrarToast('Error al guardar la SOLPE', 'danger');
     });
   }
+
+
+
+  eliminarDatosDeLocalStorage() {
+    localStorage.removeItem('solpes');
+  }
+
+
 
   convertFileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -202,12 +277,9 @@ export class SolpePage implements OnInit  {
   resetearFormulario() {
     this.solpe = {
       numero_solpe: null,
-      fecha: '',
       numero_contrato: '',
-      usuario: '',
       items: [],
-      estatus: 'Solicitado',
-      imagen_referencia_base64: ''
+      estatus: 'Solicitado'
     };
     this.obtenerUltimoNumeroSolpe();
   }
@@ -220,4 +292,10 @@ export class SolpePage implements OnInit  {
     });
     toast.present();
   }
+  eliminarImagen(index: number) {
+    this.solpe.items[index].imagen_referencia_base64 = '';  // Elimina la imagen base64
+    this.mostrarToast('Imagen eliminada', 'success');
+    this.guardarDatosEnLocalStorage();  // Guarda los datos nuevamente después de eliminar la imagen
+  }
+
 }
