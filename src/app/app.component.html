@@ -6,18 +6,12 @@
           <img
             src="assets/img/Logo XT Servicios.png"
             alt="Logo"
-            style="
-              height: 40px;
-              display: block;
-              margin: auto;
-              border-radius: 10px;
-              -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-              mask-image: linear-gradient(to right, transparent, black 10%, black 92%, transparent);
-            "
+            style="height: 40px; display: block; margin: auto; border-radius: 10px;
+                   -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+                   mask-image: linear-gradient(to right, transparent, black 10%, black 92%, transparent);"
           >
         </ion-toolbar>
       </ion-header>
-
 
       <ion-content>
         <ion-list id="inbox-list">
@@ -26,14 +20,35 @@
           </ion-list-header>
 
           <ion-menu-toggle auto-hide="false" *ngFor="let p of filteredPages">
-            <ion-item routerDirection="root" [routerLink]="[p.url]" lines="none" detail="false" routerLinkActive="selected" class="menu-item">
-              <ion-icon aria-hidden="true" slot="start" [ios]="p.icon + '-outline'" [md]="p.icon + '-sharp'" class="menu-item-icon"></ion-icon>
+            <ion-item routerDirection="root"
+                      [routerLink]="[p.url]"
+                      lines="none"
+                      detail="false"
+                      routerLinkActive="selected"
+                      class="menu-item">
+              <ng-container *ngIf="p.url === '/perfil-usuario'; else normalIcon">
+                <ion-avatar slot="start">
+                  <img [src]="photoURL" alt="Avatar">
+                </ion-avatar>
+              </ng-container>
+              <ng-template #normalIcon>
+                <ion-icon aria-hidden="true"
+                          slot="start"
+                          [ios]="p.icon + '-outline'"
+                          [md]="p.icon + '-sharp'"
+                          class="menu-item-icon">
+                </ion-icon>
+              </ng-template>
+
               <ion-label class="menu-item-label">{{ p.title }}</ion-label>
             </ion-item>
           </ion-menu-toggle>
 
+
           <ion-item button (click)="logout()" class="logout-item">
-            <ion-icon aria-hidden="true" slot="start" name="log-out-outline" class="logout-icon"></ion-icon>
+            <ion-icon aria-hidden="true" slot="start"
+                      name="log-out-outline" class="logout-icon">
+            </ion-icon>
             <ion-label>Cerrar sesión</ion-label>
           </ion-item>
         </ion-list>

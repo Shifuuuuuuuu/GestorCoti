@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from './services/auth.service';
 import { Router } from '@angular/router';
+import { AngularFirestore } from '@angular/fire/compat/firestore';
 
 @Component({
   selector: 'app-root',
@@ -17,11 +18,11 @@ export class AppComponent implements OnInit {
 
   filteredPages: any[] = [];
   isDarkMode = false;
-
-  constructor(private authService: AuthService, private router: Router) {}
+  public photoURL: string = 'assets/img/default-avatar.jpg';
+  constructor(private authService: AuthService, private router: Router, private afs: AngularFirestore  ) {}
 
   ngOnInit() {
-    // Activar tema si está guardado
+    this.loadUserProfile();
     const storedMode = localStorage.getItem('darkMode');
     if (storedMode !== null) {
       this.isDarkMode = storedMode === 'true';
@@ -39,6 +40,17 @@ export class AppComponent implements OnInit {
     if (currentRole) {
       this.cargarMenuPorRol(currentRole);
     }
+  }
+  private loadUserProfile() {
+    const uid = localStorage.getItem('userId');
+    if (!uid) return;
+    this.afs.doc<{ photoURL: string }>(`Usuarios/${uid}`)
+      .valueChanges()
+      .subscribe(user => {
+        if (user?.photoURL) {
+          this.photoURL = user.photoURL;
+        }
+      });
   }
 
   cargarMenuPorRol(role: string) {
