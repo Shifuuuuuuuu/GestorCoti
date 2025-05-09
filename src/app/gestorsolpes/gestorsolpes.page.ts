@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { SolpeService } from '../services/solpe.service';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
@@ -6,6 +6,8 @@ import { ArchivoPDF } from '../Interface/IArchivoPDF';
 import * as XLSX from 'xlsx';
 import { Item } from '../Interface/IItem';
 import { Comparaciones } from '../Interface/Icompara';
+import { Solpes } from '../Interface/ISolpes';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 @Component({
   selector: 'app-gestorsolpes',
   templateUrl: './gestorsolpes.page.html',
@@ -20,8 +22,8 @@ export class GestorsolpesPage implements OnInit {
   imagenAmpliadaVisible: boolean = false;
   archivosPDF: { [solpeId: string]: ArchivoPDF[] } = {};
   pdfsCargados: { [solpeId: string]: { id: string; nombre: string }[] } = {};
+  openedAccordions: string[] = [];
   @ViewChildren('fileInputPDF') fileInputsPDF!: QueryList<ElementRef>;
-
   @ViewChildren('fileInput') fileInputs!: QueryList<ElementRef>;
 
   constructor(
@@ -30,6 +32,8 @@ export class GestorsolpesPage implements OnInit {
     private firestore: AngularFirestore,
     private toastController: ToastController,
     private menu: MenuController,
+    private cdRef: ChangeDetectorRef,
+    private afAuth: AngularFireAuth
   ) {}
 
   ngOnInit() {
@@ -37,6 +41,12 @@ export class GestorsolpesPage implements OnInit {
       this.cargarSolpes();
       this.loading = false;
     }, 2000);
+  }
+  onAccordionChange(event: any) {
+    this.openedAccordions = event.detail.value;
+  }
+  trackByItemId(index: number, item: Item) {
+    return item.id;
   }
   verFactura(base64Data: string) {
     const base64Clean = base64Data.replace(/^data:application\/pdf;base64,/, '');
@@ -74,8 +84,6 @@ export class GestorsolpesPage implements OnInit {
 
   cargarComparacionesDesdeExcel(data: any[][]): void {
     let currentCompany = '';
-
-    // Iterar todas las filas
     for (let r = 0; r < data.length; r++) {
       const row = data[r];
       if (!row || row.length === 0) continue;
@@ -83,26 +91,21 @@ export class GestorsolpesPage implements OnInit {
       const key = row[0]?.toString().trim().toLowerCase();
 
       if (key === 'empresa') {
-        // Nueva sección: guardamos la empresa
         currentCompany = row[1]?.toString().trim() ?? '';
       }
       else if (key === 'descripción') {
-        // Fila de detalle: descripción, cantidad y precio base
         const descripcion = row[1]?.toString().trim() ?? '';
         const cantidad    = Number(row[2]) || 0;
         const precioBase  = Number(row[3]) || 0;
-        const precioFinal = precioBase;      // como pides, mismo valor
-        const descuento   = 0;               // siempre 0
+        const precioFinal = precioBase;
+        const descuento   = 0;
 
         if (!currentCompany || !descripcion) continue;
-
-        // Para cada SOLPE que tenga un ítem con esa descripción…
         this.solpes
           .filter(sol => sol.items.some((it: Item) =>
             it.descripcion.trim().toLowerCase() === descripcion.toLowerCase()
           ))
           .forEach(sol => {
-            // Añadimos la comparativa a cada ítem coincidente
             sol.items
               .filter((it: Item) =>
                 it.descripcion.trim().toLowerCase() === descripcion.toLowerCase()
@@ -119,8 +122,6 @@ export class GestorsolpesPage implements OnInit {
                   destacado: false
                 });
               });
-
-            // Y actualizamos Firestore para esta SOLPE
             this.firestore
               .collection('solpes')
               .doc(sol.id)
@@ -141,14 +142,14 @@ generarId(): string {
 }
 
 agregarComparacion(item: Item) {
-  const solpeId = 'id_del_solpe';  // Debes asegurarte de tener el solpeId correcto
+  const solpeId = 'id_del_solpe';
   const solpe = this.solpes.find(s => s.id === solpeId);
 
   if (solpe) {
     const itemIndex = solpe.items.findIndex((i: Item) => i.id === item.id);
 
     if (itemIndex !== -1) {
-      solpe.items[itemIndex].comparaciones.push(...item.comparaciones);  // Agrega las comparaciones al item
+      solpe.items[itemIndex].comparaciones.push(...item.comparaciones);
       this.firestore.collection('solpes').doc(solpeId).update({
         items: solpe.items,
       }).then(() => {
@@ -164,8 +165,6 @@ agregarComparacion(item: Item) {
 
 descargarExcel(solpe: any) {
   const worksheetData: any[][] = [];
-
-  // Encabezado
   worksheetData.push([
     'Empresa',
     '',
@@ -173,7 +172,6 @@ descargarExcel(solpe: any) {
     'Precio',
   ]);
 
-  // Datos por ítem y comparaciones
   solpe.items.forEach((item: Item) => {
     if (item.comparaciones && item.comparaciones.length > 0) {
       item.comparaciones.forEach((comp: Comparaciones) => {
@@ -262,27 +260,50 @@ descargarExcel(solpe: any) {
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Siguiente',
-          handler: async (estatusSeleccionado) => {
-            if (estatusSeleccionado) {
-              this.firestore.collection('solpes').doc(solpe.id).update({
-                estatus: estatusSeleccionado,
-              }).then(async () => {
+          handler: async (estatusSeleccionado: string) => {
+            if (!estatusSeleccionado) return;
+            const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
+
+            solpeRef
+              .update({ estatus: estatusSeleccionado })
+              .then(async () => {
+                // 1) Actualizo UI
                 solpe.estatus = estatusSeleccionado;
                 this.mostrarToast(`SOLPE marcada como "${estatusSeleccionado}"`, 'success');
+
+                // 2) Registro en historialEstados
+                let usuarioNombre = 'Desconocido';
+                const afUser = await this.afAuth.currentUser;
+                if (afUser?.uid) {
+                  const userSnap = await this.firestore
+                    .collection('Usuarios')
+                    .doc(afUser.uid)
+                    .get()
+                    .toPromise();
+                  if (userSnap?.exists) {
+                    const data = userSnap.data() as any;
+                    usuarioNombre = data.fullName ?? usuarioNombre;
+                  }
+                }
+                await solpeRef
+                  .collection('historialEstados')
+                  .add({
+                    fecha: new Date(),
+                    estatus: estatusSeleccionado,
+                    usuario: usuarioNombre
+                  });
+
+                // 3) Subo PDFs si corresponde
                 if (
                   this.archivosPDF[solpe.id]?.length > 0 &&
-                  (estatusSeleccionado === 'Pre Aprobado' || estatusSeleccionado === 'Tránsito a Faena')
+                  (estatusSeleccionado === 'Preaprobado' || estatusSeleccionado === 'Tránsito a Faena')
                 ) {
                   try {
                     const pdfsParaSubir = this.archivosPDF[solpe.id].map(pdf => ({
                       nombre: pdf.nombre,
-                      base64: pdf.base64,
+                      base64: pdf.base64
                     }));
-
-                    await this.firestore.collection('solpes').doc(solpe.id).update({
-                      pdfs: pdfsParaSubir
-                    });
-
+                    await solpeRef.update({ pdfs: pdfsParaSubir });
                     this.archivosPDF[solpe.id] = [];
                     this.mostrarToast('PDFs cargados en la SOLPE', 'success');
                   } catch (error) {
@@ -290,15 +311,16 @@ descargarExcel(solpe: any) {
                     this.mostrarToast('Error al subir PDFs', 'danger');
                   }
                 }
-              }).catch(err => {
-                this.mostrarToast('Error al actualizar estatus', 'danger');
+              })
+              .catch(err => {
                 console.error(err);
+                this.mostrarToast('Error al actualizar estatus', 'danger');
               });
-            }
-          },
-        },
-      ],
+          }
+        }
+      ]
     });
+
     await alert.present();
   }
   abrirInputArchivos(solpeId: string) {
@@ -460,12 +482,12 @@ descargarExcel(solpe: any) {
       }
     }
   }
-  async abrirComparacion(item: Item, solpe: any) {
+  async abrirComparacion(item: Item, solpe: any): Promise<void> {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
       inputs: [
         { name: 'empresa', type: 'text', placeholder: 'Nombre de la empresa' },
-        { name: 'precio', type: 'number', placeholder: 'Precio base' },
+        { name: 'precio',  type: 'number', placeholder: 'Precio base' },
         { name: 'descuento', type: 'number', placeholder: 'Descuento (%) - opcional' }
       ],
       buttons: [
@@ -473,18 +495,13 @@ descargarExcel(solpe: any) {
         {
           text: 'Agregar',
           handler: (data) => {
-            // Validación básica
             if (!data.empresa || !data.precio) {
               this.mostrarToast('Debes ingresar empresa y precio', 'danger');
               return false;
             }
-
-            // Cálculo de precios
             const precioBase  = Number(data.precio);
             const descuento   = Number(data.descuento) || 0;
             const precioFinal = precioBase * (1 - descuento / 100);
-
-            // Agregar la nueva comparativa al ítem
             item.comparaciones = item.comparaciones || [];
             item.comparaciones.push({
               id:         Date.now(),
@@ -496,8 +513,12 @@ descargarExcel(solpe: any) {
               destacado:  false
             });
 
-            // Guardar TODO el array de items de la SOLPE
-            this.guardarComparacionesEnFirestore(solpe);
+            this.actualizarComparacionEnFirestore(solpe.id, item);
+
+            if (!this.openedAccordions.includes(item.id)) {
+              this.openedAccordions.push(item.id);
+            }
+
             return true;
           }
         }
@@ -506,8 +527,6 @@ descargarExcel(solpe: any) {
 
     await alert.present();
   }
-
-
 
   async eliminarPDF(solpeId: string, pdfId: string, nombre: string) {
     try {
@@ -528,15 +547,50 @@ descargarExcel(solpe: any) {
     itemRef.update({ comparaciones: item.comparaciones });
   }
 
-  eliminarComparacion(solpe: any, item: Item, comp: Comparaciones) {
-    const idx = item.comparaciones.findIndex(c => c.id === comp.id);
-    if (idx < 0) return;
-    item.comparaciones.splice(idx, 1);
-    this.saveSolpeItems(solpe.id, solpe.items);
+  async eliminarComparacionCompleta(solpedId: string, itemId: string, comparacionId: number, item: any, index: number) {
+    await this.eliminarComparacionFirestore(solpedId, itemId, comparacionId);
+    item.comparaciones.splice(index, 1);
+    this.cdRef.detectChanges();
   }
+  async eliminarComparacionFirestore(solpedId: string, itemId: string, comparacionId: number) {
+    const solpedRef = this.firestore.collection('solpes').doc(solpedId);
 
+    try {
+      const solpedDoc = await solpedRef.get().toPromise();
 
+      if (solpedDoc && solpedDoc.exists) {
+        const solpedData = solpedDoc.data() as Solpes;
+        const items: Item[] = solpedData?.items || [];
 
+        const item = items.find((i: Item) => i.id === itemId);
+        if (item) {
+          const comparacionIndex = item.comparaciones.findIndex(
+            (comp: Comparaciones) => comp.id === comparacionId
+          );
+
+          if (comparacionIndex !== -1) {
+            item.comparaciones = item.comparaciones.filter(
+              (comp: Comparaciones) => comp.id !== comparacionId
+            );
+            await solpedRef.update({ items });
+            this.mostrarToast('Comparación eliminada de Firestore', 'success');
+          } else {
+            console.log('❌ Comparación no encontrada');
+            this.mostrarToast('Comparación no encontrada', 'danger');
+          }
+        } else {
+          console.log('❌ Ítem no encontrado');
+          this.mostrarToast('Ítem no encontrado', 'danger');
+        }
+      } else {
+        console.log('❌ Documento no encontrado o vacío');
+        this.mostrarToast('Documento no encontrado o vacío', 'danger');
+      }
+    } catch (error) {
+      console.error('Error eliminando la comparación:', error);
+      this.mostrarToast('Error al eliminar la comparación en Firestore', 'danger');
+    }
+  }
   destacarComparacion(item: any, index: number) {
     item.comparaciones[index].destacado = !item.comparaciones[index].destacado;
     const solpeRef = this.firestore.collection('solpes').doc(item.solpeId);
@@ -547,15 +601,6 @@ descargarExcel(solpe: any) {
     }).catch(err => {
       console.error('Error al actualizar comparación:', err);
     });
-  }
-  private async saveSolpeItems(solpeId: string, items: Item[]) {
-    try {
-      await this.firestore.collection('solpes').doc(solpeId).update({ items });
-      this.mostrarToast('Datos guardados', 'success');
-    } catch (err) {
-      console.error(err);
-      this.mostrarToast('Error al guardar', 'danger');
-    }
   }
 
   async subirComparaciones(solpe: any, auto: boolean = false) {
@@ -576,6 +621,28 @@ descargarExcel(solpe: any) {
       this.guardarComparacionesEnFirestore(solpe);
     }
   }
+  async actualizarComparacionEnFirestore(solpeId: string, item: Item): Promise<void> {
+    const solpe = this.solpes.find(s => s.id === solpeId);
+    if (!solpe) return;
+    const nuevosItems: Item[] = (solpe.items as Item[]).map((it: Item) =>
+      it.id === item.id ? item : it
+    );
+
+    try {
+      await this.firestore
+        .collection('solpes')
+        .doc(solpeId)
+        .update({ items: nuevosItems });
+
+      this.mostrarToast('Comparación guardada correctamente', 'success');
+      solpe.items = nuevosItems;
+    } catch (err) {
+      console.error(err);
+      this.mostrarToast('Error al guardar comparación', 'danger');
+    }
+  }
+
+
 
   guardarComparacionesEnFirestore(solpe: any) {
     solpe.items.forEach((item: any) => {

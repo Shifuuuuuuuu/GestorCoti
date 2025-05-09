@@ -208,7 +208,7 @@ guardarDatosEnLocalStorage() {
     });
   }
 
-  guardarSolpe() {
+  async guardarSolpe() {
     if (!this.solpe.numero_contrato) {
       this.mostrarToast('Debes seleccionar un Centro de Costo', 'warning');
       return;
@@ -247,15 +247,30 @@ guardarDatosEnLocalStorage() {
         imagen_referencia_base64: item.imagen_referencia_base64 || null,
       }))
     };
-    this.firestore.collection('solpes').add(solpeAGuardar).then(() => {
-      this.mostrarToast('SOLPE guardada con éxito', 'success');
-      this.resetearFormulario();
-      this.eliminarDatosDeLocalStorage();
-    }).catch(err => {
-      console.error(err);
-      this.mostrarToast('Error al guardar la SOLPE', 'danger');
-    });
+
+    this.firestore
+      .collection('solpes')
+      .add(solpeAGuardar)
+      .then(async docRef => {
+        await this.firestore
+          .collection('solpes')
+          .doc(docRef.id)
+          .collection('historialEstados')
+          .add({
+            fecha: new Date(),
+            estatus: solpeAGuardar.estatus,
+            usuario: this.solpe.usuario
+          });
+        this.mostrarToast('SOLPE guardada con éxito', 'success');
+        this.resetearFormulario();
+        this.eliminarDatosDeLocalStorage();
+      })
+      .catch(err => {
+        console.error(err);
+        this.mostrarToast('Error al guardar la SOLPE', 'danger');
+      });
   }
+
 
 
 

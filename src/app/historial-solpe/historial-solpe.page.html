@@ -21,6 +21,9 @@
     <ion-segment-button value="buscar">
       <ion-label>Buscar por número</ion-label>
     </ion-segment-button>
+    <ion-segment-button value="estados">
+      <ion-label>Historial de Estados</ion-label>
+    </ion-segment-button>
   </ion-segment>
 
   <div *ngIf="segmentoSeleccionado === 'buscar'">
@@ -193,6 +196,44 @@
     <ion-text *ngIf="solpesFiltradas.length === 0" class="no-solped-container">
       <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
     </ion-text>
-
+  </div>
+  <div *ngIf="segmentoSeleccionado === 'estados'">
+    <ion-grid>
+      <ion-row>
+        <ion-col size="10">
+          <ion-item>
+            <ion-label position="floating">Número de SOLPED</ion-label>
+            <ion-input [(ngModel)]="numeroBusqueda" type="number"></ion-input>
+          </ion-item>
+        </ion-col>
+        <ion-col size="2">
+          <ion-button expand="block" shape="round" style="--background: red;" (click)="buscarSolpe()">
+            <ion-icon color="light" name="search-outline"></ion-icon>
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+    <ion-card *ngIf="solpeEncontrada">
+      <ion-card-header>
+        <ion-card-title>Historial de Estados de SOLPED #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-list>
+          <ion-item *ngFor="let h of historialEstados">
+            <ion-label>
+              <h2>{{ h.fecha | date:'dd/MM/yyyy HH:mm' }}</h2>
+              <p><strong>Estado:</strong> {{ h.estatus }}</p>
+              <p><strong>Usuario:</strong> {{ h.usuario }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ion-text *ngIf="historialEstados.length === 0" color="medium">
+          <p>No hay cambios de estado registrados.</p>
+        </ion-text>
+      </ion-card-content>
+    </ion-card>
+    <ion-text *ngIf="!solpeEncontrada" color="medium">
+      <p>Busca primero una SOLPED en el segmento "Buscar por número".</p>
+    </ion-text>
   </div>
 </ion-content>

@@ -173,13 +173,16 @@
                             <tr>
                               <th>Empresa</th>
                               <th>Precio</th>
-                              <th>PDF</th>
+                              <th>Descuento</th>
+                              <th>Precio con Descuento</th>
                               <th>Acciones</th>
                             </tr>
                           </thead>
                           <tbody>
                             <tr *ngFor="let comp of item.comparaciones; let i = index">
                               <td>{{ comp.empresa?.toUpperCase() }}</td>
+                              <td>{{ comp.precioBase || comp.precio | currency }}</td>
+                              <td>{{ comp.descuento || 0 }}%</td>
                               <td>{{ comp.precio | currency }}</td>
                               <td>
                                 <ion-button *ngIf="comp.pdfId" fill="clear" color="primary" size="small" (click)="verPDFComparacion(solpe.id, comp.pdfId)">
@@ -188,12 +191,10 @@
                                 <ion-button *ngIf="comp.pdfId" fill="clear" color="success" size="small" (click)="descargarPDFComparacion(solpe.id, comp.pdfId)">
                                   <ion-icon name="download-outline"></ion-icon>
                                 </ion-button>
-                              </td>
-                              <td>
                                 <ion-button color="danger" fill="clear" (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id, item, i)">
                                   <ion-icon name="close-circle"></ion-icon>
                                 </ion-button>
-                                <ion-button color="warning" fill="clear" (click)="destacarComparacion(item, i)">
+                                <ion-button color="warning" fill="clear" (click)="destacarComparacion(solpe.id, item, i)">
                                   <ion-icon [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
                                 </ion-button>
                               </td>

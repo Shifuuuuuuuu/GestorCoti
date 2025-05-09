@@ -25,6 +25,7 @@ export class HistorialSolpePage implements OnInit {
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
+  historialEstados: Array<{ fecha: any; estatus: string; usuario: string }> = [];
   constructor(private firestore: AngularFirestore,private menu: MenuController,
     private toastController: ToastController
   ) {}
@@ -33,21 +34,53 @@ export class HistorialSolpePage implements OnInit {
     this.cargarSolpes();
     this.cargarUsuarios();
   }
+  cargarHistorialEstados(solpeId: string) {
+    this.firestore
+      .collection('solpes')
+      .doc(solpeId)
+      .collection('historialEstados', ref => ref.orderBy('fecha', 'asc'))
+      .get()
+      .subscribe(snapshot => {
+        this.historialEstados = snapshot.docs.map(doc => {
+          const d: any = doc.data();
+          let fechaDate: Date;
+          if (d.fecha?.toDate) {
+            fechaDate = d.fecha.toDate();
+          } else {
+            fechaDate = new Date(d.fecha);
+          }
+          return {
+            fecha: fechaDate,
+            estatus: d.estatus,
+            usuario: d.usuario
+          };
+        });
+      }, error => {
+        console.error('Error cargando historial de estados:', error);
+        this.historialEstados = [];
+      });
+  }
+
+
 
   cargarSolpes() {
-    this.firestore.collection('solpes').get().subscribe(snapshot => {
-      const solpesTemp: any[] = [];
-
-      snapshot.docs.forEach((doc: any) => {
-        const solpe = doc.data();
-        solpe.id = doc.id;
-        solpesTemp.push(solpe);
+    this.firestore
+      .collection('solpes', ref =>
+        ref.orderBy('numero_solpe', 'desc')
+      )
+      .get()
+      .subscribe(snapshot => {
+        const solpesTemp: any[] = [];
+        snapshot.docs.forEach((doc: any) => {
+          const solpe = doc.data();
+          solpe.id = doc.id;
+          solpesTemp.push(solpe);
+        });
+        this.solpesOriginal = solpesTemp;
+        this.solpesFiltradas = [...this.solpesOriginal];
       });
-
-      this.solpesOriginal = solpesTemp;
-      this.solpesFiltradas = [...this.solpesOriginal];
-    });
   }
+
 
   ionViewWillEnter() {
     this.menu.enable(false);
@@ -161,12 +194,15 @@ export class HistorialSolpePage implements OnInit {
       .subscribe(snapshot => {
         if (!snapshot.empty) {
           const doc = snapshot.docs[0];
-          const data = doc.data() as any; // o usa tu interfaz si la tienes: as Solpes
+          const data = doc.data() as any;
           this.solpeEncontrada = { id: doc.id, ...data };
+          if (this.segmentoSeleccionado === 'estados') {
+            this.cargarHistorialEstados(doc.id);
+          }
         } else {
           this.solpeEncontrada = null;
+          this.historialEstados = [];
         }
-        this.buscado = true;
       });
   }
 
@@ -226,7 +262,7 @@ export class HistorialSolpePage implements OnInit {
         return '#007bff';
       case 'Preaprobado':
         return '#ffc107';
-      case 'Oc enviada a Proveedor':
+      case 'OC enviada a Proveedor':
         return '#17a2b8';
       case 'Por Importación':
         return '#6f42c1';

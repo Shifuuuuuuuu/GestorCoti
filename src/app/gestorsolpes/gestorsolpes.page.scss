@@ -74,3 +74,22 @@ ion-content {
     margin-left: 2%;
   }
 }
+.solpe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 1% 0 1%;
+}
+
+.solpe-actions {
+  display: flex;
+  gap: 8px; /* separación entre botones */
+}
+
+/* Para que el label solo actúe de contenedor y no rompa el flujo */
+.upload-label {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}

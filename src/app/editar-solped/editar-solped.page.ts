@@ -5,6 +5,7 @@ import { AlertController, MenuController, ToastController } from '@ionic/angular
 import { Comparaciones } from '../Interface/Icompara';
 import { Solpes } from '../Interface/ISolpes';
 import { Item } from '../Interface/IItem';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 
 @Component({
   selector: 'app-editar-solped',
@@ -43,7 +44,8 @@ export class EditarSolpedPage implements OnInit {
     private route: ActivatedRoute,
     private alertController: AlertController,
     private toastController: ToastController,
-    private cdRef: ChangeDetectorRef
+    private cdRef: ChangeDetectorRef,
+    private afAuth: AngularFireAuth
   ) {}
 
   ngOnInit() {
@@ -187,69 +189,89 @@ export class EditarSolpedPage implements OnInit {
   }
 
 
-  destacarComparacion(item: any, index: number) {
-    item.comparaciones[index].destacado = !item.comparaciones[index].destacado;
-    const solpeRef = this.firestore.collection('solpes').doc(item.solpeId);
-    solpeRef.update({
-      items: item.comparaciones
-    }).then(() => {
-      console.log('Comparación actualizada en Firestore');
-    }).catch(err => {
-      console.error('Error al actualizar comparación:', err);
-    });
+  async destacarComparacion(solpeId: string, item: any, compIdx: number) {
+    if (item.comparaciones && item.comparaciones[compIdx]) {
+      item.comparaciones[compIdx].destacado =
+        !item.comparaciones[compIdx].destacado;
+    }
+
+    try {
+      const solpeRef = this.firestore.collection('solpes').doc(solpeId);
+      const solpeSnap = await solpeRef.get().toPromise();
+      if (!solpeSnap || !solpeSnap.exists) {
+        throw new Error('SOLPE no encontrado');
+      }
+
+      const solpeData = solpeSnap.data() as any;
+      const items = solpeData.items || [];
+      const idx = items.findIndex((i: any) => i.id === item.id);
+      if (idx === -1) {
+        throw new Error('Item no encontrado en SOLPE');
+      }
+
+      items[idx].comparaciones = item.comparaciones;
+
+      await solpeRef.update({ items });
+    } catch (err) {
+      console.error(err);
+      this.mostrarToast('Error al actualizar comparación', 'danger');
+    }
   }
   async abrirComparacion(item: any, solpeId: string) {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
       inputs: [
         { name: 'empresa', type: 'text', placeholder: 'Nombre de la Empresa' },
-        { name: 'precio', type: 'number', placeholder: 'Precio' },
+        { name: 'precio',  type: 'number', placeholder: 'Precio base' },
+        { name: 'descuento', type: 'number', placeholder: 'Descuento (%) - opcional' }
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Agregar',
           handler: async (data) => {
-            if (data.empresa && data.precio) {
-              if (!item.comparaciones) {
-                item.comparaciones = [];
-              }
-
-              const nuevoId = Date.now();
-              const nuevaComparacion = {
-                id: nuevoId,
-                empresa: data.empresa,
-                precio: Number(data.precio)
-              };
-
-              item.comparaciones.push(nuevaComparacion);
-
-              try {
-                const solpeRef = this.firestore.collection('solpes').doc(solpeId);
-                const solpeDoc = await solpeRef.get().toPromise();
-
-                if (solpeDoc && solpeDoc.exists) {
-                  const solpeData = solpeDoc.data() as any;
-                  const items = solpeData.items || [];
-
-                  const itemIndex = items.findIndex((i: any) => i.id === item.id);
-                  if (itemIndex !== -1) {
-                    items[itemIndex].comparaciones = item.comparaciones;
-
-                    await solpeRef.update({ items });
-                    this.mostrarToast('Comparación agregada', 'success');
-                  }
-                }
-              } catch (error) {
-                console.error('Error al guardar comparación:', error);
-                this.mostrarToast('Error al agregar la comparación', 'danger');
-              }
-
-              return true;
-            } else {
-              this.mostrarToast('Debes completar ambos campos', 'danger');
+            if (!data.empresa || data.precio == null) {
+              this.mostrarToast('Debes ingresar empresa y precio', 'danger');
               return false;
             }
+
+            const precioBase = Number(data.precio);
+            const descuentoPct = Number(data.descuento) || 0;
+            const precioConDescuento = precioBase * (1 - descuentoPct / 100);
+            item.comparaciones = item.comparaciones || [];
+
+            const nuevaComparacion = {
+              id: Date.now(),
+              empresa: data.empresa,
+              precio: precioBase,
+              descuento: descuentoPct,
+              precioConDescuento
+            };
+            item.comparaciones.push(nuevaComparacion);
+
+            try {
+              const solpeRef = this.firestore.collection('solpes').doc(solpeId);
+              const solpeSnap = await solpeRef.get().toPromise();
+              if (!solpeSnap || !solpeSnap.exists) {
+                throw new Error('SOLPE no encontrado');
+              }
+
+              const solpeData = solpeSnap.data() as any;
+              const items = solpeData.items || [];
+              const idx = items.findIndex((i: any) => i.id === item.id);
+              if (idx === -1) {
+                throw new Error('Item no encontrado en SOLPE');
+              }
+
+              items[idx].comparaciones = item.comparaciones;
+              await solpeRef.update({ items });
+              this.mostrarToast('Comparación agregada', 'success');
+            } catch (err) {
+              console.error(err);
+              this.mostrarToast('Error al agregar la comparación', 'danger');
+            }
+
+            return true;
           }
         }
       ]
@@ -307,18 +329,24 @@ export class EditarSolpedPage implements OnInit {
     itemRef.update({ comparaciones: item.comparaciones });
   }
   cargarSolpes() {
-    this.firestore.collection('solpes').get().subscribe(snapshot => {
-      const solpesTemp: any[] = [];
-      snapshot.docs.forEach((doc: any) => {
-        const solpe = doc.data();
-        solpe.id = doc.id;
-        solpesTemp.push(solpe);
+    this.firestore
+      .collection('solpes', ref =>
+        ref.orderBy('numero_solpe', 'desc')
+      )
+      .get()
+      .subscribe(snapshot => {
+        const solpesTemp: any[] = [];
+        snapshot.docs.forEach((doc: any) => {
+          const solpe = doc.data();
+          solpe.id = doc.id;
+          solpesTemp.push(solpe);
+        });
+        this.solpesOriginal = solpesTemp;
+        this.solpesFiltradas = [...this.solpesOriginal];
+        this.loading = false;
       });
-      this.solpesOriginal = solpesTemp;
-      this.solpesFiltradas = [...this.solpesOriginal];
-      this.loading = false;
-    });
   }
+
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
       this.listaUsuarios = snapshot.docs.map(doc => {
@@ -392,7 +420,7 @@ export class EditarSolpedPage implements OnInit {
         return '#007bff';
       case 'Preaprobado':
         return '#ffc107';
-      case 'Oc enviada a Proveedor':
+      case 'OC enviada a Proveedor':
         return '#17a2b8';
       case 'Por Importación':
         return '#6f42c1';
@@ -400,6 +428,7 @@ export class EditarSolpedPage implements OnInit {
         return '#6c757d';
     }
   }
+
 
 
   verPDFComparacion(solpedId: string, pdfId: string) {
@@ -473,30 +502,47 @@ export class EditarSolpedPage implements OnInit {
   }
   async cambiarEstatus(solpe: any) {
     const alert = await this.alertController.create({
-      header: 'Cambiar Estado de la SOLPE',
+      header: 'Cambiar Estado de la SOLPED',
       inputs: [
-        { name: 'estatus', type: 'radio', label: 'Oc enviada a Proveedor', value: 'Oc enviada a Proveedor' },
-        { name: 'estatus', type: 'radio', label: 'Por Importación', value: 'Por Importación' },
+        { name: 'estatus', type: 'radio', label: 'OC enviada a proveedor', value: 'OC enviada a proveedor' },
+        { name: 'estatus', type: 'radio', label: 'Por importación', value: 'Por importación' },
       ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Siguiente',
-          handler: async (estatusSeleccionado) => {
-            if (estatusSeleccionado) {
-              this.firestore.collection('solpes').doc(solpe.id).update({
+          handler: async (estatusSeleccionado: string) => {
+            if (!estatusSeleccionado) return;
+            const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
+            try {
+              await solpeRef.update({ estatus: estatusSeleccionado });
+              let usuarioNombre = 'Desconocido';
+              const afUser = await this.afAuth.currentUser;
+              if (afUser?.uid) {
+                const userSnap = await this.firestore
+                  .collection('Usuarios')
+                  .doc(afUser.uid)
+                  .get()
+                  .toPromise();
+                if (userSnap?.exists) {
+                  const data = userSnap.data() as any;
+                  usuarioNombre = data.fullName ?? usuarioNombre;
+                }
+              }
+              await solpeRef.collection('historialEstados').add({
+                fecha: new Date(),
                 estatus: estatusSeleccionado,
-              }).then(() => {
-                solpe.estatus = estatusSeleccionado;
-                this.mostrarToast(`SOLPE marcada como "${estatusSeleccionado}"`, 'success');
-              }).catch(err => {
-                this.mostrarToast('Error al actualizar estatus', 'danger');
-                console.error(err);
+                usuario: usuarioNombre
               });
+              solpe.estatus = estatusSeleccionado;
+              this.mostrarToast(`SOLPED marcada como "${estatusSeleccionado}"`, 'success');
+            } catch (err) {
+              console.error(err);
+              this.mostrarToast('Error al actualizar estatus', 'danger');
             }
-          },
-        },
-      ],
+          }
+        }
+      ]
     });
     await alert.present();
   }

@@ -31,17 +31,23 @@
   <ng-template #contentLoaded>
     <ion-card class="main-card">
       <div *ngFor="let solpe of solpes; let idx = index" class="solpe-container">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 1% 0 1%;">
-          <h3 style="margin: 0;">SOLPED N.º {{ solpe.numero_solpe }}</h3>
-          <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
-            <ion-label style="font-size: 12px;">Descarga Excel</ion-label>
-          </ion-button>
-          <ion-button color="primary" size="small" (click)="abrirArchivoExcel()">
-            <ion-icon name="cloud-upload-outline"></ion-icon>
-            Subir Excel
-          </ion-button>
-          <input type="file" accept=".xlsx, .xls" (change)="leerArchivoExcel($event)" hidden />
-        </div>
+          <div class="solpe-header">
+            <h3>SOLPED N.º {{ solpe.numero_solpe }}</h3>
+            <div class="solpe-actions">
+              <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
+                <ion-label style="font-size: 12px;">Descargar Excel</ion-label>
+              </ion-button>
+              <label class="upload-label">
+                <ion-button fill="solid" color="primary" size="small">
+                  Subir Excel
+                </ion-button>
+                <input type="file"
+                       accept=".xlsx, .xls"
+                       (change)="leerArchivoExcel($event)"
+                       hidden />
+              </label>
+            </div>
+          </div>
         <ion-card class="inner-card">
           <div class="table-container">
             <table class="styled-table">
@@ -71,7 +77,6 @@
           </div>
         </ion-card>
 
-        <!-- Ítems con acordeones -->
         <ion-accordion-group>
           <ion-accordion *ngFor="let item of solpe.items">
             <ion-item slot="header">
@@ -125,7 +130,7 @@
                           <ion-icon name="eye-outline"></ion-icon>
                         </ion-button>
                         <ion-button color="danger" size="small" fill="clear"
-                        (click)="eliminarComparacion(solpe, item, comp)">
+                        (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id, item, i)">
                           <ion-icon name="close-outline"></ion-icon>
                         </ion-button>
                         <ion-button color="warning" size="small" fill="clear" (click)="destacarComparacion(item, i)">
@@ -137,7 +142,7 @@
                 </tbody>
               </table>
               <ion-buttons>
-                <ion-button size="small" color="primary" (click)="abrirComparacion(item, solpe.id)">
+                <ion-button size="small" color="primary" (click)="abrirComparacion(item, solpe)">
                   <ion-icon color="light" name="add-circle-outline" slot="start"></ion-icon>
                   <ion-label style="font-size: 12px;">Agregar</ion-label>
                 </ion-button>
