@@ -8,6 +8,8 @@ import { Item } from '../Interface/IItem';
 import { Comparaciones } from '../Interface/Icompara';
 import { Solpes } from '../Interface/ISolpes';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
 @Component({
   selector: 'app-gestorsolpes',
   templateUrl: './gestorsolpes.page.html',
@@ -32,7 +34,6 @@ export class GestorsolpesPage implements OnInit {
     private firestore: AngularFirestore,
     private toastController: ToastController,
     private menu: MenuController,
-    private cdRef: ChangeDetectorRef,
     private afAuth: AngularFireAuth
   ) {}
 
@@ -41,7 +42,29 @@ export class GestorsolpesPage implements OnInit {
       this.cargarSolpes();
       this.loading = false;
     }, 2000);
+    this.listenSolpes();
   }
+  listenSolpes() {
+  this.firestore
+    .collection('solpes', ref => ref.where('estatus', '==', 'Solicitado'))
+    .snapshotChanges()
+    .subscribe(actions => {
+      this.solpes = actions.map(a => {
+        const data = a.payload.doc.data() as any;
+        const id   = a.payload.doc.id;
+        let itemsRaw = data.items;
+        if (!Array.isArray(itemsRaw) && itemsRaw) {
+          itemsRaw = Object.values(itemsRaw);
+        }
+        const items: Item[] = (itemsRaw as any[]).map(it => ({
+          ...it,
+          comparaciones: Array.isArray(it.comparaciones) ? it.comparaciones : []
+        }));
+
+        return { id, ...data, items };
+      });
+    });
+}
   onAccordionChange(event: any) {
     this.openedAccordions = event.detail.value;
   }
@@ -230,20 +253,24 @@ descargarExcel(solpe: any) {
     return new Blob(byteArrays, { type: contentType });
   }
 
-  cargarSolpes() {
-    this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
-      const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
-      this.solpes = filtradas.map((solpe: any) => {
-        solpe.items = solpe.items.map((item: any) => {
-          return {
-            ...item,
-            comparaciones: item.comparaciones || [],
-          };
-        });
-        return solpe;
-      });
+cargarSolpes() {
+  this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {
+    const filtradas = data.filter(solpe => solpe.estatus === 'Solicitado');
+    this.solpes = filtradas.map((solpe: any) => {
+      let itemsRaw = solpe.items;
+      if (!Array.isArray(itemsRaw) && itemsRaw && typeof itemsRaw === 'object') {
+        itemsRaw = Object.values(itemsRaw);
+      }
+      const items: Item[] = (itemsRaw as any[]).map((it: any) => ({
+        ...it,
+        comparaciones: Array.isArray(it.comparaciones) ? it.comparaciones : []
+      }));
+
+      return { ...solpe, items };
     });
-  }
+  });
+}
+
 
   ionViewWillEnter() {
     this.menu.enable(false);
@@ -267,11 +294,8 @@ descargarExcel(solpe: any) {
             solpeRef
               .update({ estatus: estatusSeleccionado })
               .then(async () => {
-                // 1) Actualizo UI
                 solpe.estatus = estatusSeleccionado;
                 this.mostrarToast(`SOLPE marcada como "${estatusSeleccionado}"`, 'success');
-
-                // 2) Registro en historialEstados
                 let usuarioNombre = 'Desconocido';
                 const afUser = await this.afAuth.currentUser;
                 if (afUser?.uid) {
@@ -292,8 +316,6 @@ descargarExcel(solpe: any) {
                     estatus: estatusSeleccionado,
                     usuario: usuarioNombre
                   });
-
-                // 3) Subo PDFs si corresponde
                 if (
                   this.archivosPDF[solpe.id]?.length > 0 &&
                   (estatusSeleccionado === 'Preaprobado' || estatusSeleccionado === 'Tránsito a Faena')
@@ -482,51 +504,53 @@ descargarExcel(solpe: any) {
       }
     }
   }
-  async abrirComparacion(item: Item, solpe: any): Promise<void> {
-    const alert = await this.alertController.create({
-      header: 'Agregar Comparación de Precios',
-      inputs: [
-        { name: 'empresa', type: 'text', placeholder: 'Nombre de la empresa' },
-        { name: 'precio',  type: 'number', placeholder: 'Precio base' },
-        { name: 'descuento', type: 'number', placeholder: 'Descuento (%) - opcional' }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Agregar',
-          handler: (data) => {
-            if (!data.empresa || !data.precio) {
-              this.mostrarToast('Debes ingresar empresa y precio', 'danger');
-              return false;
-            }
-            const precioBase  = Number(data.precio);
-            const descuento   = Number(data.descuento) || 0;
-            const precioFinal = precioBase * (1 - descuento / 100);
-            item.comparaciones = item.comparaciones || [];
-            item.comparaciones.push({
-              id:         Date.now(),
-              empresa:    data.empresa,
-              precioBase,
-              descuento,
-              precio:     precioFinal,
-              pdfId:      '',
-              destacado:  false
-            });
-
-            this.actualizarComparacionEnFirestore(solpe.id, item);
-
-            if (!this.openedAccordions.includes(item.id)) {
-              this.openedAccordions.push(item.id);
-            }
-
-            return true;
+async abrirComparacion(item: any, solpeId: string) {
+  const alert = await this.alertController.create({
+        header: 'Agregar Comparación de Precios',
+    inputs: [
+      { name: 'empresa',   type: 'text',   placeholder: 'Nombre de la Empresa' },
+      { name: 'precio',    type: 'number', placeholder: 'Precio base' },
+      { name: 'descuento', type: 'number', placeholder: 'Descuento (%) — opcional' },
+    ],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Agregar',
+        handler: (data): boolean => {
+          if (!data.empresa || !data.precio) {
+            this.mostrarToast('Debes ingresar empresa y precio', 'danger');
+            return false;
           }
-        }
-      ]
-    });
+          const precioBase  = Number(data.precio);
+          const descuento   = Number(data.descuento) || 0;
+          const precioFinal = precioBase * (1 - descuento / 100);
+          const nuevoId     = Date.now();
+          item.comparaciones = item.comparaciones || [];
+          item.comparaciones.push({
+            id:         nuevoId,
+            empresa:    data.empresa,
+            precioBase,
+            descuento,
+            precio:     precioFinal
+          });
+          this.firestore
+            .collection('solpes')
+            .doc(solpeId)
+            .update({ items: this.solpes.find(s => s.id === solpeId)!.items });
 
-    await alert.present();
-  }
+          return true;
+        }
+      }
+    ]
+  });
+  await alert.present();
+}
+
+
+
+eliminarComparacion(item: any, index: number) {
+  item.comparaciones.splice(index, 1);
+}
 
   async eliminarPDF(solpeId: string, pdfId: string, nombre: string) {
     try {
@@ -547,50 +571,30 @@ descargarExcel(solpe: any) {
     itemRef.update({ comparaciones: item.comparaciones });
   }
 
-  async eliminarComparacionCompleta(solpedId: string, itemId: string, comparacionId: number, item: any, index: number) {
-    await this.eliminarComparacionFirestore(solpedId, itemId, comparacionId);
-    item.comparaciones.splice(index, 1);
-    this.cdRef.detectChanges();
+async eliminarComparacionCompleta(solpeId: string, itemId: string, comparacionId: number) {
+  const solpe = this.solpes.find((s: any) => s.id === solpeId);
+  if (!solpe) return this.mostrarToast('SOLPE no encontrada', 'danger');
+
+  const item = solpe.items.find((it: Item) => it.id === itemId);
+  if (!item) return this.mostrarToast('Ítem no encontrado', 'danger');
+
+  if (!Array.isArray(item.comparaciones)) {
+    return this.mostrarToast('No hay comparaciones', 'danger');
   }
-  async eliminarComparacionFirestore(solpedId: string, itemId: string, comparacionId: number) {
-    const solpedRef = this.firestore.collection('solpes').doc(solpedId);
+  item.comparaciones = item.comparaciones.filter((c: Comparaciones) => c.id !== comparacionId);
 
-    try {
-      const solpedDoc = await solpedRef.get().toPromise();
+  try {
+    await this.firestore
+      .collection('solpes')
+      .doc(solpeId)
+      .update({ items: solpe.items });
 
-      if (solpedDoc && solpedDoc.exists) {
-        const solpedData = solpedDoc.data() as Solpes;
-        const items: Item[] = solpedData?.items || [];
-
-        const item = items.find((i: Item) => i.id === itemId);
-        if (item) {
-          const comparacionIndex = item.comparaciones.findIndex(
-            (comp: Comparaciones) => comp.id === comparacionId
-          );
-
-          if (comparacionIndex !== -1) {
-            item.comparaciones = item.comparaciones.filter(
-              (comp: Comparaciones) => comp.id !== comparacionId
-            );
-            await solpedRef.update({ items });
-            this.mostrarToast('Comparación eliminada de Firestore', 'success');
-          } else {
-            console.log('❌ Comparación no encontrada');
-            this.mostrarToast('Comparación no encontrada', 'danger');
-          }
-        } else {
-          console.log('❌ Ítem no encontrado');
-          this.mostrarToast('Ítem no encontrado', 'danger');
-        }
-      } else {
-        console.log('❌ Documento no encontrado o vacío');
-        this.mostrarToast('Documento no encontrado o vacío', 'danger');
-      }
-    } catch (error) {
-      console.error('Error eliminando la comparación:', error);
-      this.mostrarToast('Error al eliminar la comparación en Firestore', 'danger');
-    }
+    this.mostrarToast('Comparación eliminada', 'success');
+  } catch {
+    this.mostrarToast('Error al eliminar comparación', 'danger');
   }
+}
+
   destacarComparacion(item: any, index: number) {
     item.comparaciones[index].destacado = !item.comparaciones[index].destacado;
     const solpeRef = this.firestore.collection('solpes').doc(item.solpeId);
@@ -603,24 +607,28 @@ descargarExcel(solpe: any) {
     });
   }
 
-  async subirComparaciones(solpe: any, auto: boolean = false) {
-    if (!auto) {
-      const confirm = await this.alertController.create({
-        header: 'Confirmar',
-        message: '¿Estás seguro de subir las comparaciones a Firestore?',
-        buttons: [
-          { text: 'Cancelar', role: 'cancel' },
-          {
-            text: 'Sí, subir',
-            handler: () => this.guardarComparacionesEnFirestore(solpe)
-          }
-        ]
-      });
-      await confirm.present();
-    } else {
-      this.guardarComparacionesEnFirestore(solpe);
-    }
-  }
+async subirComparaciones(solpe: any) {
+  const confirm = await this.alertController.create({
+    header: 'Confirmar',
+    message: '¿Estás seguro de subir las comparaciones a Firestore?',
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Sí, subir',
+        handler: () => {
+          this.firestore.collection('solpes').doc(solpe.id).update({
+            items: solpe.items
+          }).then(() => {
+            console.log('Comparaciones subidas a Firestore');
+          }).catch(err => {
+            console.error('Error al subir comparaciones:', err);
+          });
+        }
+      }
+    ]
+  });
+  await confirm.present();
+}
   async actualizarComparacionEnFirestore(solpeId: string, item: Item): Promise<void> {
     const solpe = this.solpes.find(s => s.id === solpeId);
     if (!solpe) return;

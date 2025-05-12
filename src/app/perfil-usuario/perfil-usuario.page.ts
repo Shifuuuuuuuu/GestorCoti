@@ -53,7 +53,6 @@ export class PerfilUsuarioPage implements OnInit {
       await this.loadUserData(userId);
     } else {
       this.errorMessage = 'Error: no se encontró el usuario.';
-      console.error(this.errorMessage);
     }
   }
   initializeDarkMode() {

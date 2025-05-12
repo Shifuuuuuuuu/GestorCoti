@@ -129,8 +129,11 @@
                         <ion-button size="small" color="primary" fill="clear" *ngIf="comp.pdfId" (click)="verPDFComparacion(solpe.id, comp.pdfId)">
                           <ion-icon name="eye-outline"></ion-icon>
                         </ion-button>
-                        <ion-button color="danger" size="small" fill="clear"
-                        (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id, item, i)">
+                        <ion-button
+                          color="danger"
+                          size="small"
+                          fill="clear"
+                          (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id)">
                           <ion-icon name="close-outline"></ion-icon>
                         </ion-button>
                         <ion-button color="warning" size="small" fill="clear" (click)="destacarComparacion(item, i)">
@@ -142,10 +145,12 @@
                 </tbody>
               </table>
               <ion-buttons>
-                <ion-button size="small" color="primary" (click)="abrirComparacion(item, solpe)">
-                  <ion-icon color="light" name="add-circle-outline" slot="start"></ion-icon>
-                  <ion-label style="font-size: 12px;">Agregar</ion-label>
-                </ion-button>
+                  <ion-button (click)="abrirComparacion(item, solpe.id)">
+                    <ion-icon name="add-circle-outline"></ion-icon>
+                  </ion-button>
+                    <ion-button color="success" size="small" (click)="subirComparaciones(solpe)">
+                      <ion-icon name="send-outline"></ion-icon>
+                    </ion-button>
               </ion-buttons>
 
             </div>
