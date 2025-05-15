@@ -5,6 +5,7 @@ import { SolpeService } from '../services/solpe.service';
 import { Solpes } from '../Interface/ISolpes';
 import { Comparaciones } from '../Interface/Icompara';
 import { ArchivoPDF } from '../Interface/IArchivoPDF';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 
 @Component({
   selector: 'app-visualizacion-solped',
@@ -24,7 +25,8 @@ export class VisualizacionSolpedPage implements OnInit {
     private alertCtrl: AlertController,
     private solpeService: SolpeService,
     private toastController: ToastController,
-    private menu: MenuController
+    private menu: MenuController,
+    private afAuth: AngularFireAuth
   ) {}
 
   ngOnInit() {
@@ -311,31 +313,54 @@ async subirItemAFirestore() {
     this.actualizarEstado(solped.id, 'Rechazado', comentario);
   }
 
-  async actualizarEstado(id: string, estado: string, comentario: string) {
-    try {
-      await this.firestore.collection('solpes').doc(id).update({
-        estatus: estado,
-        comentario: comentario,
-      });
+async actualizarEstado(id: string, estado: string, comentario: string) {
+  try {
+    const solpedRef = this.firestore.collection('solpes').doc(id);
 
-      const alert = await this.alertCtrl.create({
-        header: 'Éxito',
-        message: `SOLPED ${estado}`,
-        buttons: ['OK'],
-      });
-      await alert.present();
+    // Actualiza el estado actual
+    await solpedRef.update({
+      estatus: estado,
+      comentario: comentario,
+    });
 
-      this.cargarSolped();
-    } catch (error) {
-      console.error('Error al actualizar:', error);
-      const errorAlert = await this.alertCtrl.create({
-        header: 'Error',
-        message: 'Hubo un problema al actualizar el estado.',
-        buttons: ['OK'],
-      });
-      await errorAlert.present();
+    // Obtiene el nombre del usuario que realiza el cambio
+    const afUser = await this.afAuth.currentUser;
+    let usuarioNombre = 'Desconocido';
+    if (afUser?.uid) {
+      const userSnap = await this.firestore.collection('Usuarios').doc(afUser.uid).get().toPromise();
+      if (userSnap?.exists) {
+        const data = userSnap.data() as any;
+        usuarioNombre = data.fullName ?? usuarioNombre;
+      }
     }
+
+    // Guarda el historial
+    await solpedRef.collection('historialEstados').add({
+      fecha: new Date(),
+      estatus: estado,
+      usuario: usuarioNombre
+    });
+
+    const alert = await this.alertCtrl.create({
+      header: 'Éxito',
+      message: `SOLPED ${estado}`,
+      buttons: ['OK'],
+    });
+    await alert.present();
+
+    this.cargarSolped();
+  } catch (error) {
+    console.error('Error al actualizar:', error);
+    const errorAlert = await this.alertCtrl.create({
+      header: 'Error',
+      message: 'Hubo un problema al actualizar el estado.',
+      buttons: ['OK'],
+    });
+    await errorAlert.present();
   }
+}
+
+
 
   async eliminarComparacion(solpedId: string, itemId: string, comparacionId: number) {
     const solpedRef = this.firestore.collection('solpes').doc(solpedId);

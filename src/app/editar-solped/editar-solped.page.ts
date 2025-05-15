@@ -135,9 +135,27 @@ export class EditarSolpedPage implements OnInit {
   }
 
 
-  toggleDetalle(solpeId: string) {
-    this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
+toggleDetalle(solpeId: string) {
+  this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
+
+  if (this.solpeExpandidaId) {
+    if (!this.ocsCargadas[solpeId]) {
+      this.firestore
+        .collection('solpes')
+        .doc(solpeId)
+        .collection('ocs')
+        .get()
+        .subscribe(snapshot => {
+          this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            nombre: doc.data()['nombre']
+          }));
+          this.cdRef.detectChanges();
+        });
+    }
   }
+}
+
   async eliminarComparacionFirestore(solpedId: string, itemId: string, comparacionId: number) {
     const solpedRef = this.firestore.collection('solpes').doc(solpedId);
 
@@ -420,7 +438,7 @@ export class EditarSolpedPage implements OnInit {
         return '#007bff';
       case 'Preaprobado':
         return '#ffc107';
-      case 'OC enviada a Proveedor':
+      case 'OC enviada a proveedor':
         return '#17a2b8';
       case 'Por Importación':
         return '#6f42c1';
