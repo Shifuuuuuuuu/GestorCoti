@@ -35,7 +35,8 @@ export class EditarSolpedsPage implements OnInit {
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
   loading: boolean = true;
-ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
+  ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
+
   constructor(
     private firestore: AngularFirestore,
     private menu: MenuController,
@@ -61,22 +62,13 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
   this.cdRef.detectChanges();
   }
 
-
-
+  ionViewWillEnter() {
+    this.menu.enable(false);
+  }
   abrirInputOC(solpeId: string) {
     const input = document.getElementById(`ocInput-${solpeId}`) as HTMLInputElement;
     if (input) {
       input.click();
-    }
-  }
-    async eliminarOC(solpeId: string, ocId: string, nombre: string) {
-    try {
-      await this.firestore.collection('solpes').doc(solpeId).collection('ocs').doc(ocId).delete();
-      this.ocsCargadas[solpeId] = this.ocsCargadas[solpeId].filter(oc => oc.id !== ocId);
-      this.mostrarToast(`OC "${nombre}" eliminada correctamente`, 'success');
-    } catch (error) {
-      console.error('Error al eliminar OC:', error);
-      this.mostrarToast('No se pudo eliminar la OC', 'danger');
     }
   }
 
@@ -110,6 +102,16 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
     }
   }
 
+  async eliminarOC(solpeId: string, ocId: string, nombre: string) {
+    try {
+      await this.firestore.collection('solpes').doc(solpeId).collection('ocs').doc(ocId).delete();
+      this.ocsCargadas[solpeId] = this.ocsCargadas[solpeId].filter(oc => oc.id !== ocId);
+      this.mostrarToast(`OC "${nombre}" eliminada correctamente`, 'success');
+    } catch (error) {
+      console.error('Error al eliminar OC:', error);
+      this.mostrarToast('No se pudo eliminar la OC', 'danger');
+    }
+  }
   verOC(solpedId: string, ocId: string) {
     this.firestore.collection('solpes').doc(solpedId).collection('ocs').doc(ocId).get().subscribe(doc => {
       if (!doc.exists) {
@@ -130,13 +132,29 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
       window.open(url, '_blank');
     });
   }
-  ionViewWillEnter() {
-    this.menu.enable(false);
-  }
 
-  toggleDetalle(solpeId: string) {
-    this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
+
+toggleDetalle(solpeId: string) {
+  this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
+
+  if (this.solpeExpandidaId) {
+    if (!this.ocsCargadas[solpeId]) {
+      this.firestore
+        .collection('solpes')
+        .doc(solpeId)
+        .collection('ocs')
+        .get()
+        .subscribe(snapshot => {
+          this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            nombre: doc.data()['nombre']
+          }));
+          this.cdRef.detectChanges();
+        });
+    }
   }
+}
+
   async eliminarComparacionFirestore(solpedId: string, itemId: string, comparacionId: number) {
     const solpedRef = this.firestore.collection('solpes').doc(solpedId);
 
@@ -195,7 +213,6 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
     }
 
     try {
-      // 2) Ahora sincronizas con Firestore
       const solpeRef = this.firestore.collection('solpes').doc(solpeId);
       const solpeSnap = await solpeRef.get().toPromise();
       if (!solpeSnap || !solpeSnap.exists) {
@@ -217,9 +234,6 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
       this.mostrarToast('Error al actualizar comparación', 'danger');
     }
   }
-
-
-
   async abrirComparacion(item: any, solpeId: string) {
     const alert = await this.alertController.create({
       header: 'Agregar Comparación de Precios',
@@ -282,6 +296,7 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
 
     await alert.present();
   }
+
 
 
   async subirComparaciones(solpe: any, auto: boolean = false) {
@@ -348,6 +363,7 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
         this.loading = false;
       });
   }
+
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
       this.listaUsuarios = snapshot.docs.map(doc => {
@@ -429,6 +445,7 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
         return '#6c757d';
     }
   }
+
 
 
   verPDFComparacion(solpedId: string, pdfId: string) {
@@ -562,4 +579,3 @@ ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
     toast.present();
   }
 }
-

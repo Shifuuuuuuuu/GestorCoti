@@ -1,6 +1,6 @@
 <ion-header>
   <ion-toolbar style="--background: red;">
-    <ion-buttons slot="start" >
+    <ion-buttons slot="start" style="color: white;">
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Historial de SOLPED</ion-title>
@@ -194,16 +194,13 @@
                               <td>{{ comp.descuento || 0 }}%</td>
                               <td>{{ comp.precio | currency }}</td>
                               <td>
-                                <ion-button *ngIf="comp.pdfId" fill="clear" color="primary" size="small"
-                                  (click)="verPDFComparacion(solpe.id, comp.pdfId)">
+                                <ion-button *ngIf="comp.pdfId" fill="clear" color="primary" size="small" (click)="verPDFComparacion(solpe.id, comp.pdfId)">
                                   <ion-icon name="eye-outline"></ion-icon>
                                 </ion-button>
-                                <ion-button *ngIf="comp.pdfId" fill="clear" color="success" size="small"
-                                  (click)="descargarPDFComparacion(solpe.id, comp.pdfId)">
+                                <ion-button *ngIf="comp.pdfId" fill="clear" color="success" size="small" (click)="descargarPDFComparacion(solpe.id, comp.pdfId)">
                                   <ion-icon name="download-outline"></ion-icon>
                                 </ion-button>
-                                <ion-button color="danger" fill="clear"
-                                  (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id, item, i)">
+                                <ion-button color="danger" fill="clear" (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id, item, i)">
                                   <ion-icon name="close-circle"></ion-icon>
                                 </ion-button>
                                 <ion-button color="warning" fill="clear" (click)="destacarComparacion(solpe.id, item, i)">
@@ -217,6 +214,7 @@
                       <ion-buttons>
                         <ion-button size="small" (click)="abrirComparacion(item, solpe.id)">
                           <ion-icon color="secondary" name="add-circle-outline"></ion-icon>
+                          <ion-label color="secondary" class="ion-text-wrap" style="font-size: 12px;">Agregar</ion-label>
                         </ion-button>
                       </ion-buttons>
                     </td>
@@ -224,10 +222,7 @@
                 </tbody>
               </table>
             </div>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-                  <ion-row class="ion-align-items-center">
+            <ion-row class="ion-align-items-center">
               <ion-col size="2" size-md="1">
                 <ion-button  fill="solid" color="secondary" size="small" (click)="abrirInputOC(solpe.id)">
                   <ion-label style="font-size: 12px;">PDF</ion-label>
@@ -247,6 +242,9 @@
                 </ion-chip>
               </ion-col>
             </ion-row>
+          </ion-card>
+        </ion-col>
+      </ion-row>
     </ion-grid>
 
     <br><br><br><br>
