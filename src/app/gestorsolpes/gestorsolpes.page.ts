@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { SolpeService } from '../services/solpe.service';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
@@ -6,9 +6,7 @@ import { ArchivoPDF } from '../Interface/IArchivoPDF';
 import * as XLSX from 'xlsx';
 import { Item } from '../Interface/IItem';
 import { Comparaciones } from '../Interface/Icompara';
-import { Solpes } from '../Interface/ISolpes';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 @Component({
   selector: 'app-gestorsolpes',
@@ -27,6 +25,18 @@ export class GestorsolpesPage implements OnInit {
   openedAccordions: string[] = [];
   @ViewChildren('fileInputPDF') fileInputsPDF!: QueryList<ElementRef>;
   @ViewChildren('fileInput') fileInputs!: QueryList<ElementRef>;
+  @ViewChild('fileInputExcel', { static: false }) fileInputExcel!: ElementRef;
+  modalAbierto = false;
+  itemSeleccionado: any = null;
+  solpeIdSeleccionado: string = '';
+  comparacionForm = {
+    empresa: '',
+    precioBase: 0,
+    descuento: 0,
+    pdfId: ''
+  };
+  pdfBase64Seleccionado: string = '';
+  nombrePDFSeleccionado: string = '';
 
   constructor(
     private solpeService: SolpeService,
@@ -44,6 +54,59 @@ export class GestorsolpesPage implements OnInit {
     }, 2000);
     this.listenSolpes();
   }
+  abrirComparacionDesdeFlotante(item: any, solpeId: string) {
+  this.itemSeleccionado = item;
+  this.solpeIdSeleccionado = solpeId;
+  this.comparacionForm = { empresa: '', precioBase: 0, descuento: 0, pdfId: '' };
+  this.pdfBase64Seleccionado = '';
+  this.nombrePDFSeleccionado = '';
+  this.modalAbierto = true;
+}
+cerrarModalComparacion() {
+  this.modalAbierto = false;
+}
+onPDFSeleccionado(event: any) {
+  const archivo = event.target.files[0];
+  if (!archivo) return;
+
+  this.nombrePDFSeleccionado = archivo.name;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = reader.result as string;
+    this.pdfBase64Seleccionado = result.split(',')[1];
+  };
+  reader.readAsDataURL(archivo);
+}
+async guardarComparacionDesdeModal() {
+  const { empresa, precioBase, descuento, pdfId } = this.comparacionForm;
+
+  if (!empresa || !precioBase) {
+    this.mostrarToast('Empresa y precio son obligatorios', 'danger');
+    return;
+  }
+
+  const precioFinal = precioBase * (1 - (descuento || 0) / 100);
+  const comparacion = {
+    id: Date.now(),
+    empresa: empresa.trim(),
+    precioBase,
+    descuento: descuento || 0,
+    precio: precioFinal,
+    pdfId: pdfId || '',
+    destacado: false
+  };
+
+  this.itemSeleccionado.comparaciones = this.itemSeleccionado.comparaciones || [];
+  this.itemSeleccionado.comparaciones.push(comparacion);
+
+  await this.actualizarComparacionEnFirestore(this.solpeIdSeleccionado, this.itemSeleccionado);
+  this.mostrarToast('Comparación agregada correctamente', 'success');
+  this.cerrarModalComparacion();
+}
+
+
+
   listenSolpes() {
   this.firestore
     .collection('solpes', ref => ref.where('estatus', '==', 'Solicitado'))
@@ -87,77 +150,114 @@ export class GestorsolpesPage implements OnInit {
     }
 
 
-  leerArchivoExcel(event: any) {
-    const archivo = event.target.files[0];
-    if (archivo) {
-      const reader = new FileReader();
-      reader.onload = (e) => this.procesarArchivoExcel(reader.result as string);
-      reader.readAsBinaryString(archivo);
-    }
+leerArchivoExcel(event: any) {
+  const archivo = event.target.files[0];
+  if (archivo) {
+    const reader = new FileReader();
+    reader.onload = (e) => this.procesarArchivoExcel(reader.result as string);
+    reader.readAsBinaryString(archivo);
+  }
+}
+
+procesarArchivoExcel(data: string) {
+  const wb = XLSX.read(data, { type: 'binary' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const jsonData: any[] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+  this.cargarComparacionesDesdeExcel(jsonData);
+}
+
+
+abrirInputExcel() {
+  this.fileInputExcel.nativeElement.click();
+}
+cargarComparacionesDesdeExcel(data: any[][]): void {
+  if (!data || data.length === 0) return;
+
+  const headersRowIndex = data.findIndex(row =>
+    row.some(cell =>
+      typeof cell === 'string' &&
+      cell.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().includes('DESCRIPCION')
+    )
+  );
+
+  if (headersRowIndex === -1) {
+    console.warn('❌ No se encontró la fila de encabezado con "DESCRIPCION"');
+    return;
   }
 
-  procesarArchivoExcel(data: string) {
-    const wb = XLSX.read(data, { type: 'binary' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
+  const headersRow = data[headersRowIndex];
 
-    const jsonData: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
-    this.cargarComparacionesDesdeExcel(jsonData);
-  }
+  const descripcionIndex = headersRow.findIndex(cell =>
+    typeof cell === 'string' &&
+    cell.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().includes('DESCRIPCION')
+  );
+  const cantidadIndex = headersRow.findIndex(cell =>
+    typeof cell === 'string' &&
+    cell.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().includes('CANTIDAD')
+  );
+  const stockIndex = headersRow.findIndex(cell =>
+    typeof cell === 'string' &&
+    cell.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().includes('STOCK')
+  );
 
+  const empresaIndices = headersRow
+    .map((col, i) => ({
+      nombre: col?.toString().trim(),
+      index: i
+    }))
+    .filter(e =>
+      e.index > descripcionIndex &&
+      e.nombre &&
+      typeof e.nombre === 'string' &&
+      e.nombre.length > 0
+    );
 
-  cargarComparacionesDesdeExcel(data: any[][]): void {
-    let currentCompany = '';
-    for (let r = 0; r < data.length; r++) {
-      const row = data[r];
-      if (!row || row.length === 0) continue;
+  const startIndex = headersRowIndex + 1;
 
-      const key = row[0]?.toString().trim().toLowerCase();
+  for (let r = startIndex; r < data.length; r++) {
+    const row = data[r];
+    const descripcion = row[descripcionIndex]?.toString().trim();
 
-      if (key === 'empresa') {
-        currentCompany = row[1]?.toString().trim() ?? '';
-      }
-      else if (key === 'descripción') {
-        const descripcion = row[1]?.toString().trim() ?? '';
-        const cantidad    = Number(row[2]) || 0;
-        const precioBase  = Number(row[3]) || 0;
-        const precioFinal = precioBase;
-        const descuento   = 0;
+    if (!descripcion) continue;
 
-        if (!currentCompany || !descripcion) continue;
-        this.solpes
-          .filter(sol => sol.items.some((it: Item) =>
-            it.descripcion.trim().toLowerCase() === descripcion.toLowerCase()
-          ))
-          .forEach(sol => {
-            sol.items
-              .filter((it: Item) =>
-                it.descripcion.trim().toLowerCase() === descripcion.toLowerCase()
-              )
-              .forEach((it: Item) => {
-                it.comparaciones = it.comparaciones || [];
-                it.comparaciones.push({
-                  id:      Date.now(),
-                  empresa: currentCompany,
-                  precioBase,
-                  descuento,
-                  precio: precioFinal,
-                  pdfId:   '',
-                  destacado: false
-                });
-              });
-            this.firestore
-              .collection('solpes')
-              .doc(sol.id)
-              .update({ items: sol.items })
-              .then(() => this.mostrarToast(`Comparaciones guardadas en SOLPE ${sol.id}`, 'success'))
-              .catch(err => {
-                console.error(err);
-                this.mostrarToast(`Error guardando comparaciones en SOLPE ${sol.id}`, 'danger');
-              });
+    this.solpes.forEach(sol => {
+      sol.items
+        .filter((it: Item) =>
+          it.descripcion?.toString().trim().toLowerCase() === descripcion.toLowerCase()
+        )
+        .forEach((it: Item) => {
+          empresaIndices.forEach(({ nombre, index }) => {
+            const precioBase = Number(row[index]);
+            if (!isNaN(precioBase)) {
+              const comparacion = {
+                id: Date.now() + Math.random(),
+                empresa: nombre,
+                precioBase,
+                descuento: 0,
+                precio: precioBase,
+                pdfId: '',
+                destacado: false
+              };
+              it.comparaciones = it.comparaciones || [];
+              it.comparaciones.push(comparacion);
+            }
           });
-      }
-    }
+        });
+
+      this.firestore
+        .collection('solpes')
+        .doc(sol.id)
+        .update({ items: sol.items })
+        .catch(err => {
+          console.error(err);
+          this.mostrarToast(`❌ Error guardando comparaciones en SOLPE ${sol.id}`, 'danger');
+        });
+    });
   }
+}
+
+
 
 
 generarId(): string {
@@ -188,50 +288,65 @@ agregarComparacion(item: Item) {
 
 descargarExcel(solpe: any) {
   const worksheetData: any[][] = [];
-  worksheetData.push([
-    'Empresa',
-    '',
-    'Cantidad',
-    'Precio',
-  ]);
-
+  worksheetData.push(['SOLICITUD DE COMPRA']);
+  worksheetData.push(['Solicitante:', solpe.usuario]);
+  worksheetData.push(['Fecha:', solpe.fecha]);
+  worksheetData.push(['N° Contrato:', solpe.numero_contrato]);
+  worksheetData.push([]);
+  const empresasSet = new Set<string>();
   solpe.items.forEach((item: Item) => {
-    if (item.comparaciones && item.comparaciones.length > 0) {
-      item.comparaciones.forEach((comp: Comparaciones) => {
-        const precioBase = comp.precioBase || 0;
-        const descuento = comp.descuento || 0;
-        const precioFinal = comp.precio || 0;
-
-        worksheetData.push([
-          item.descripcion || '',
-          item.cantidad || '',
-          comp.empresa || '',
-          precioBase,
-          descuento,
-          precioFinal
-        ]);
-      });
-    } else {
-      worksheetData.push([
-        'Descripción',
-        item.descripcion || '',
-        item.cantidad || '',
-        0,
-      ]);
-    }
+    item.comparaciones?.forEach((comp: Comparaciones) => {
+      if (comp.empresa) {
+        empresasSet.add(comp.empresa.toUpperCase());
+      }
+    });
   });
+  const empresas = Array.from(empresasSet);
+  worksheetData.push([
+    'ITEM','CANTIDAD', 'DESCRIPCION',
+    ...empresas
+  ]);
+  solpe.items.forEach((item: Item, index: number) => {
+    const filaBase = [
+      item.item || (index + 1),
+
+      item.cantidad || '',
+      item.descripcion || '',
+    ];
+
+    const preciosPorEmpresa: { [empresa: string]: string | number } = {};
+    item.comparaciones?.forEach((comp: Comparaciones) => {
+      const empresa = comp.empresa?.toUpperCase();
+      if (empresa) {
+        const pdfNombre = this.obtenerNombrePDF(solpe.id, comp.pdfId);
+        preciosPorEmpresa[empresa] = `${comp.precio} ${pdfNombre ? `(${pdfNombre})` : ''}`;
+      }
+    });
+
+    const preciosEnOrden = empresas.map(nombre => preciosPorEmpresa[nombre] || '');
+    worksheetData.push([...filaBase, ...preciosEnOrden]);
+  });
+
 
   const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(worksheetData);
   const workbook: XLSX.WorkBook = XLSX.utils.book_new();
   const sheetName = `SOLPED_${solpe.numero_solpe}`;
-
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
   const fechaActual = new Date().toISOString().split('T')[0];
   const nombreArchivo = `SOLPED_${solpe.numero_solpe}_${fechaActual}.xlsx`;
-
   XLSX.writeFile(workbook, nombreArchivo);
 }
 
+obtenerNombrePDF(solpeId: string, pdfId?: string): string {
+  if (!pdfId) return '';
+
+  const pdfList = this.pdfsCargados[solpeId];
+  if (!pdfList) return '';
+
+  const encontrado = pdfList.find(p => p.id === pdfId);
+  return encontrado ? encontrado.nombre : '';
+}
 
 
   base64ToBlob(base64: string, contentType: string): Blob {

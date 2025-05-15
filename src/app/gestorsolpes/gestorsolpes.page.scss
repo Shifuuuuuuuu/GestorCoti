@@ -83,13 +83,22 @@ ion-content {
 
 .solpe-actions {
   display: flex;
-  gap: 8px; /* separación entre botones */
+  gap: 8px;
 }
 
-/* Para que el label solo actúe de contenedor y no rompa el flujo */
 .upload-label {
   display: inline-block;
   margin: 0;
   padding: 0;
   cursor: pointer;
+}
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.boton-guardar {
+  margin-top: 150px;
 }

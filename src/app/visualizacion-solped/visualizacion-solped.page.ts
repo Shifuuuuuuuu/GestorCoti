@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { AlertController, ToastController } from '@ionic/angular';
+import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { SolpeService } from '../services/solpe.service';
 import { Solpes } from '../Interface/ISolpes';
 import { Comparaciones } from '../Interface/Icompara';
@@ -23,7 +23,8 @@ export class VisualizacionSolpedPage implements OnInit {
     private firestore: AngularFirestore,
     private alertCtrl: AlertController,
     private solpeService: SolpeService,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private menu: MenuController
   ) {}
 
   ngOnInit() {
@@ -32,6 +33,9 @@ export class VisualizacionSolpedPage implements OnInit {
       this.loading = false;
     }, 2000);
     this.obtenerItemsGuardados();
+  }
+    ionViewWillEnter() {
+    this.menu.enable(false);
   }
   async agregarItemASolped() {
     if (!this.solpedSeleccionadaId || !this.selectedItem) {
