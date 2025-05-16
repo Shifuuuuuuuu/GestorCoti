@@ -35,6 +35,9 @@ export class GestorsolpesPage implements OnInit {
     descuento: 0,
     pdfId: ''
   };
+itemExpandidoId: string | null = null;
+
+
   pdfBase64Seleccionado: string = '';
   nombrePDFSeleccionado: string = '';
 
@@ -62,6 +65,14 @@ export class GestorsolpesPage implements OnInit {
   this.nombrePDFSeleccionado = '';
   this.modalAbierto = true;
 }
+
+toggleItemDetalle(solpeId: string, itemId: string) {
+  const clave = `${solpeId}-${itemId}`;
+  this.itemExpandidoId = this.itemExpandidoId === clave ? null : clave;
+}
+
+
+
 cerrarModalComparacion() {
   this.modalAbierto = false;
 }
@@ -119,10 +130,16 @@ async guardarComparacionDesdeModal() {
         if (!Array.isArray(itemsRaw) && itemsRaw) {
           itemsRaw = Object.values(itemsRaw);
         }
-        const items: Item[] = (itemsRaw as any[]).map(it => ({
-          ...it,
-          comparaciones: Array.isArray(it.comparaciones) ? it.comparaciones : []
-        }));
+        const items: Item[] = (itemsRaw as any[]).map(it => {
+          if (!it.id) {
+            it.id = this.generarId();
+          }
+          return {
+            ...it,
+            comparaciones: Array.isArray(it.comparaciones) ? it.comparaciones : []
+          };
+        });
+
 
         return { id, ...data, items };
       });
@@ -376,15 +393,22 @@ cargarSolpes() {
       if (!Array.isArray(itemsRaw) && itemsRaw && typeof itemsRaw === 'object') {
         itemsRaw = Object.values(itemsRaw);
       }
-      const items: Item[] = (itemsRaw as any[]).map((it: any) => ({
-        ...it,
-        comparaciones: Array.isArray(it.comparaciones) ? it.comparaciones : []
-      }));
+
+      const items: Item[] = (itemsRaw as any[]).map((it: any) => {
+        if (!it.id) {
+          it.id = this.generarId();
+        }
+        return {
+          ...it,
+          comparaciones: Array.isArray(it.comparaciones) ? it.comparaciones : []
+        };
+      });
 
       return { ...solpe, items };
     });
   });
 }
+
 
 
   ionViewWillEnter() {

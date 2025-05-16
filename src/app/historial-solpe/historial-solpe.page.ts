@@ -262,7 +262,7 @@ export class HistorialSolpePage implements OnInit {
         return '#007bff';
       case 'Preaprobado':
         return '#ffc107';
-      case 'OC enviada a Proveedor':
+      case 'OC enviada a proveedor':
         return '#17a2b8';
       case 'Por Importación':
         return '#6f42c1';

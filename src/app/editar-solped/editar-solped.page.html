@@ -137,8 +137,11 @@
                     <td>{{ solpe.usuario }}</td>
                     <td>{{ solpe.estatus }}</td>
                     <td>
-                      <ion-button color="secondary" size="small" (click)="cambiarEstatus(solpe)">
+                      <ion-button fill="solid" color="secondary" size="small" (click)="cambiarEstatus(solpe)">
                         Cambiar estado
+                      </ion-button>
+                      <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
+                        <ion-label>Descargar Excel</ion-label>
                       </ion-button>
                     </td>
                   </tr>
@@ -225,7 +228,7 @@
             <ion-row class="ion-align-items-center">
               <ion-col size="2" size-md="1">
                 <ion-button  fill="solid" color="secondary" size="small" (click)="abrirInputOC(solpe.id)">
-                  <ion-label style="font-size: 12px;">PDF</ion-label>
+                  <ion-label style="font-size: 12px;">Subir oc</ion-label>
                 </ion-button>
                 <input
                   type="file"

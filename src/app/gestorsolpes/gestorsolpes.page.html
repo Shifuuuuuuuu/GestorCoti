@@ -76,89 +76,85 @@
             </table>
           </div>
         </ion-card>
+        <div *ngFor="let item of solpe.items" class="item-container">
+          <ion-row (click)="toggleItemDetalle(solpe.id, item.id)" style="background-color: #eee; border-bottom: 1px solid #ccc; cursor: pointer;">
 
-        <ion-accordion-group>
-          <ion-accordion *ngFor="let item of solpe.items">
-            <ion-item slot="header">
-              <ion-label>
+            <ion-col size="10">
+              <strong>
                 Item {{ item.item }} - {{ item.descripcion?.toUpperCase() }}
-              </ion-label>
-              <ion-button fill="clear" size="small" (click)="abrirComparacionDesdeFlotante(solpe.items[0], solpe.id)">
-                <ion-icon name="add-circle-outline" slot="start"></ion-icon>
-              </ion-button>
-            </ion-item>
-            <div slot="content" class="ion-padding">
+              </strong>
+            </ion-col>
 
-              <p><strong>Código:</strong> {{ item.codigo_referencial?.toUpperCase() }}</p>
-              <p><strong>Cantidad:</strong> {{ item.cantidad }} | <strong>Stock:</strong> {{ item.stock }}</p>
-              <p><strong>Patente/N° Interno:</strong> {{ item.numero_interno }}</p>
+            <ion-col size="2" class="ion-text-end">
+              <ion-icon [name]="itemExpandidoId === (solpe.id + '-' + item.id) ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+            </ion-col>
+          </ion-row>
+          <div *ngIf="item.id && (itemExpandidoId === (solpe.id + '-' + item.id))" class="ion-padding">
 
-              <div *ngIf="item.imagen_referencia_base64" style="text-align: center;">
-                <img [src]="item.imagen_referencia_base64" alt="Imagen" width="200" height="200" style="cursor: pointer;" (click)="verImagenAmpliada(item.imagen_referencia_base64)" />
+            <p><strong>Código:</strong> {{ item.codigo_referencial?.toUpperCase() }}</p>
+            <p><strong>Cantidad:</strong> {{ item.cantidad }} | <strong>Stock:</strong> {{ item.stock }}</p>
+            <p><strong>Patente/N° Interno:</strong> {{ item.numero_interno }}</p>
 
-              </div>
-
-              <h5 *ngIf="item.comparaciones?.length">Comparaciones agrupadas:</h5>
-
-              <table class="styled-table" *ngIf="item.comparaciones?.length">
-                <thead>
-                  <tr>
-                    <th>Empresa</th>
-                    <th>Cotización</th>
-                    <th>Precio</th>
-                    <th>Descuento</th>
-                    <th>Precio con Descuento</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <ng-container *ngFor="let empresa of getEmpresas(item)">
-                    <tr class="grupo-proveedor">
-                      <td colspan="4"><strong>{{ empresa }}</strong></td>
-                    </tr>
-                    <tr *ngFor="let comp of groupComparacionesPorEmpresa(item)[empresa]; let i = index">
-                      <td></td>
-                      <td>
-                        <ion-select interface="popover" [(ngModel)]="comp.pdfId" placeholder="Selecciona PDF">
-                          <ion-select-option *ngFor="let pdf of pdfsCargados[solpe.id]" [value]="pdf.id">
-                            {{ pdf.nombre }}
-                          </ion-select-option>
-                        </ion-select>
-                      </td>
-                      <td>{{ comp.precioBase || comp.precio | currency }}</td>
-                      <td>{{ comp.descuento || 0 }}%</td>
-                      <td>{{ comp.precio | currency }}</td>
-                      <td>
-                        <ion-button size="small" color="primary" fill="clear" *ngIf="comp.pdfId" (click)="verPDFComparacion(solpe.id, comp.pdfId)">
-                          <ion-icon name="eye-outline"></ion-icon>
-                        </ion-button>
-                        <ion-button
-                          color="danger"
-                          size="small"
-                          fill="clear"
-                          (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id)">
-                          <ion-icon name="close-outline"></ion-icon>
-                        </ion-button>
-                        <ion-button color="warning" size="small" fill="clear" (click)="destacarComparacion(item, i)">
-                          <ion-icon [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
-                        </ion-button>
-                      </td>
-                    </tr>
-                  </ng-container>
-                </tbody>
-              </table>
-                <ion-buttons>
-                  <ion-button (click)="abrirComparacion(item, solpe.id)">
-                    <ion-icon name="add-circle-outline"></ion-icon>
-                  </ion-button>
-                    <ion-button color="success" size="small" (click)="subirComparaciones(solpe)">
-                      <ion-icon name="send-outline"></ion-icon>
-                    </ion-button>
-              </ion-buttons>
+            <div *ngIf="item.imagen_referencia_base64" style="text-align: center;">
+              <img [src]="item.imagen_referencia_base64" alt="Imagen" width="200" height="200" style="cursor: pointer;" (click)="verImagenAmpliada(item.imagen_referencia_base64)" />
             </div>
-          </ion-accordion>
-        </ion-accordion-group>
 
+            <h5 *ngIf="item.comparaciones?.length">Comparaciones agrupadas:</h5>
+
+            <table class="styled-table" *ngIf="item.comparaciones?.length">
+              <thead>
+                <tr>
+                  <th>Empresa</th>
+                  <th>Cotización</th>
+                  <th>Precio</th>
+                  <th>Descuento</th>
+                  <th>Precio con Descuento</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <ng-container *ngFor="let empresa of getEmpresas(item)">
+                  <tr class="grupo-proveedor">
+                    <td colspan="4"><strong>{{ empresa }}</strong></td>
+                  </tr>
+                  <tr *ngFor="let comp of groupComparacionesPorEmpresa(item)[empresa]; let i = index">
+                    <td></td>
+                    <td>
+                      <ion-select interface="popover" [(ngModel)]="comp.pdfId" placeholder="Selecciona PDF">
+                        <ion-select-option *ngFor="let pdf of pdfsCargados[solpe.id]" [value]="pdf.id">
+                          {{ pdf.nombre }}
+                        </ion-select-option>
+                      </ion-select>
+                    </td>
+                    <td>{{ comp.precioBase || comp.precio | currency }}</td>
+                    <td>{{ comp.descuento || 0 }}%</td>
+                    <td>{{ comp.precio | currency }}</td>
+                    <td>
+                      <ion-button size="small" color="primary" fill="clear" *ngIf="comp.pdfId" (click)="verPDFComparacion(solpe.id, comp.pdfId)">
+                        <ion-icon name="eye-outline"></ion-icon>
+                      </ion-button>
+                      <ion-button color="danger" size="small" fill="clear" (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id)">
+                        <ion-icon name="close-outline"></ion-icon>
+                      </ion-button>
+                      <ion-button color="warning" size="small" fill="clear" (click)="destacarComparacion(item, i)">
+                        <ion-icon [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
+                      </ion-button>
+                    </td>
+                  </tr>
+                </ng-container>
+              </tbody>
+            </table>
+
+            <ion-buttons>
+              <ion-button (click)="abrirComparacion(item, solpe.id)">
+                <ion-icon name="add-circle-outline"></ion-icon>
+              </ion-button>
+              <ion-button color="success" size="small" (click)="subirComparaciones(solpe)">
+                <ion-icon name="send-outline"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </div>
+        </div>
         <div class="ion-padding-start">
           <ion-button fill="solid" color="secondary" size="small" (click)="abrirInputArchivos(solpe.id)">
             <ion-label style="font-size: 12px;">Subir PDF</ion-label>
