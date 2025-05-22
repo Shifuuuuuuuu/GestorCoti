@@ -11,6 +11,7 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 export class AppComponent implements OnInit {
   public appPages = [
     { title: 'Menú de gestor', url: '/home', icon: 'home', roles: ['Aprobador/Editor'] },
+    { title: 'Gestor de OC', url: '/menu-oc', icon: 'newspaper', roles: ['Aprobador/Editor','Editor',] },
     { title: 'Menú SOLPED', url: '/menu-solpe', icon: 'document-text', roles: ['Generador solped', 'Aprobador/Editor'] },
     { title: 'Menú de cruce de precios', url: '/menu-cotizador', icon: 'document-attach', roles: ['Editor', 'Aprobador/Editor'] },
     { title: 'Perfil de usuario', url: '/perfil-usuario', icon: 'person-circle', roles: ['Generador solped', 'Editor', 'Aprobador/Editor'] },

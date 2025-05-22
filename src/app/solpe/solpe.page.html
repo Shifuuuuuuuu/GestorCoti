@@ -69,38 +69,52 @@
             <tr *ngFor="let item of solpe.items; let i = index">
               <td>{{ i + 1 }}</td>
               <td>
-                <ion-input [(ngModel)]="item.descripcion"
-                           [readonly]="!item.editando"
-                           (ionInput)="item.descripcion = item.descripcion.toUpperCase()"
-                           (ionBlur)="verificarYGuardarItem(i)">
+                <ion-input
+                  [(ngModel)]="item.descripcion"
+                  [readonly]="!item.editando"
+                  (ionInput)="item.descripcion = item.descripcion.toUpperCase()"
+                  (ionBlur)="verificarYGuardarItem(i)"
+                  type="text"
+                  inputmode="text"
+                  clearInput="false">
                 </ion-input>
               </td>
               <td>
-                <ion-input [(ngModel)]="item.codigo_referencial"
-                           [readonly]="!item.editando"
-                           (ionInput)="item.codigo_referencial = item.codigo_referencial.toUpperCase()"
-                           (ionBlur)="verificarYGuardarItem(i)">
+                <ion-input
+                  [(ngModel)]="item.codigo_referencial"
+                  [readonly]="!item.editando"
+                  type="text"
+                  inputmode="text"
+                  (ionInput)="item.codigo_referencial = item.codigo_referencial.toUpperCase()"
+                  (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>
               </td>
               <td>
-                <ion-input type="number"
-                           [(ngModel)]="item.cantidad"
-                           [readonly]="!item.editando"
-                           (ionBlur)="verificarYGuardarItem(i)">
+                <ion-input
+                  [(ngModel)]="item.cantidad"
+                  [readonly]="!item.editando"
+                  type="number"
+                  inputmode="numeric"
+                  (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>
               </td>
               <td>
-                <ion-input type="number"
-                           [(ngModel)]="item.stock"
-                           [readonly]="!item.editando"
-                           (ionBlur)="verificarYGuardarItem(i)">
+                <ion-input
+                  [(ngModel)]="item.stock"
+                  [readonly]="!item.editando"
+                  type="number"
+                  inputmode="numeric"
+                  (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>
               </td>
               <td>
-                <ion-input [(ngModel)]="item.numero_interno"
-                           [readonly]="!item.editando"
-                           (ionInput)="item.numero_interno = item.numero_interno.toUpperCase()"
-                           (ionBlur)="verificarYGuardarItem(i)">
+                <ion-input
+                  [(ngModel)]="item.numero_interno"
+                  [readonly]="!item.editando"
+                  type="text"
+                  inputmode="text"
+                  (ionInput)="item.numero_interno = item.numero_interno.toUpperCase()"
+                  (ionBlur)="verificarYGuardarItem(i)">
                 </ion-input>
               </td>
               <td>

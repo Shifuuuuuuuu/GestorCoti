@@ -55,6 +55,18 @@ const routes: Routes = [
     path: 'editar-solpeds',
     loadChildren: () => import('./editar-solpeds/editar-solpeds.module').then( m => m.EditarSolpedsPageModule)
   },
+  {
+    path: 'generador-oc',
+    loadChildren: () => import('./generador-oc/generador-oc.module').then( m => m.GeneradorOcPageModule)
+  },
+  {
+    path: 'menu-oc',
+    loadChildren: () => import('./menu-oc/menu-oc.module').then( m => m.MenuOcPageModule)
+  },
+  {
+    path: 'validar-oc',
+    loadChildren: () => import('./validar-oc/validar-oc.module').then( m => m.ValidarOcPageModule)
+  },
 
 
 

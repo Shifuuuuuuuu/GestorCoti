@@ -1,0 +1,46 @@
+<ion-header [translucent]="true">
+  <ion-toolbar style="--background: red; color: white;">
+    <ion-buttons slot="start" style="color: white;">
+      <ion-back-button color="light" defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Validar OC</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+<ion-card *ngFor="let oc of ocs">
+  <ion-card-header>
+    <ion-card-title>OC #{{ oc.id }}</ion-card-title>
+    <ion-card-subtitle><strong>Estatus:</strong> {{ oc.estatus }}</ion-card-subtitle>
+  </ion-card-header>
+
+  <ion-card-content>
+    <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }}</p>
+    <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
+    <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
+
+    <ion-card *ngIf="oc.pdfVistaUrl">
+      <iframe [src]="oc.pdfVistaUrl" width="100%" height="600px" style="border: none;"></iframe>
+    </ion-card>
+    <ion-item>
+    <ion-label position="floating">Comentario</ion-label>
+      <ion-textarea [(ngModel)]="oc.comentarioTemporal"></ion-textarea>
+    </ion-item>
+    <ion-grid *ngIf="oc.estatus !== 'Aprobado' && oc.estatus !== 'Rechazado'">
+      <ion-row>
+        <ion-col size="6">
+          <ion-button expand="block" color="success" (click)="aprobarOC(oc)">
+            Aprobar
+          </ion-button>
+        </ion-col>
+        <ion-col size="6">
+          <ion-button expand="block" color="danger" (click)="rechazarOC(oc)">
+            Rechazar
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-card-content>
+</ion-card>
+
+</ion-content>

@@ -126,19 +126,21 @@ guardarDatosEnLocalStorage() {
     this.guardarDatosEnLocalStorage();
   }
 
-  verificarYGuardarItem(index: number) {
-    const item = this.solpe.items[index];
-    if (
-      item.descripcion &&
-      item.codigo_referencial &&
-      item.cantidad !== null &&
-      item.stock !== null &&
-      item.numero_interno && item.numero_interno.trim() !== '' &&
-      item.imagen_referencia_base64
-    ) {
-      this.guardarItem(index);
-    }
+verificarYGuardarItem(index: number) {
+  const item = this.solpe.items[index];
+  if (
+    item.descripcion &&
+    item.codigo_referencial &&
+    item.cantidad !== null &&
+    item.stock !== null &&
+    item.numero_interno &&
+    item.numero_interno.trim() !== '' &&
+    item.imagen_referencia_base64
+  ) {
+    this.guardarDatosEnLocalStorage();
   }
+}
+
 
 
   subirImagenReferencia(event: any, index: number) {
@@ -177,14 +179,15 @@ guardarDatosEnLocalStorage() {
     }
   }
 
+guardarItem(index: number) {
+  this.solpe.items[index].editando = false;
+  this.guardarDatosEnLocalStorage();
+}
 
-  guardarItem(index: number) {
-    this.solpe.items[index].editando = false;
-  }
 
-  editarItem(index: number) {
-    this.solpe.items[index].editando = true;
-  }
+editarItem(index: number) {
+  this.solpe.items[index].editando = true;
+}
 
   guardarEdicion(index: number) {
     this.solpe.items[index].editando = false;
