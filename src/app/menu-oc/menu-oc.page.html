@@ -9,11 +9,20 @@
 
 <ion-content id="main-content" class="main-content">
   <div class="menu-grid">
-
     <div class="menu-item" (click)="navigateTo('generador-oc')">
       <ion-icon name="document-text-outline" class="menu-icon"></ion-icon>
       <p>Generador de OC</p>
       <span>Crea y registra órdenes de compra fácilmente</span>
+    </div>
+    <div class="menu-item" (click)="navigateTo('gestor-oc')">
+      <ion-icon name="briefcase-outline" class="menu-icon"></ion-icon>
+      <p>Gestor de OC</p>
+      <span>Verifica o cambia el estatus de las órdenes de compra</span>
+    </div>
+    <div class="menu-item" (click)="navigateTo('historial-oc')">
+      <ion-icon name="time-outline" class="menu-icon"></ion-icon>
+      <p>Historial de OC</p>
+      <span>Consulta los cambios de estado y registros de las órdenes de compra</span>
     </div>
   </div>
 </ion-content>

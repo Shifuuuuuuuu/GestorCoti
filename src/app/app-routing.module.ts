@@ -67,6 +67,14 @@ const routes: Routes = [
     path: 'validar-oc',
     loadChildren: () => import('./validar-oc/validar-oc.module').then( m => m.ValidarOcPageModule)
   },
+  {
+    path: 'gestor-oc',
+    loadChildren: () => import('./gestor-oc/gestor-oc.module').then( m => m.GestorOcPageModule)
+  },
+  {
+    path: 'historial-oc',
+    loadChildren: () => import('./historial-oc/historial-oc.module').then( m => m.HistorialOcPageModule)
+  },
 
 
 

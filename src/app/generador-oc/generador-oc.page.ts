@@ -3,6 +3,7 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import firebase from 'firebase/compat/app';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-generador-oc',
@@ -21,27 +22,27 @@ export class GeneradorOcPage implements OnInit {
   constructor(
     private firestore: AngularFirestore,
     private auth: AngularFireAuth,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private toastController: ToastController
   ) {}
 
   ngOnInit() {}
 
-onFileSelected(event: any) {
-  this.archivoPDF = event.target.files[0];
-  if (this.archivoPDF) {
-    this.nombrePDF = this.archivoPDF.name;
+  onFileSelected(event: any) {
+    this.archivoPDF = event.target.files[0];
+    if (this.archivoPDF) {
+      this.nombrePDF = this.archivoPDF.name;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64PDF = (reader.result as string).split(',')[1];
-      const blob = this.base64ToBlob(base64PDF, 'application/pdf');
-      const url = URL.createObjectURL(blob);
-      this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    };
-    reader.readAsDataURL(this.archivoPDF);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64PDF = (reader.result as string).split(',')[1];
+        const blob = this.base64ToBlob(base64PDF, 'application/pdf');
+        const url = URL.createObjectURL(blob);
+        this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      };
+      reader.readAsDataURL(this.archivoPDF);
+    }
   }
-}
-
 
   async obtenerNuevoId(): Promise<number> {
     const snap = await this.firestore.collection('ordenes_oc', ref => ref.orderBy('id', 'desc').limit(1)).get().toPromise();
@@ -54,7 +55,17 @@ onFileSelected(event: any) {
     if (!this.archivoPDF || !this.centroCosto) return;
 
     const user = await this.auth.currentUser;
-    const usuario = user?.email || 'Desconocido';
+    const uid = user?.uid;
+    let usuario = 'Desconocido';
+
+    if (uid) {
+      const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
+      if (userDoc?.exists) {
+        const userData = userDoc.data() as any;
+        usuario = userData?.fullName || usuario;
+      }
+    }
+
     const fecha = new Date().toISOString();
     const id = await this.obtenerNuevoId();
 
@@ -86,29 +97,37 @@ onFileSelected(event: any) {
       this.historial.push(historialEntry);
       this.archivoPDF = null;
       this.centroCosto = '';
-      alert('Orden subida con éxito.');
+      this.mostrarToast('Orden subida con éxito.', 'success'); // ✅ Toast
     };
 
     reader.readAsDataURL(this.archivoPDF);
   }
 
-base64ToBlob(base64: string, contentType: string): Blob {
-  const byteCharacters = atob(base64);
-  const byteArrays = [];
+  base64ToBlob(base64: string, contentType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteArrays = [];
 
-  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-    const slice = byteCharacters.slice(offset, offset + 512);
-    const byteNumbers = new Array(slice.length);
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+      const slice = byteCharacters.slice(offset, offset + 512);
+      const byteNumbers = new Array(slice.length);
 
-    for (let i = 0; i < slice.length; i++) {
-      byteNumbers[i] = slice.charCodeAt(i);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
     }
 
-    const byteArray = new Uint8Array(byteNumbers);
-    byteArrays.push(byteArray);
+    return new Blob(byteArrays, { type: contentType });
   }
-
-  return new Blob(byteArrays, { type: contentType });
-}
-
+  async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
+    const toast = await this.toastController.create({
+      message: mensaje,
+      duration: 2000,
+      color,
+      position: 'top'
+    });
+    toast.present();
+  }
 }

@@ -1,0 +1,45 @@
+<ion-header [translucent]="true">
+  <ion-toolbar style="--background: red; color: white;">
+    <ion-buttons slot="start" style="color: white;">
+      <ion-back-button color="light" defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>OC Aprobadas</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <ng-container *ngIf="ocs.length === 0; else listaAprobadas">
+    <ion-card color="light">
+      <ion-card-content class="ion-text-center">
+        <ion-icon name="checkmark-circle-outline" size="large"></ion-icon>
+        <h2>No hay OCs Aprobadas</h2>
+        <p>No se han encontrado órdenes con estado "Aprobado".</p>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <ng-template #listaAprobadas>
+    <ion-card *ngFor="let oc of ocs">
+      <ion-card-header>
+        <ion-card-title>OC #{{ oc.id }}</ion-card-title>
+        <ion-card-subtitle>Estatus: {{ oc.estatus }}</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }}</p>
+        <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
+        <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
+
+        <ion-card *ngIf="oc.pdfVistaUrl">
+          <iframe [src]="oc.pdfVistaUrl" width="100%" height="400px" style="border: none;"></iframe>
+        </ion-card>
+
+        <ion-button expand="block" color="secondary" (click)="marcarComoEnviada(oc)">
+          Enviada a Proveedor
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </ng-template>
+
+</ion-content>

@@ -1,0 +1,61 @@
+<ion-header [translucent]="true">
+  <ion-toolbar style="--background: red; color: white;">
+    <ion-buttons slot="start" style="color: white;">
+      <ion-back-button color="light" defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Historial de OCs</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <ng-container *ngIf="ocs.length === 0; else listaHistorial">
+    <ion-card color="light">
+      <ion-card-content class="ion-text-center">
+        <ion-icon name="information-circle-outline" size="large"></ion-icon>
+        <h2>No hay OCs registradas</h2>
+        <p>Aún no se ha subido ninguna orden de compra al sistema.</p>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <ng-template #listaHistorial>
+    <ion-card *ngFor="let oc of ocs">
+      <ion-card-header>
+        <ion-card-title>OC #{{ oc.id }}</ion-card-title>
+        <ion-card-subtitle>Centro de Costo: {{ oc.centroCosto }}</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
+        <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
+        <p><strong>Estado Actual:</strong> {{ oc.estatus }}</p>
+
+        <ion-card *ngIf="oc.pdfVistaUrl">
+          <iframe [src]="oc.pdfVistaUrl" width="100%" height="300px" style="border: none;"></iframe>
+        </ion-card>
+
+        <ion-accordion-group>
+          <ion-accordion>
+            <ion-item slot="header" color="light">
+              <ion-label><strong>Ver historial de cambios</strong></ion-label>
+            </ion-item>
+            <div class="ion-padding" slot="content">
+              <ion-list *ngIf="oc.historial?.length">
+                <ion-item *ngFor="let h of oc.historial">
+                  <ion-label>
+                    <h3>{{ h.usuario }} → <strong>{{ h.estatus }}</strong></h3>
+                    <p>{{ h.fecha | date:'short' }}</p>
+                    <p *ngIf="h.comentario">📝 {{ h.comentario }}</p>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+              <p *ngIf="!oc.historial?.length">Sin historial disponible.</p>
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
+      </ion-card-content>
+    </ion-card>
+  </ng-template>
+
+</ion-content>
