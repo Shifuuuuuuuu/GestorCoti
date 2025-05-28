@@ -29,53 +29,33 @@
   </ng-container>
 
   <ng-template #contentLoaded>
-    <ion-card class="main-card">
-      <div *ngFor="let solpe of solpes; let idx = index" class="solpe-container">
-          <div class="solpe-header">
-            <h3>SOLPED N.º {{ solpe.numero_solpe }}</h3>
-            <div class="solpe-actions">
-              <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
-                <ion-label style="font-size: 12px;">Descargar Excel</ion-label>
-              </ion-button>
-              <label class="upload-label">
-                <ion-button (click)="abrirInputExcel()" fill="solid" color="secondary" size="small">
-                  Subir Excel
-                </ion-button>
-                <input #fileInputExcel type="file"
-                      accept=".xlsx, .xls"
-                      (change)="leerArchivoExcel($event)"
-                      hidden />
-              </label>
-            </div>
-          </div>
-        <ion-card class="inner-card">
-          <div class="table-container">
-            <table class="styled-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Contrato</th>
-                  <th>Usuario</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{{ solpe.fecha }}</td>
-                  <td>{{ solpe.numero_contrato }}</td>
-                  <td>{{ solpe.usuario }}</td>
-                  <td>{{ solpe.estatus }}</td>
-                  <td>
-                    <ion-button color="secondary" size="small" (click)="cambiarEstatus(solpe)">
-                      Cambiar estado
-                    </ion-button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </ion-card>
+  <ion-card class="main-card">
+    <div *ngFor="let solpe of solpes; let idx = index" class="solpe-container">
+    <ion-card-header class="ion-no-padding" style="cursor: pointer;">
+      <ion-item lines="none" class="solpe-header-item" style="flex-wrap: wrap; align-items: center;">
+        <ion-label style="flex: 1;">
+          <h2><strong>📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
+          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }}</p>
+          <p style="font-size: 14px;">Estado: {{ solpe.estatus }}</p>
+        </ion-label>
+
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
+            Excel
+          </ion-button>
+
+          <ion-button fill="solid" color="secondary" size="small" (click)="abrirInputExcel()">
+            Subir Excel
+          </ion-button>
+          <input #fileInputExcel type="file" accept=".xlsx, .xls" (change)="leerArchivoExcel($event)" hidden />
+
+          <ion-button fill="solid" color="secondary" size="small" (click)="cambiarEstatus(solpe)">
+            Estado
+          </ion-button>
+        </div>
+      </ion-item>
+      <br>
+    </ion-card-header>
         <div *ngFor="let item of solpe.items" class="item-container">
           <ion-row (click)="toggleItemDetalle(solpe.id, item.id)" style="background-color: #eee; border-bottom: 1px solid #ccc; cursor: pointer;">
 
@@ -230,17 +210,41 @@
           <ion-label position="floating">Descuento (%)</ion-label>
           <ion-input type="number" [(ngModel)]="comparacionForm.descuento"></ion-input>
         </ion-item>
+        <ion-item lines="none">
+          <ion-label><strong>PDF Cotización:</strong></ion-label>
 
-        <ion-item lines="inset">
-          <ion-icon name="document-outline" slot="start" color="danger"></ion-icon>
-          <ion-label>PDF Cotización</ion-label>
-          <ion-select placeholder="Selecciona PDF" [(ngModel)]="comparacionForm.pdfId">
-            <ion-select-option
-              *ngFor="let pdf of pdfsCargados[solpeIdSeleccionado]"
-              [value]="pdf.id">
+          <ion-chip
+            *ngFor="let pdf of pdfsCargados[solpeIdSeleccionado]"
+            [outline]="comparacionForm.pdfId !== pdf.id"
+          >
+            <ion-label
+              (click)="comparacionForm.pdfId = pdf.id"
+              style="cursor: pointer;"
+            >
               {{ pdf.nombre }}
-            </ion-select-option>
-          </ion-select>
+            </ion-label>
+            <ion-icon
+              name="close-circle"
+              color="danger"
+              (click)="eliminarPDF(solpeIdSeleccionado, pdf.id, pdf.nombre)"
+            ></ion-icon>
+          </ion-chip>
+
+          <ion-button
+            size="small"
+            color="secondary"
+            (click)="abrirInputPDF(solpeIdSeleccionado)"
+          >
+            Subir PDF
+          </ion-button>
+
+          <input
+            type="file"
+            hidden
+            [id]="'pdfInput-' + solpeIdSeleccionado"
+            (change)="subirPDFs($event, solpeIdSeleccionado, itemSeleccionado)"
+            accept="application/pdf"
+          />
         </ion-item>
       </div>
       <div class="boton-guardar">

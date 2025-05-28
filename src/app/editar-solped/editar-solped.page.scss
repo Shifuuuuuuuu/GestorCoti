@@ -151,3 +151,47 @@ ion-content {
     margin-left: 2%;
   }
 }
+.tabla-items {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tabla-header {
+  background-color: #f1f1f1;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+
+.tabla-row {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 0;
+  align-items: center;
+}
+
+.tabla-row:last-child {
+  border-bottom: none;
+}
+
+.tabla-row ion-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.item-usuario-accion {
+  --padding-start: 12px;
+  --inner-padding-end: 12px;
+  align-items: center;
+
+  ion-button {
+    height: 28px;
+    font-size: 13px;
+    margin-left: auto;
+  }
+
+  ion-icon {
+    font-size: 20px;
+  }
+}

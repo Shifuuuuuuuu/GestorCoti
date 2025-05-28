@@ -384,6 +384,12 @@ obtenerNombrePDF(solpeId: string, pdfId?: string): string {
 
     return new Blob(byteArrays, { type: contentType });
   }
+abrirInputPDF(solpeId: string) {
+  const input = document.getElementById(`pdfInput-${solpeId}`) as HTMLInputElement;
+  if (input) {
+    input.click();
+  }
+}
 
 cargarSolpes() {
   this.solpeService.obtenerTodasLasSolpes().subscribe((data: any[]) => {

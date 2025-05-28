@@ -3,7 +3,7 @@
     <ion-buttons slot="start" style="color: white;">
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
-    <ion-title>Validar OC</ion-title>
+    <ion-title>Validar Cotización</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -12,8 +12,8 @@
     <ion-card color="light">
       <ion-card-content class="ion-text-center">
         <ion-icon name="information-circle-outline" size="large"></ion-icon>
-        <h2>No hay OCs con estatus "Preaprobado"</h2>
-        <p>Actualmente no hay órdenes para validar.</p>
+        <h2>No hay Cotizaciones con estado "Preaprobado"</h2>
+        <p>Actualmente no hay cotizaciones para validar.</p>
       </ion-card-content>
     </ion-card>
   </ng-container>
@@ -21,13 +21,14 @@
   <ng-template #listaOCs>
     <ion-card *ngFor="let oc of ocs">
       <ion-card-header>
-        <ion-card-title>OC #{{ oc.id }}</ion-card-title>
-        <ion-card-subtitle><strong>Estatus:</strong> {{ oc.estatus }}</ion-card-subtitle>
+        <ion-card-title>Cotización #{{ oc.id }}</ion-card-title>
+        <ion-card-subtitle><strong>Estado:</strong> {{ oc.estatus }}</ion-card-subtitle>
       </ion-card-header>
 
       <ion-card-content>
         <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }}</p>
         <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
+        <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
         <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
 
         <ion-card *ngIf="oc.pdfVistaUrl">

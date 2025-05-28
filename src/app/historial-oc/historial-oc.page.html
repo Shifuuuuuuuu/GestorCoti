@@ -3,7 +3,7 @@
     <ion-buttons slot="start" style="color: white;">
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
-    <ion-title>Historial de OCs</ion-title>
+    <ion-title>Historial de Cotizaciones</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -13,8 +13,8 @@
     <ion-card color="light">
       <ion-card-content class="ion-text-center">
         <ion-icon name="information-circle-outline" size="large"></ion-icon>
-        <h2>No hay OCs registradas</h2>
-        <p>Aún no se ha subido ninguna orden de compra al sistema.</p>
+        <h2>No hay Cotizaciones registradas</h2>
+        <p>Aún no se ha subido ninguna Cotización al sistema.</p>
       </ion-card-content>
     </ion-card>
   </ng-container>
@@ -22,17 +22,33 @@
   <ng-template #listaHistorial>
     <ion-card *ngFor="let oc of ocs">
       <ion-card-header>
-        <ion-card-title>OC #{{ oc.id }}</ion-card-title>
+        <ion-card-title>Cotización #{{ oc.id }}</ion-card-title>
         <ion-card-subtitle>Centro de Costo: {{ oc.centroCosto }}</ion-card-subtitle>
       </ion-card-header>
 
       <ion-card-content>
         <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
         <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
+        <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
         <p><strong>Estado Actual:</strong> {{ oc.estatus }}</p>
 
+
         <ion-card *ngIf="oc.pdfVistaUrl">
-          <iframe [src]="oc.pdfVistaUrl" width="100%" height="300px" style="border: none;"></iframe>
+          <ion-card-header>
+            <ion-card-title>Cotización</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <iframe [src]="oc.pdfVistaUrl" width="100%" height="300px" style="border: none;"></iframe>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card *ngIf="oc.nuevoPdfVistaUrl">
+          <ion-card-header>
+            <ion-card-title>Órden de compra</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <iframe [src]="oc.nuevoPdfVistaUrl" width="100%" height="300px" style="border: none;"></iframe>
+          </ion-card-content>
         </ion-card>
 
         <ion-accordion-group>

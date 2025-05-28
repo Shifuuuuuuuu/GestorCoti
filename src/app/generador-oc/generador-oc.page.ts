@@ -16,7 +16,7 @@ export class GeneradorOcPage implements OnInit {
   historial: any[] = [];
   pdfUrl: SafeResourceUrl | null = null;
   nombrePDF: string = '';
-  tipoCompra: string = '';
+  tipoCompra: string = 'stock';
   destinoCompra: string = '';
 
   constructor(

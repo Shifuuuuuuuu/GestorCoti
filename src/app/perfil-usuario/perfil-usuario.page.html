@@ -90,14 +90,19 @@
       </div>
     </form>
 
-    <div class="modo-oscuro-toggle igual-margin">
-      <ion-button fill="clear" (click)="toggleDarkModeManualmente()">
+    <!-- Botón de modo oscuro -->
+    <div class="darkmode-toggle" [class.dark]="isDarkMode">
+      <ion-button fill="clear" shape="round" (click)="toggleDarkModeManualmente()">
         <ion-icon
+          slot="start"
           [name]="isDarkMode ? 'sunny-outline' : 'moon-outline'"
-          [style.color]="isDarkMode ? '#FFD700' : '#000000'"
-          slot="icon-only">
+          [style.color]="isDarkMode ? '#FFD700' : '#333'">
         </ion-icon>
+        <span [ngStyle]="{ color: isDarkMode ? '#fff' : '#000' }">
+          {{ isDarkMode ? 'Modo claro' : 'Modo oscuro' }}
+        </span>
       </ion-button>
     </div>
+
   </ion-card>
 </ion-content>

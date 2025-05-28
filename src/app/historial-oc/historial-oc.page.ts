@@ -26,13 +26,30 @@ export class HistorialOcPage implements OnInit {
       .subscribe(snapshot => {
         this.ocs = snapshot.map(doc => {
           const data = doc.payload.doc.data() as any;
-          const pdfVistaUrl = data.archivoBase64
-            ? this.crearPDFUrl(data.archivoBase64)
-            : null;
+
+          let pdfVistaUrl = null;
+          if (data.archivoBase64) {
+            pdfVistaUrl = this.crearPDFUrl(data.archivoBase64);
+          }
+
+
+          const archivosPDF = data.archivosPDF;
+          let nuevoPdfVistaUrl = null;
+          if (archivosPDF) {
+            const base64PDF = archivosPDF['archivoBase64'];
+
+            if (base64PDF) {
+              nuevoPdfVistaUrl = this.crearPDFUrl(base64PDF);
+            }
+          }
+          const nuevoPdfNombre = data.nombrePDF || null;
+
           return {
             ...data,
             docId: doc.payload.doc.id,
-            pdfVistaUrl
+            pdfVistaUrl,
+            nuevoPdfVistaUrl,
+            nuevoPdfNombre,
           };
         }).sort((a, b) => {
           const fechaA = a.fechaSubida?.toDate?.() || new Date(0);

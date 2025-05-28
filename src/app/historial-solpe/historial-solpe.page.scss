@@ -75,3 +75,54 @@ ion-segment-button.ios {
 .no-solped-container p {
   font-size: 1.2rem;
 }
+ion-toolbar {
+  --background: #d32f2f;
+  color: white;
+}
+
+.custom-segment {
+  margin: 12px 0;
+}
+
+.header-row {
+  background-color: #f1f1f1;
+  font-weight: bold;
+}
+
+ion-card-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+ion-card-subtitle {
+  font-size: 14px;
+  color: #666;
+}
+
+ion-badge {
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+ion-col {
+  font-size: 14px;
+}
+
+ion-icon {
+  vertical-align: middle;
+}
+.filtro-card {
+  --ion-card-background: #f9f9f9;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+.header-row {
+  border-radius: 8px;
+  text-align: center;
+}
+
+.no-solped-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

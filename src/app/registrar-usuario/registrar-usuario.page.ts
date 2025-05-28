@@ -110,7 +110,7 @@ export class RegistrarUsuarioPage implements OnInit {
 
   formatRUTForSave(rut: string): string {
     const cleanRut = rut.replace(/\D/g, '');
-    return `${cleanRut.slice(0, 2)}-${cleanRut.slice(2, 5)}-${cleanRut.slice(5, 8)}-${cleanRut.slice(8)}`;
+    return `${cleanRut.slice(0, 2)}.${cleanRut.slice(2, 5)}.${cleanRut.slice(5, 8)}-${cleanRut.slice(8)}`;
   }
 
   formatPhoneForSave(phone: string): string {

@@ -3,18 +3,17 @@
     <ion-buttons slot="start" style="color: white;">
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
-    <ion-title>OC Aprobadas</ion-title>
+    <ion-title>Cotizaciones Aprobadas</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-
   <ng-container *ngIf="ocs.length === 0; else listaAprobadas">
     <ion-card color="light">
       <ion-card-content class="ion-text-center">
         <ion-icon name="checkmark-circle-outline" size="large"></ion-icon>
-        <h2>No hay OCs Aprobadas</h2>
-        <p>No se han encontrado órdenes con estado "Aprobado".</p>
+        <h2>No hay Cotizaciones Aprobadas</h2>
+        <p>No se han encontrado Cotizaciones con estado "Aprobado".</p>
       </ion-card-content>
     </ion-card>
   </ng-container>
@@ -22,18 +21,33 @@
   <ng-template #listaAprobadas>
     <ion-card *ngFor="let oc of ocs">
       <ion-card-header>
-        <ion-card-title>OC #{{ oc.id }}</ion-card-title>
-        <ion-card-subtitle>Estatus: {{ oc.estatus }}</ion-card-subtitle>
+        <ion-card-title>Cotización #{{ oc.id }}</ion-card-title>
+        <ion-card-subtitle>Estado: {{ oc.estatus }}</ion-card-subtitle>
       </ion-card-header>
 
       <ion-card-content>
         <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }}</p>
         <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
-        <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
-
-        <ion-card *ngIf="oc.pdfVistaUrl">
-          <iframe [src]="oc.pdfVistaUrl" width="100%" height="400px" style="border: none;"></iframe>
+        <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
+        <p><strong>Cotización PDF:</strong> {{ oc.nombrePDF }}</p>
+        <p *ngIf="nombreArchivoSeleccionado">
+          <strong>OC PDF:</strong>
+          <span>{{ nombreArchivoSeleccionado }}</span>
+          <ion-icon name="close-circle" color="danger" (click)="eliminarArchivoSeleccionado()" style="cursor: pointer;"></ion-icon>
+        </p>
+        <ion-card *ngIf="vistaPreviaPdf">
+          <ion-card-header>
+            <ion-card-title>Vista previa del PDF seleccionado</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <iframe [src]="vistaPreviaPdf" width="100%" height="400px" style="border: none;"></iframe>
+          </ion-card-content>
         </ion-card>
+        <ion-item>
+          <ion-label>Subir nuevo PDF</ion-label>
+          <input type="file" accept="application/pdf" (change)="onFileSelected($event, oc)" />
+        </ion-item>
+
 
         <ion-button expand="block" color="secondary" (click)="marcarComoEnviada(oc)">
           Enviada a Proveedor
@@ -41,5 +55,4 @@
       </ion-card-content>
     </ion-card>
   </ng-template>
-
 </ion-content>

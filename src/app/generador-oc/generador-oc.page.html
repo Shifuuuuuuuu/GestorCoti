@@ -10,7 +10,7 @@
 <ion-content [fullscreen]="true" class="ion-padding">
   <ion-card>
     <ion-card-header>
-      <ion-card-title>Subir Orden de Compra</ion-card-title>
+      <ion-card-title>Subir Cotización</ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <ion-item>
@@ -35,9 +35,17 @@
       </ion-item>
 
       <ion-item>
-        <ion-label position="floating">¿Para qué patente o es stock?</ion-label>
-        <ion-input [(ngModel)]="destinoCompra"></ion-input>
+        <ion-label position="floating">N° Patente/ Stock</ion-label>
+        <ion-select [(ngModel)]="tipoCompra" interface="popover" required>
+          <ion-select-option value="stock">Stock</ion-select-option>
+          <ion-select-option value="patente">Patente</ion-select-option>
+        </ion-select>
       </ion-item>
+
+      <ion-item *ngIf="tipoCompra === 'patente'">
+        <ion-input [(ngModel)]="destinoCompra" placeholder="Escribe la patente aquí"></ion-input>
+      </ion-item>
+
     <ion-card *ngIf="pdfUrl">
   <ion-card-header>
     <ion-card-title>PDF Subido</ion-card-title>
@@ -51,7 +59,7 @@
         <input type="file" accept="application/pdf" (change)="onFileSelected($event)" />
       </ion-item>
 
-      <ion-button expand="block" style="--background: red; color: white;" (click)="enviarOC()">Enviar OC</ion-button>
+      <ion-button expand="block" style="--background: red; color: white;" (click)="enviarOC()">Enviar Cotización</ion-button>
     </ion-card-content>
   </ion-card>
 </ion-content>

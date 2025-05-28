@@ -168,3 +168,18 @@ h3 {
   display: block;
   margin: auto;
 }
+.darkmode-toggle {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.darkmode-toggle.dark span {
+  color: #fff !important;
+}
+
+.darkmode-toggle span {
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}

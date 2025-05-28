@@ -18,6 +18,7 @@
   display: flex;
   justify-content: space-evenly;
   margin-top: 10px;
+  color: white;
 }
 
 .table-container {
@@ -122,13 +123,12 @@ ion-segment-button {
   --indicator-color: red;
 }
 
-/* Material Design styles */
+
 ion-segment-button.md {
   --color-checked: red;
   --indicator-height: 4px;
 }
 
-/* iOS styles */
 ion-segment-button.ios {
   --color: red;
   --color-checked: #fff;

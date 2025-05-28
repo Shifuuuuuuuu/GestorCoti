@@ -1,50 +1,55 @@
 <ion-header>
-  <ion-toolbar style="--background: red;">
-    <ion-buttons slot="start" style="color: white;">
-      <ion-back-button color="light" defaultHref="/"></ion-back-button>
+  <ion-toolbar style="--background: red">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" color="light"></ion-back-button>
     </ion-buttons>
     <ion-title style="color: white;">Historial de SOLPED</ion-title>
-    <ion-button slot="end" size="large" fill="clean" (click)="mostrarFiltros = !mostrarFiltros">
-      <ion-icon color="light" name="filter">{{ mostrarFiltros ? 'Ocultar filtros' : 'Mostrar filtros' }}</ion-icon>
-    </ion-button>
-    <ion-button style="color: white;" slot="end" size="large" fill="clean" (click)="ordenarSolpes()">
-      {{ ordenAscendente ? '↓' : '↑' }}
-    </ion-button>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="ordenarSolpes()">
+        <ion-icon name="swap-vertical-outline" slot="icon-only" color="light"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" (click)="mostrarFiltros = !mostrarFiltros">
+        <ion-icon name="funnel-outline" slot="icon-only" color="light"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <ion-segment [(ngModel)]="segmentoSeleccionado">
+
+  <ion-segment [(ngModel)]="segmentoSeleccionado" style="color: red;">
     <ion-segment-button value="historial">
-      <ion-label>Historial de SOLPED</ion-label>
+      <ion-label>Historial</ion-label>
     </ion-segment-button>
   </ion-segment>
 
-  <div *ngIf="segmentoSeleccionado === 'historial'">
-    <div *ngIf="mostrarFiltros">
-      <ion-card>
-        <ion-grid>
-          <ion-row class="ion-align-items-center">
-            <ion-col size="12" size-md="3">
-              <ion-item>
-                <ion-label position="floating">Fecha</ion-label>
-                <ion-input [(ngModel)]="filtroFecha" type="date"></ion-input>
-              </ion-item>
-            </ion-col>
-            <ion-col size="12" size-md="3">
-              <ion-item>
-                <ion-label>F. Estado</ion-label>
-                <ion-select [(ngModel)]="filtroEstatus">
-                  <ion-select-option *ngFor="let estatus of listaEstatus" [value]="estatus">
-                    {{ estatus }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
-            </ion-col>
-            <ion-col size="12" size-md="3">
-              <ion-item>
-                <ion-label>F. N.º de contrato</ion-label>
-                <ion-select [(ngModel)]="filtroContrato">
+  <ion-card *ngIf="mostrarFiltros" class="filtro-card">
+    <ion-card-header>
+      <ion-card-title style="font-size: 18px;">🔍 Filtros de búsqueda</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="floating">Fecha</ion-label>
+              <ion-input type="date" [(ngModel)]="filtroFecha"></ion-input>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">Estado</ion-label>
+              <ion-select [(ngModel)]="filtroEstatus" interface="popover">
+                <ion-select-option value="">Todos</ion-select-option>
+                <ion-select-option *ngFor="let estatus of listaEstatus" [value]="estatus">{{ estatus }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">Contrato</ion-label>
+              <ion-select [(ngModel)]="filtroContrato" interface="popover">
+                <ion-select-option value="">Todos</ion-select-option>
                   <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
                   <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
                   <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
@@ -60,199 +65,106 @@
                   <ion-select-option value="30-10-59">30-10-59</ion-select-option>
                   <ion-select-option value="30-10-60">30-10-60</ion-select-option>
                   <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
-                </ion-select>
-              </ion-item>
-            </ion-col>
-            <ion-col size="12" size-md="3">
-              <ion-item>
-                <ion-label>F. Usuario</ion-label>
-                <ion-select [(ngModel)]="filtroUsuario">
-                  <ion-select-option *ngFor="let usuario of listaUsuarios" [value]="usuario.fullName">
-                    {{ usuario.fullName }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
-            </ion-col>
-          </ion-row>
-          <ion-row>
-            <ion-col size="6">
-              <ion-button style="--background: rgb(87, 189, 132)" expand="block" (click)="filtrarSolpes()">
-                Aplicar filtros
-              </ion-button>
-            </ion-col>
-            <ion-col size="6">
-              <ion-button expand="block" color="danger" (click)="limpiarFiltros()">
-                Limpiar filtros
-              </ion-button>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card>
-    </div>
-
-    <ion-grid *ngFor="let solpe of solpesFiltradas">
-      <ion-row (click)="toggleDetalle(solpe.id)"class="header-row" style="background-color: #6c757d; color: white;">
-        <ion-col><b>N.º SOLPED</b></ion-col>
-        <ion-col><b>Fecha</b></ion-col>
-        <ion-col><b>N.º de contrato</b></ion-col>
-        <ion-col><b>Usuario</b></ion-col>
-        <ion-col><b>Estado</b></ion-col>
-      </ion-row>
-      <ion-row (click)="toggleDetalle(solpe.id)">
-        <ion-col><b>{{ solpe.numero_solpe }}</b></ion-col>
-        <ion-col>{{ solpe.fecha }}</ion-col>
-        <ion-col>{{ solpe.numero_contrato }}</ion-col>
-        <ion-col>{{ solpe.usuario }}</ion-col>
-        <ion-col>
-          <span [ngStyle]="{
+              </ion-select>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">Usuario</ion-label>
+              <ion-select [(ngModel)]="filtroUsuario" interface="popover">
+                <ion-select-option value="">Todos</ion-select-option>
+                <ion-select-option *ngFor="let usuario of listaUsuarios" [value]="usuario.fullName">{{ usuario.fullName }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+            <ion-button expand="block" color="success"  (click)="filtrarSolpes()">
+              <ion-icon name="search-outline" slot="start"></ion-icon>Aplicar filtros
+            </ion-button>
+          </ion-col>
+          <ion-col>
+            <ion-button expand="block" color="medium"  (click)="limpiarFiltros()">
+              <ion-icon name="refresh-outline" slot="start"></ion-icon>Limpiar
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
+  <ion-card *ngFor="let solpe of solpesFiltradas">
+    <ion-card-header class="ion-no-padding" (click)="toggleDetalle(solpe.id)" style="cursor: pointer;">
+      <ion-item lines="none">
+        <ion-label>
+          <h2><strong style="color: black;">📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
+          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} | Usuario: {{ solpe.usuario }}</p>
+        </ion-label>
+        <ion-badge [color]="getColorByStatus(solpe.estatus)"[ngStyle]="{
             'background-color': getColorByStatus(solpe.estatus),
             'color': 'white',
             'padding': '4px 10px',
             'font-weight': 'bold'
-          }">
-            {{ solpe.estatus }}
-          </span>
-        </ion-col>
-      </ion-row>
+          }" style="height: 25px; font-size: 12px;">{{ solpe.estatus }}</ion-badge>
+      </ion-item>
+    </ion-card-header>
 
-      <ion-row *ngIf="solpeExpandidaId === solpe.id">
-        <ion-col size="12">
-          <h3 style="margin-left: 1%;">SOLPED N.º {{ solpe.numero_solpe }}</h3>
-          <ion-card class="inner-card">
-            <div class="table-container">
-              <table class="styled-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Contrato</th>
-                    <th>Usuario</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{{ solpe.fecha }}</td>
-                    <td>{{ solpe.numero_contrato }}</td>
-                    <td>{{ solpe.usuario }}</td>
-                    <td>{{ solpe.estatus }}</td>
-                    <td>
-                      <ion-button fill="solid" color="secondary" size="small" (click)="cambiarEstatus(solpe)">
-                        Cambiar estado
-                      </ion-button>
-                      <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
-                        <ion-label>Descargar Excel</ion-label>
-                      </ion-button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </ion-card>
+    <ion-card-content *ngIf="solpeExpandidaId === solpe.id">
+      <ion-item lines="none" class="item-usuario-accion">
+        <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+        <ion-label>
+          Usuario: {{ solpe.usuario }}
+        </ion-label>
+        <ion-button color="secondary" size="small"  slot="end" (click)="cambiarEstatus(solpe)">
+            Cambiar estado
+        </ion-button>
+        <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
+          Descargar Excel
+        </ion-button>
+      </ion-item>
+      <ion-list-header>
+        <ion-label><strong>🛠 Ítems asociados</strong></ion-label>
+      </ion-list-header>
+      <ion-grid class="tabla-items">
+        <ion-row class="tabla-header">
+          <ion-col>Ítem</ion-col>
+          <ion-col>Descripción</ion-col>
+          <ion-col>Cantidad</ion-col>
+          <ion-col>Imagen</ion-col>
+          <ion-col>Acciones</ion-col>
+        </ion-row>
+        <ion-row *ngFor="let item of solpe.items" class="tabla-row">
+          <ion-col>{{ item.item }}</ion-col>
+          <ion-col>{{ item.descripcion }}</ion-col>
+          <ion-col>{{ item.cantidad }}</ion-col>
+          <ion-col>
+            <img *ngIf="item.imagen_referencia_base64" [src]="item.imagen_referencia_base64" width="60" />
+          </ion-col>
+          <ion-col>
+            <ion-button fill="clear" size="small" (click)="abrirComparacion(item, solpe.id)">
+              <ion-icon name="add-circle-outline" color="secondary"></ion-icon>
+            </ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+        <ion-item lines="none">
+          <ion-label><strong>Archivos OC:</strong></ion-label>
+          <ion-chip *ngFor="let oc of ocsCargadas[solpe.id]">
+            <ion-label (click)="verOC(solpe.id, oc.id)" style="cursor: pointer;">{{ oc.nombre }}</ion-label>
+            <ion-icon name="close-circle" color="danger" (click)="eliminarOC(solpe.id, oc.id, oc.nombre)"></ion-icon>
+          </ion-chip>
+          <ion-button size="small" color="secondary" (click)="abrirInputOC(solpe.id)">
+            Subir OC
+          </ion-button>
+          <input type="file" hidden [id]="'ocInput-' + solpe.id" (change)="subirOC($event, solpe.id)" accept="application/pdf" />
+        </ion-item>
+    </ion-card-content>
+  </ion-card>
 
-          <ion-card class="inner-card">
-            <div class="table-container">
-              <table class="styled-table">
-                <thead>
-                  <tr>
-                    <th>Ítem</th>
-                    <th>Descripción</th>
-                    <th>Código</th>
-                    <th>Cantidad</th>
-                    <th>Stock</th>
-                    <th>Patente / N.º interno</th>
-                    <th>Imagen</th>
-                    <th>Comparaciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of solpe.items">
-                    <td>{{ item.item }}</td>
-                    <td>{{ item.descripcion?.toUpperCase() }}</td>
-                    <td>{{ item.codigo_referencial?.toUpperCase() }}</td>
-                    <td>{{ item.cantidad }}</td>
-                    <td>{{ item.stock }}</td>
-                    <td>{{ item.numero_interno }}</td>
-                    <td>
-                      <div *ngIf="item.imagen_referencia_base64" style="margin-top: 10px; text-align: center;">
-                        <img [src]="item.imagen_referencia_base64" alt="Imagen" width="200" height="200">
-                      </div>
-                    </td>
-                    <td>
-                      <div *ngIf="item.comparaciones?.length">
-                        <table class="styled-table">
-                          <thead>
-                            <tr>
-                              <th>Empresa</th>
-                              <th>Precio</th>
-                              <th>Descuento</th>
-                              <th>Precio con Descuento</th>
-                              <th>Acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr *ngFor="let comp of item.comparaciones; let i = index">
-                              <td>{{ comp.empresa?.toUpperCase() }}</td>
-                              <td>{{ comp.precioBase || comp.precio | currency }}</td>
-                              <td>{{ comp.descuento || 0 }}%</td>
-                              <td>{{ comp.precio | currency }}</td>
-                              <td>
-                                <ion-button *ngIf="comp.pdfId" fill="clear" color="primary" size="small" (click)="verPDFComparacion(solpe.id, comp.pdfId)">
-                                  <ion-icon name="eye-outline"></ion-icon>
-                                </ion-button>
-                                <ion-button *ngIf="comp.pdfId" fill="clear" color="success" size="small" (click)="descargarPDFComparacion(solpe.id, comp.pdfId)">
-                                  <ion-icon name="download-outline"></ion-icon>
-                                </ion-button>
-                                <ion-button color="danger" fill="clear" (click)="eliminarComparacionCompleta(solpe.id, item.id, comp.id, item, i)">
-                                  <ion-icon name="close-circle"></ion-icon>
-                                </ion-button>
-                                <ion-button color="warning" fill="clear" (click)="destacarComparacion(solpe.id, item, i)">
-                                  <ion-icon [name]="comp.destacado ? 'star' : 'star-outline'"></ion-icon>
-                                </ion-button>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                      <ion-buttons>
-                        <ion-button size="small" (click)="abrirComparacion(item, solpe.id)">
-                          <ion-icon color="secondary" name="add-circle-outline"></ion-icon>
-                          <ion-label color="secondary" class="ion-text-wrap" style="font-size: 12px;">Agregar</ion-label>
-                        </ion-button>
-                      </ion-buttons>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <ion-row class="ion-align-items-center">
-              <ion-col size="2" size-md="1">
-                <ion-button  fill="solid" color="secondary" size="small" (click)="abrirInputOC(solpe.id)">
-                  <ion-label style="font-size: 12px;">Subir oc</ion-label>
-                </ion-button>
-                <input
-                  type="file"
-                  id="ocInput-{{ solpe.id }}"
-                  (change)="subirOC($event, solpe.id)"
-                  accept="application/pdf"
-                  hidden
-                />
-                <ion-chip *ngFor="let oc of ocsCargadas[solpe.id]">
-                  <ion-label (click)="verOC(solpe.id, oc.id)" style="cursor: pointer; text-decoration: underline;">
-                    {{ oc.nombre }}
-                  </ion-label>
-                  <ion-icon name="close-circle" color="danger" (click)="eliminarOC(solpe.id, oc.id, oc.nombre)"></ion-icon>
-                </ion-chip>
-              </ion-col>
-            </ion-row>
-          </ion-card>
-        </ion-col>
-      </ion-row>
-    </ion-grid>
-
-    <br><br><br><br>
-    <ion-text *ngIf="solpesFiltradas.length === 0" class="no-solped-container">
-      <ion-icon name="cloud-offline-outline" class="no-solped-icon"></ion-icon>
+    <ion-text *ngIf="solpesFiltradas.length === 0" color="medium" class="ion-text-center">
+      <p><ion-icon name="cloud-offline-outline" style="font-size: 32px;"></ion-icon></p>
+      <p>No hay SOLPED disponibles con los filtros aplicados.</p>
     </ion-text>
-  </div>
+
+  <br><br><br>
 </ion-content>
