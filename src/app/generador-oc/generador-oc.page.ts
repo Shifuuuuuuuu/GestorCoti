@@ -51,57 +51,68 @@ export class GeneradorOcPage implements OnInit {
     return lastId + 1;
   }
 
-  async enviarOC() {
-    if (!this.archivoPDF || !this.centroCosto) return;
+async enviarOC() {
+  if (!this.archivoPDF || !this.centroCosto) {
+    this.mostrarToast('Por favor selecciona un PDF y Centro de Costo.', 'warning');
+    return;
+  }
 
-    const user = await this.auth.currentUser;
-    const uid = user?.uid;
-    let usuario = 'Desconocido';
+  const user = await this.auth.currentUser;
+  const uid = user?.uid;
+  let usuario = 'Desconocido';
 
-    if (uid) {
-      const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
-      if (userDoc?.exists) {
-        const userData = userDoc.data() as any;
-        usuario = userData?.fullName || usuario;
-      }
+  if (uid) {
+    const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
+    if (userDoc?.exists) {
+      const userData = userDoc.data() as any;
+      usuario = userData?.fullName || usuario;
     }
+  }
 
-    const fecha = new Date().toISOString();
-    const id = await this.obtenerNuevoId();
+  const fecha = new Date().toISOString();
+  const id = await this.obtenerNuevoId();
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64PDF = (reader.result as string).split(',')[1];
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64PDF = (reader.result as string).split(',')[1];
 
-      const historialEntry = {
-        usuario,
-        estatus: 'Preaprobado',
-        fecha
-      };
+    const historialEntry = {
+      usuario,
+      estatus: 'Preaprobado',
+      fecha
+    };
 
+    try {
       await this.firestore.collection('ordenes_oc').add({
         id,
         centroCosto: this.centroCosto,
-        destinoCompra: this.destinoCompra,
+        tipoCompra: this.tipoCompra,
+        destinoCompra: this.tipoCompra === 'patente' ? this.destinoCompra : '',
         estatus: 'Preaprobado',
         fechaSubida: firebase.firestore.Timestamp.fromDate(new Date()),
         nombrePDF: this.nombrePDF,
         archivoBase64: base64PDF,
-        historial: [historialEntry]
+        historial: [historialEntry],
       });
 
-      const blob = this.base64ToBlob(base64PDF, 'application/pdf');
-      const url = URL.createObjectURL(blob);
-      this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-
-      this.historial.push(historialEntry);
-      this.archivoPDF = null;
+      this.mostrarToast('Cotización enviada exitosamente.', 'success');
       this.centroCosto = '';
-      this.mostrarToast('Orden subida con éxito.', 'success'); // ✅ Toast
-    };
+      this.archivoPDF = null;
+      this.nombrePDF = '';
+      this.pdfUrl = null;
+      this.tipoCompra = 'stock';
+      this.destinoCompra = '';
+    } catch (error) {
+      console.error('Error al enviar la cotización:', error);
+      this.mostrarToast('Error al enviar la cotización.', 'danger');
+    }
+  };
 
-    reader.readAsDataURL(this.archivoPDF);
-  }
+  reader.readAsDataURL(this.archivoPDF);
+}
+
+
+
 
   base64ToBlob(base64: string, contentType: string): Blob {
     const byteCharacters = atob(base64);

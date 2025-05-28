@@ -1,0 +1,23 @@
+<ion-header>
+  <ion-toolbar style="--background: red;">
+    <ion-buttons color="light" slot="start">
+      <ion-menu-button color="light"></ion-menu-button>
+    </ion-buttons>
+    <ion-title style="color: white;">Menú de Cotización</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content id="main-content" class="main-content">
+  <div class="menu-grid">
+    <div class="menu-item" (click)="navigateTo('administrar-solped')">
+      <ion-icon name="build-outline" class="menu-icon"></ion-icon>
+      <p>Gestión de SOLPED</p>
+      <span>Edita, elimina o administra solicitudes</span>
+    </div>
+    <div class="menu-item" (click)="navigateTo('administrar-cotizaciones')">
+      <ion-icon name="document-text-outline" class="menu-icon"></ion-icon>
+      <p>Gestión de Cotizaciones</p>
+      <span>Crea, edita o elimina cotizaciones</span>
+    </div>
+  </div>
+</ion-content>

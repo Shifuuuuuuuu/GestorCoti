@@ -75,6 +75,18 @@ const routes: Routes = [
     path: 'historial-oc',
     loadChildren: () => import('./historial-oc/historial-oc.module').then( m => m.HistorialOcPageModule)
   },
+  {
+    path: 'menu-admin',
+    loadChildren: () => import('./menu-admin/menu-admin.module').then( m => m.MenuAdminPageModule)
+  },
+  {
+    path: 'administrar-solped',
+    loadChildren: () => import('./administrar-solped/administrar-solped.module').then( m => m.AdministrarSolpedPageModule)
+  },
+  {
+    path: 'administrar-cotizaciones',
+    loadChildren: () => import('./administrar-cotizaciones/administrar-cotizaciones.module').then( m => m.AdministrarCotizacionesPageModule)
+  },
 
 
 
