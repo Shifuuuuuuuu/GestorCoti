@@ -23,6 +23,23 @@ export class SolpePage implements OnInit  {
     items: [] as Item[],
     estatus: 'Solicitado',
   };
+  centrosCosto: { [key: string]: string } = {
+  '10-10-12': 'ZAMAQ',
+  '20-10-01': 'BENÍTEZ',
+  '30-10-01': 'CASA MATRIZ',
+  '30-10-07': '30-10-07',
+  '30-10-08': 'ÁRIDOS SAN JOAQUÍN',
+  '30-10-42': 'RAÚL ALFARO',
+  '30-10-43': 'DET NUEVO',
+  '30-10-52': 'LUIS CABRERA',
+  '30-10-53': 'URBANO SAN BERNARDO',
+  '30-10-54': 'URBANO OLIVAR',
+  '30-10-57': 'CALAMA',
+  '30-10-58': 'GASTÓN CASTILLO',
+  '30-10-59': '30-10-59',
+  '30-10-60': '30-10-60',
+  '30-10-61': 'ALTO MAIPO',
+};
 
   constructor(
     private solpeService: SolpeService,
@@ -47,45 +64,58 @@ formatDate(date: Date): string {
   const day = date.getDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-
+actualizarCentroCosto(event: any) {
+  const codigoSeleccionado = event.detail.value;
+  this.solpe.numero_contrato = codigoSeleccionado;
+  this.solpe.nombre_centro_costo = this.centrosCosto[codigoSeleccionado] || '';
+}
 
 cargarDatosDeLocalStorage() {
   const solpeGuardado = localStorage.getItem('solpe');
+  const hoy = this.formatDate(new Date());
+
   if (solpeGuardado) {
     const datos = JSON.parse(solpeGuardado);
     console.log('Datos cargados de localStorage:', datos);
 
-    if (datos.items && datos.items.length > 0) {
-      this.solpe = { ...datos };
-      this.solpe.items = this.solpe.items.map((item: Item) => ({
-        ...item,
-        descripcion: item.descripcion || '',
-        codigo_referencial: item.codigo_referencial || '',
-        cantidad: item.cantidad || 0,
-        stock: item.stock || 0,
-        numero_interno: item.numero_interno || '',
-        imagen_referencia_base64: item.imagen_referencia_base64 || '',
-        comparaciones: item.comparaciones || [],
-      }));
-    } else {
-      this.solpe.items = [];
+    if (datos.fecha !== hoy) {
+      datos.fecha = hoy;
+      datos.items = [];
     }
+
+    this.solpe = { ...datos };
+    this.solpe.items = this.solpe.items.map((item: Item) => ({
+      ...item,
+      descripcion: item.descripcion || '',
+      codigo_referencial: item.codigo_referencial || '',
+      cantidad: item.cantidad || 0,
+      stock: item.stock || 0,
+      numero_interno: item.numero_interno || '',
+      imagen_referencia_base64: item.imagen_referencia_base64 || '',
+      comparaciones: item.comparaciones || [],
+    }));
   } else {
     this.solpe.numero_solpe = 1;
+    this.solpe.fecha = hoy;
     this.solpe.items = [];
   }
 }
 
+
+
 guardarDatosEnLocalStorage() {
-  if (this.solpe.numero_solpe) {
-    if (this.solpe.items && this.solpe.items.length > 0) {
-      localStorage.setItem('solpe', JSON.stringify(this.solpe));
-    } else {
-      this.mostrarToast('No hay ítems para guardar', 'warning');
-    }
+  if (this.solpe.numero_solpe && this.solpe.items.length > 0) {
+    localStorage.setItem('solpes', JSON.stringify(this.solpe)); // NO "solpes"
+  } else {
+    this.eliminarDatosDeLocalStorage();
   }
 }
 
+
+
+guardarSolpeEnLocalStorage() {
+  localStorage.setItem('solpe', JSON.stringify(this.solpe));
+}
 
 
 
@@ -102,7 +132,7 @@ guardarDatosEnLocalStorage() {
   }
 
   ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
 
   agregarFila() {
@@ -121,10 +151,19 @@ guardarDatosEnLocalStorage() {
   }
 
 
-  eliminarItem(index: number) {
+eliminarItem(index: number) {
+  if (index >= 0 && index < this.solpe.items.length) {
     this.solpe.items.splice(index, 1);
-    this.guardarDatosEnLocalStorage();
+
+    if (this.solpe.items.length > 0) {
+      this.guardarDatosEnLocalStorage();
+    } else {
+      this.eliminarDatosDeLocalStorage();
+    }
   }
+}
+
+
 
 verificarYGuardarItem(index: number) {
   const item = this.solpe.items[index];
@@ -277,11 +316,9 @@ editarItem(index: number) {
 
 
 
-  eliminarDatosDeLocalStorage() {
-    localStorage.removeItem('solpes');
-  }
-
-
+eliminarDatosDeLocalStorage() {
+  localStorage.removeItem('solpes');
+}
 
   convertFileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -292,15 +329,18 @@ editarItem(index: number) {
     });
   }
 
-  resetearFormulario() {
-    this.solpe = {
-      numero_solpe: null,
-      numero_contrato: '',
-      items: [],
-      estatus: 'Solicitado'
-    };
-    this.obtenerUltimoNumeroSolpe();
-  }
+resetearFormulario() {
+  this.solpe = {
+    numero_solpe: null,
+    fecha: '',
+    numero_contrato: '',
+    usuario: '',
+    items: [],
+    estatus: 'Solicitado'
+  };
+  this.obtenerUltimoNumeroSolpe();
+}
+
 
   async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
     const toast = await this.toastController.create({

@@ -33,7 +33,8 @@ export class PerfilUsuarioPage implements OnInit {
     'bodegacaneche@xtremeservicios.cl',
     'amartinez@xtrememining.cl',
     'avacher@xtrememining.cl',
-    'rsanhueza@xtrememining.cl'
+    'rsanhueza@xtrememining.cl',
+    'ahernandez@xtrememining.cl'
   ];
 
   constructor(
@@ -102,7 +103,7 @@ export class PerfilUsuarioPage implements OnInit {
   }
 
   ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
 
   async uploadProfileImage(event: any) {

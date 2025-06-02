@@ -56,6 +56,8 @@
         <ion-card-subtitle>Fecha: {{ solpeEncontrada.fecha }}</ion-card-subtitle>
         <ion-card-subtitle>Usuario: {{ solpeEncontrada.usuario }}</ion-card-subtitle>
         <ion-card-subtitle>Estado: {{ solpeEncontrada.estatus }}</ion-card-subtitle>
+        <ion-card-subtitle>Centro de Costo: {{ solpeEncontrada.numero_contrato }}</ion-card-subtitle>
+        <ion-card-subtitle>Nombre del centro: {{ solpeEncontrada.nombre_centro_costo }}</ion-card-subtitle>
       </ion-card-header>
 
       <ion-card-content *ngFor="let item of solpeEncontrada.items">
@@ -129,7 +131,7 @@
             </ion-col>
             <ion-col size="12" size-md="6">
               <ion-item>
-                <ion-label position="stacked">Contrato</ion-label>
+                <ion-label position="stacked">Centro de costo</ion-label>
                 <ion-select [(ngModel)]="filtroContrato" interface="popover">
                   <ion-select-option value="">Todos</ion-select-option>
                   <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
@@ -180,7 +182,7 @@
       <ion-item lines="full">
         <ion-label>
           <h2><strong>📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
-          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} | Usuario: {{ solpe.usuario }} </p>
+          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} | Usuario: {{ solpe.usuario }} </p>
         </ion-label>
         <ion-badge [ngStyle]="{
             'background-color': getColorByStatus(solpe.estatus),

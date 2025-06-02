@@ -63,7 +63,7 @@ export class EditarSolpedsPage implements OnInit {
   }
 
   ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
   abrirInputOC(solpeId: string) {
     const input = document.getElementById(`ocInput-${solpeId}`) as HTMLInputElement;

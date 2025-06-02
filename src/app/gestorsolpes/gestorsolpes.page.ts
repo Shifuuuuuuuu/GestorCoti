@@ -418,7 +418,7 @@ cargarSolpes() {
 
 
   ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
 
   async cambiarEstatus(solpe: any) {

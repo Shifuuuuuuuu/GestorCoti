@@ -27,25 +27,32 @@ export class GestorOcPage implements OnInit {
     this.cargarOCs();
   }
 
-  cargarOCs() {
-    this.firestore
-      .collection('ordenes_oc', ref => ref.where('estatus', '==', 'Aprobado'))
-      .snapshotChanges()
-      .subscribe(snapshot => {
-        this.ocs = snapshot.map(doc => {
-          const data = doc.payload.doc.data() as any;
-          const pdfVistaUrl = data.archivosPDF?.archivoBase64
-            ? this.crearPDFUrl(data.archivosPDF.archivoBase64)
-            : null;
-          return {
-            ...data,
-            docId: doc.payload.doc.id,
-            pdfVistaUrl,
-            pdfSubido: data.archivosPDF && data.archivosPDF.archivoBase64,
-          };
-        });
+cargarOCs() {
+  this.firestore
+    .collection('ordenes_oc', ref =>
+      ref.where('estatus', '==', 'Aprobado')
+    )
+    .snapshotChanges()
+    .subscribe(snapshot => {
+      this.ocs = snapshot.map(doc => {
+        const data = doc.payload.doc.data() as any;
+        const pdfVistaUrl = data.archivosPDF?.archivoBase64
+          ? this.crearPDFUrl(data.archivosPDF.archivoBase64)
+          : null;
+        return {
+          ...data,
+          docId: doc.payload.doc.id,
+          pdfVistaUrl,
+          pdfSubido: data.archivosPDF && data.archivosPDF.archivoBase64,
+        };
+      }).sort((a, b) => {
+        const fechaA = a.fechaSubida?.toDate?.() || new Date(0);
+        const fechaB = b.fechaSubida?.toDate?.() || new Date(0);
+        return fechaB.getTime() - fechaA.getTime();
       });
-  }
+    });
+}
+
 
   crearPDFUrl(base64: string): SafeResourceUrl {
     const byteCharacters = atob(base64);
@@ -124,10 +131,6 @@ export class GestorOcPage implements OnInit {
           fechaSubida: fechaSubida
         },
         historial: nuevoHistorial,
-      });
-
-      await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
-        nuevoPdfVistaUrl: this.crearPDFUrl(base64PDF),
       });
 
       await this.firestore.collection('ordenes_oc').doc(oc.docId).update({

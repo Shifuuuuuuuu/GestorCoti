@@ -37,7 +37,7 @@ export class VisualizacionSolpedPage implements OnInit {
     this.obtenerItemsGuardados();
   }
     ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
   async agregarItemASolped() {
     if (!this.solpedSeleccionadaId || !this.selectedItem) {
@@ -316,14 +316,11 @@ async subirItemAFirestore() {
 async actualizarEstado(id: string, estado: string, comentario: string) {
   try {
     const solpedRef = this.firestore.collection('solpes').doc(id);
-
-    // Actualiza el estado actual
     await solpedRef.update({
       estatus: estado,
       comentario: comentario,
     });
 
-    // Obtiene el nombre del usuario que realiza el cambio
     const afUser = await this.afAuth.currentUser;
     let usuarioNombre = 'Desconocido';
     if (afUser?.uid) {
@@ -334,7 +331,6 @@ async actualizarEstado(id: string, estado: string, comentario: string) {
       }
     }
 
-    // Guarda el historial
     await solpedRef.collection('historialEstados').add({
       fecha: new Date(),
       estatus: estado,

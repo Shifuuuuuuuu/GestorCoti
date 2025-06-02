@@ -83,7 +83,7 @@ export class HistorialSolpePage implements OnInit {
 
 
   ionViewWillEnter() {
-    this.menu.enable(false);
+    this.menu.enable(true);
   }
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {

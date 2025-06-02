@@ -30,7 +30,7 @@
 
           <ion-item>
             <ion-label position="floating">Centro de Costo</ion-label>
-            <ion-select [(ngModel)]="solpe.numero_contrato" required>
+            <ion-select [(ngModel)]="solpe.numero_contrato"  (ionChange)="actualizarCentroCosto($event)" required>
                   <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
                   <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
                   <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>

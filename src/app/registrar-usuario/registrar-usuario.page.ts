@@ -40,7 +40,8 @@ export class RegistrarUsuarioPage implements OnInit {
       'amartinez@xtrememining.cl',
       'avacher@xtrememining.cl',
       'rsanhueza@xtrememining.cl',
-      'pbustos@xtrememining.cl'
+      'pbustos@xtrememining.cl',
+      'ahernandez@xtrememining.cl'
     ];
 
     const emailLimpio = email.trim().toLowerCase();

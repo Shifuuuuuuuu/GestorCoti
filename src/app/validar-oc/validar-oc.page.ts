@@ -23,34 +23,42 @@ export class ValidarOcPage implements OnInit {
     this.cargarOCs();
   }
 
-  cargarOCs() {
-    this.firestore
-      .collection('ordenes_oc', ref =>
-        ref.where('estatus', '==', 'Preaprobado')
-      )
-      .snapshotChanges()
-      .subscribe((snap) => {
-        this.ocs = snap
-          .map(doc => {
-            const data = doc.payload.doc.data() as any;
-            const pdfVistaUrl = data.archivoBase64
-              ? this.crearPDFUrl(data.archivoBase64)
-              : null;
+cargarOCs() {
+  this.firestore
+    .collection('ordenes_oc', ref =>
+      ref.where('estatus', '==', 'Preaprobado')
+    )
+    .snapshotChanges()
+    .subscribe((snap) => {
+      this.ocs = snap
+        .map(doc => {
+          const data = doc.payload.doc.data() as any;
+          const pdfVistaUrl = data.archivoBase64
+            ? this.crearPDFUrl(data.archivoBase64)
+            : null;
 
-            return {
-              docId: doc.payload.doc.id,
-              ...data,
-              pdfVistaUrl,
-              comentarioTemporal: ''
-            };
-          })
-          .sort((a, b) => {
-            const fechaA = a.fechaSubida?.toDate?.() || new Date(0);
-            const fechaB = b.fechaSubida?.toDate?.() || new Date(0);
-            return fechaB.getTime() - fechaA.getTime();
+
+          const historialOrdenado = (data.historial || []).sort((a: any, b: any) => {
+            const fechaA = a.fecha?.toDate?.() || new Date(a.fecha) || new Date(0);
+            const fechaB = b.fecha?.toDate?.() || new Date(b.fecha) || new Date(0);
+            return fechaA.getTime() - fechaB.getTime();
           });
-      });
-  }
+
+          return {
+            docId: doc.payload.doc.id,
+            ...data,
+            historial: historialOrdenado,
+            pdfVistaUrl,
+            comentarioTemporal: ''
+          };
+        })
+        .sort((a, b) => {
+          const fechaA = a.fechaSubida?.toDate?.() || new Date(0);
+          const fechaB = b.fechaSubida?.toDate?.() || new Date(0);
+          return fechaA.getTime() - fechaB.getTime(); // <--- Invertido
+        });
+    });
+}
 
   async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
     const toast = await this.toastController.create({

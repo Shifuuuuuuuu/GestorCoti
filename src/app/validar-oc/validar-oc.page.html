@@ -17,7 +17,6 @@
       </ion-card-content>
     </ion-card>
   </ng-container>
-
   <ng-template #listaOCs>
     <ion-card *ngFor="let oc of ocs">
       <ion-card-header>
@@ -26,7 +25,7 @@
       </ion-card-header>
 
       <ion-card-content>
-        <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }}</p>
+        <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }} | {{ oc.centroCostoNombre }} </p>
         <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
         <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
         <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>

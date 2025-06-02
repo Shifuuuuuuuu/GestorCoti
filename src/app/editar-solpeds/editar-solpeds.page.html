@@ -47,7 +47,7 @@
           </ion-col>
           <ion-col size="12" size-md="6">
             <ion-item>
-              <ion-label position="stacked">Contrato</ion-label>
+              <ion-label position="stacked">Centro de costo</ion-label>
               <ion-select [(ngModel)]="filtroContrato" interface="popover">
                 <ion-select-option value="">Todos</ion-select-option>
                   <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
@@ -80,13 +80,11 @@
         </ion-row>
         <ion-row>
           <ion-col>
-            <ion-button expand="block" color="success" shape="round" (click)="filtrarSolpes()">
-              <ion-icon name="search-outline" slot="start"></ion-icon>Aplicar filtros
+            <ion-button expand="block" color="success" (click)="filtrarSolpes()">Aplicar filtros
             </ion-button>
           </ion-col>
           <ion-col>
-            <ion-button expand="block" color="medium" shape="round" (click)="limpiarFiltros()">
-              <ion-icon name="refresh-outline" slot="start"></ion-icon>Limpiar
+            <ion-button expand="block" color="danger"  (click)="limpiarFiltros()">Limpiar
             </ion-button>
           </ion-col>
         </ion-row>
@@ -98,7 +96,7 @@
       <ion-item lines="full">
         <ion-label>
           <h2><strong style="color: black;">📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
-          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} Contrato: {{ solpe.numero_contrato }}| Usuario: {{ solpe.usuario }} </p>
+          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }}| Usuario: {{ solpe.usuario }} </p>
         </ion-label>
         <ion-badge [color]="getColorByStatus(solpe.estatus)"[ngStyle]="{
             'background-color': getColorByStatus(solpe.estatus),
