@@ -8,6 +8,13 @@
 </ion-header>
 
 <ion-content class="ion-padding">
+    <ion-searchbar
+    [(ngModel)]="busquedaId"
+    (ionInput)="buscarPorId()"
+    placeholder="Buscar por ID de cotización"
+    debounce="300"
+  ></ion-searchbar>
+
   <ng-container *ngIf="ocs.length === 0; else listaAprobadas">
     <ion-card color="light">
       <ion-card-content class="ion-text-center">
@@ -32,21 +39,32 @@
         <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
         <p><strong>Cotización PDF:</strong> {{ oc.nombrePDF }}</p>
         <p><strong>Estado Actual:</strong> {{ oc.estatus }}</p>
-        <p *ngIf="nombreArchivoSeleccionado">
+        <p *ngIf="nombresArchivos[oc.docId]">
           <strong>OC PDF:</strong>
-          <span>{{ nombreArchivoSeleccionado }}</span>
-          <ion-icon name="close-circle" color="danger" (click)="eliminarArchivoSeleccionado()" style="cursor: pointer;"></ion-icon>
+          <span>{{ nombresArchivos[oc.docId] }}</span>
+          <ion-icon name="close-circle" color="danger" (click)="eliminarArchivoSeleccionado(oc)" style="cursor: pointer;"></ion-icon>
         </p>
-        <ion-card *ngIf="vistaPreviaPdf">
+        <ion-card *ngIf="oc.cotizacion">
+          <ion-card-header>
+            <ion-card-title>Cotización adjunta</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <iframe *ngIf="oc.cotizacion.tipo === 'application/pdf'" [src]="oc.cotizacion.url" width="100%" height="600px" style="border: none;"></iframe>
+            <img *ngIf="oc.cotizacion.tipo.startsWith('image/')" [src]="oc.cotizacion.url" width="100%" style="max-height: 600px; object-fit: contain;" />
+          </ion-card-content>
+        </ion-card>
+
+
+        <ion-card *ngIf="vistasPreviasPdf[oc.docId]">
           <ion-card-header>
             <ion-card-title>Vista previa del PDF seleccionado</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <iframe [src]="vistaPreviaPdf" width="100%" height="400px" style="border: none;"></iframe>
+            <iframe [src]="vistasPreviasPdf[oc.docId]" width="100%" height="400px" style="border: none;"></iframe>
           </ion-card-content>
         </ion-card>
         <ion-item>
-          <ion-label>Subir nuevo PDF</ion-label>
+          <ion-label>Subir OC</ion-label>
           <input type="file" accept="application/pdf" (change)="onFileSelected($event, oc)" />
         </ion-item>
 

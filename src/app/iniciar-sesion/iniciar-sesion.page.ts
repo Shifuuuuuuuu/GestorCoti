@@ -33,7 +33,7 @@ export class IniciarSesionPage implements OnInit {
         if (userDoc && userDoc.exists) {
           const userData = userDoc.data() as any;
           localStorage.setItem('userRole', userData.role);
-          this.authService.setUserRole(userData.role); // 👈 nuevo
+          this.authService.setUserRole(userData.role);
           this.redirigirPorRol(userData.role);
         }
 
@@ -43,56 +43,65 @@ export class IniciarSesionPage implements OnInit {
     }
   }
 
-  async login() {
-    const email = (document.getElementById('email') as HTMLInputElement).value;
-    const password = (document.getElementById('password') as HTMLInputElement).value;
-    const recordarSesion = (document.getElementById('recordarSesion') as HTMLInputElement)?.checked;
+async login() {
+  const email = (document.getElementById('email') as HTMLInputElement).value;
+  const password = (document.getElementById('password') as HTMLInputElement).value;
+  const recordarSesion = (document.getElementById('recordarSesion') as HTMLInputElement)?.checked;
 
-    if (!email || !password) {
-      this.presentToast('Por favor, ingrese un correo y una contraseña válidos', 'warning');
-      return;
-    }
+  if (!email || !password) {
+    this.presentToast('Por favor, ingrese un correo y una contraseña válidos', 'warning');
+    return;
+  }
 
-    try {
-      const userCredential = await this.afAuth.signInWithEmailAndPassword(email, password);
-      const user = userCredential.user;
+  try {
+    const userCredential = await this.afAuth.signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
 
-      if (user) {
-        if (user.emailVerified) {
-          const userDoc = await this.firestore.collection('Usuarios').doc(user.uid).get().toPromise();
+    if (user) {
+      if (user.emailVerified) {
+        const userDoc = await this.firestore.collection('Usuarios').doc(user.uid).get().toPromise();
 
-          if (userDoc && userDoc.exists) {
-            const userData = userDoc.data() as any;
-            localStorage.setItem('userId', user.uid);
-            localStorage.setItem('userEmail', user.email || '');
-            localStorage.setItem('userRole', userData.role);
-            this.authService.setUserRole(userData.role);
-            this.redirigirPorRol(userData.role);
-          } else {
-            this.presentToast('Usuario no encontrado en la base de datos.', 'danger');
+        if (userDoc && userDoc.exists) {
+          const userData = userDoc.data() as any;
+
+          if (!userData.role) {
+            this.presentToast('Este usuario no tiene un rol asignado. Contacte con soporte.', 'danger');
+            return;
           }
+
+          localStorage.setItem('userId', user.uid);
+          localStorage.setItem('userEmail', user.email || '');
+          localStorage.setItem('userRole', userData.role);
+          this.authService.setUserRole(userData.role);
+          this.redirigirPorRol(userData.role);
         } else {
-          this.presentToast('Por favor, verifica tu correo electrónico antes de iniciar sesión.', 'danger');
+          this.presentToast('Usuario no encontrado en la base de datos.', 'danger');
         }
+      } else {
+        this.presentToast('Por favor, verifica tu correo electrónico antes de iniciar sesión.', 'danger');
       }
-    } catch (error: any) {
-      this.presentToast(error.message || 'Error al iniciar sesión.', 'danger');
     }
+  } catch (error: any) {
+    this.presentToast(error.message || 'Error al iniciar sesión.', 'danger');
   }
+}
 
 
 
-  redirigirPorRol(userRole: string) {
-    if (userRole === 'Editor') {
-      this.router.navigate(['/menu-cotizador']);
-    } else if (userRole === 'Aprobador/Editor') {
-      this.router.navigate(['/home']);
-    } else if (userRole === 'Generador solped') {
-      this.router.navigate(['/menu-solpe']);
-    } else {
-      this.presentToast('No tiene un rol asignado. Contacte con soporte.', 'danger');
-    }
+redirigirPorRol(userRole: string) {
+  if (userRole === 'Admin') {
+    this.router.navigate(['/menu-admin']);
+  } else if (userRole === 'Editor') {
+    this.router.navigate(['/menu-cotizador']);
+  } else if (userRole === 'Aprobador/Editor') {
+    this.router.navigate(['/home']);
+  } else if (userRole === 'Generador solped') {
+    this.router.navigate(['/menu-solpe']);
+  } else {
+    this.presentToast('No tiene un rol asignado. Contacte con soporte.', 'danger');
   }
+}
+
 
   async presentToast(message: string, color: string) {
     const toast = await this.toastController.create({

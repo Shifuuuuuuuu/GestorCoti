@@ -33,10 +33,21 @@ cargarOCs() {
       this.ocs = snap
         .map(doc => {
           const data = doc.payload.doc.data() as any;
-          const pdfVistaUrl = data.archivoBase64
-            ? this.crearPDFUrl(data.archivoBase64)
-            : null;
+          const base64 = data.archivoBase64 || '';
+          const nombrePDF = data.nombrePDF || '';
+          let archivoTipo = 'application/octet-stream';
 
+          if (base64.startsWith('JVBERi')) {
+            archivoTipo = 'application/pdf';
+          } else if (base64.startsWith('/9j/')) {
+            archivoTipo = 'image/jpeg';
+          } else if (base64.startsWith('iVBORw0')) {
+            archivoTipo = 'image/png';
+          }
+
+          const archivoUrl = base64
+            ? this.crearArchivoUrl(base64, archivoTipo)
+            : null;
 
           const historialOrdenado = (data.historial || []).sort((a: any, b: any) => {
             const fechaA = a.fecha?.toDate?.() || new Date(a.fecha) || new Date(0);
@@ -48,7 +59,9 @@ cargarOCs() {
             docId: doc.payload.doc.id,
             ...data,
             historial: historialOrdenado,
-            pdfVistaUrl,
+            archivoUrl,
+            esPDF: archivoTipo === 'application/pdf',
+            esImagen: archivoTipo.startsWith('image/'),
             comentarioTemporal: ''
           };
         })
@@ -69,6 +82,28 @@ cargarOCs() {
     });
     toast.present();
   }
+  crearArchivoUrl(base64: string, tipo: string): SafeResourceUrl {
+  const byteCharacters = atob(base64);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  const blob = new Blob(byteArrays, { type: tipo });
+  const url = URL.createObjectURL(blob);
+
+  return tipo === 'application/pdf'
+    ? this.sanitizer.bypassSecurityTrustResourceUrl(url)
+    : this.sanitizer.bypassSecurityTrustUrl(url);
+}
+
 
   crearPDFUrl(base64: string): SafeResourceUrl {
     const byteCharacters = atob(base64);

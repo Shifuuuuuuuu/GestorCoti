@@ -30,9 +30,18 @@
         <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
         <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
 
-        <ion-card *ngIf="oc.pdfVistaUrl">
-          <iframe [src]="oc.pdfVistaUrl" width="100%" height="600px" style="border: none;"></iframe>
+                <!-- Mostrar archivo -->
+        <ion-card *ngIf="oc.archivoUrl">
+          <iframe *ngIf="oc.esPDF"
+                  [src]="oc.archivoUrl"
+                  width="100%" height="600px"
+                  style="border: none;"></iframe>
+
+          <img *ngIf="oc.esImagen"
+              [src]="oc.archivoUrl"
+              style="max-width: 100%; height: auto; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px;" />
         </ion-card>
+
 
         <ion-item>
           <ion-label position="floating">Comentario</ion-label>

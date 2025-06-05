@@ -1,9 +1,17 @@
 <ion-header [translucent]="true">
   <ion-toolbar style="--background: red; color: white;">
-    <ion-buttons slot="start" style="color: white;">
+    <ion-buttons slot="start">
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
     <ion-title>Historial de Cotizaciones</ion-title>
+  </ion-toolbar>
+  <ion-toolbar>
+    <ion-searchbar
+      [(ngModel)]="busquedaId"
+      (ionInput)="buscarPorId()"
+      placeholder="Buscar por ID de cotización"
+      debounce="300"
+    ></ion-searchbar>
   </ion-toolbar>
 </ion-header>
 
@@ -20,51 +28,71 @@
   </ng-container>
 
   <ng-template #listaHistorial>
-    <ion-card *ngFor="let oc of ocs">
+    <ion-card *ngFor="let oc of ocs; trackBy: trackById">
       <ion-card-header>
         <ion-card-title>Cotización #{{ oc.id }}</ion-card-title>
         <ion-card-subtitle>Centro de Costo: {{ oc.centroCosto }}</ion-card-subtitle>
+        <ion-card-subtitle>Responsable: {{ oc.responsable }}</ion-card-subtitle>
       </ion-card-header>
 
       <ion-card-content>
-        <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }} | {{ oc.centroCostoNombre }} </p>
-        <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
+        <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }} | {{ oc.centroCostoNombre }}</p>
+        <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida | date:'medium' }}</p>
         <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
         <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
         <p>
           <strong>Estado Actual:</strong> {{ oc.estatus }}
-          <span [ngStyle]="oc.estatus === 'Rechazado' ? {'background-color': '#F8FF00', 'padding': '4px', 'border-radius': '4px'} : {}" *ngIf="oc.historial && oc.historial.length > 0 && oc.historial[oc.historial.length - 1].comentario">
-            — 📝 {{ oc.historial[oc.historial.length - 1].comentario }}
+          <span *ngIf="oc.estatus === 'Rechazado'" style="background-color: #F8FF00; padding: 4px; border-radius: 4px;">
+            📝 {{ oc.historial?.[oc.historial.length - 1]?.comentario }}
           </span>
         </p>
-        <ion-card *ngIf="oc.archivoVistaUrl">
-          <ion-card-header>
-            <ion-card-title>Documento adjunto</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <iframe *ngIf="oc.tipoArchivo === 'application/pdf'"
-                    [src]="oc.archivoVistaUrl"
-                    width="100%" height="300px"
-                    style="border: none;"></iframe>
 
-            <img *ngIf="oc.tipoArchivo.startsWith('image/')"
-                [src]="oc.archivoVistaUrl"
-                width="100%"
-                style="max-height: 300px; object-fit: contain;" />
-          </ion-card-content>
-        </ion-card>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="12" size-md="6" *ngIf="oc.cotizacion">
+              <ion-button expand="block" fill="outline" (click)="mostrarArchivo(oc.cotizacion)">
+                {{ oc.cotizacion.mostrar ? 'Ocultar Cotización' : 'Ver Cotización' }}
+              </ion-button>
+              <div *ngIf="oc.cotizacion.mostrar" class="ion-padding">
+                <iframe *ngIf="oc.cotizacion.tipo === 'application/pdf'"
+                        [src]="oc.cotizacion.url"
+                        width="100%" height="700px"
+                        style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+                <img *ngIf="oc.cotizacion.tipo.startsWith('image/')"
+                     [src]="oc.cotizacion.url"
+                     style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+              </div>
+            </ion-col>
 
+            <ion-col size="12" size-md="6" *ngIf="oc.ordenCompra">
+              <ion-button expand="block" fill="outline" (click)="mostrarArchivo(oc.ordenCompra)">
+                {{ oc.ordenCompra.mostrar ? 'Ocultar Orden de Compra' : 'Ver Orden de Compra' }}
+              </ion-button>
+              <div *ngIf="oc.ordenCompra.mostrar" class="ion-padding">
+                <iframe *ngIf="oc.ordenCompra.tipo === 'application/pdf'"
+                        [src]="oc.ordenCompra.url"
+                        width="100%" height="700px"
+                        style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+                <img *ngIf="oc.ordenCompra.tipo.startsWith('image/')"
+                     [src]="oc.ordenCompra.url"
+                     style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+              </div>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
 
-        <ion-card *ngIf="oc.nuevoPdfVistaUrl">
-          <ion-card-header>
-            <ion-card-title>Órden de compra</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <iframe [src]="oc.nuevoPdfVistaUrl" width="100%" height="300px" style="border: none;"></iframe>
-          </ion-card-content>
-        </ion-card>
+        <ng-container *ngIf="oc.estatus === 'Rechazado'">
+          <ion-item class="ion-margin-top">
+            <ion-label position="stacked">Comentario antes de subir nueva cotización</ion-label>
+            <ion-textarea [(ngModel)]="oc.comentarioNuevo" placeholder="Escribe el motivo o explicación aquí..."></ion-textarea>
+          </ion-item>
 
-        <ion-accordion-group>
+          <ion-button expand="block" color="primary" class="ion-margin-top" (click)="subirNuevaCotizacion(oc)">
+            Subir nueva cotización
+          </ion-button>
+        </ng-container>
+
+        <ion-accordion-group class="ion-margin-top">
           <ion-accordion>
             <ion-item slot="header" color="light">
               <ion-label><strong>Ver historial de cambios</strong></ion-label>
@@ -87,4 +115,10 @@
     </ion-card>
   </ng-template>
 
+  <ion-infinite-scroll threshold="100px" (ionInfinite)="loadMore($event)" *ngIf="!noMoreData">
+    <ion-infinite-scroll-content
+      loadingSpinner="bubbles"
+      loadingText="Cargando más cotizaciones...">
+    </ion-infinite-scroll-content>
+  </ion-infinite-scroll>
 </ion-content>
