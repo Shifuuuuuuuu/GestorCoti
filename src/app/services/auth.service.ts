@@ -15,8 +15,36 @@ export class AuthService {
   public currentUserEmail$: Observable<string | undefined> = this.currentUserEmailSubject.asObservable();
   private userRoleSubject = new BehaviorSubject<string | null>(localStorage.getItem('userRole'));
   public userRole$ = this.userRoleSubject.asObservable();
-  constructor(private firestore: AngularFirestore, private afAuth: AngularFireAuth) {
+
+  constructor(
+    private firestore: AngularFirestore,
+    private afAuth: AngularFireAuth
+  ) {
     this.usersCollection = this.firestore.collection<AppUser>('Usuarios');
+    this.initAuthListener(); // ✅ inicializa el listener al crear el servicio
+  }
+
+  private initAuthListener() {
+    this.afAuth.authState.subscribe(async user => {
+      if (user) {
+        const uid = user.uid;
+        localStorage.setItem('userId', uid);
+        localStorage.setItem('currentUserEmail', user.email ?? '');
+
+        const doc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
+        if (doc?.exists) {
+          const userData = doc.data() as AppUser;
+          const role = userData.role || '';
+          this.setUserRole(role);
+        }
+      } else {
+        // Si la sesión se pierde, limpiar datos
+        this.userRoleSubject.next(null);
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('currentUserEmail');
+      }
+    });
   }
 
   getUserId(): string | null {
@@ -33,16 +61,13 @@ export class AuthService {
     );
   }
 
-
   async getCurrentUser(): Promise<firebase.User | null> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.afAuth.onAuthStateChanged(user => {
         resolve(user);
       });
     });
   }
-
-
 
   async getUserData(userId: string): Promise<AppUser | null> {
     try {
@@ -54,17 +79,13 @@ export class AuthService {
     }
   }
 
-
   async registerUser(user: Omit<AppUser, 'token'>, password: string): Promise<Omit<AppUser, 'token'>> {
     try {
-      await this.afAuth.signOut();
-
       const userCredential = await this.afAuth.createUserWithEmailAndPassword(user.email, password);
-      console.log('Usuario registrado en Firebase Authentication:', userCredential);
+      console.log('Usuario registrado:', userCredential);
 
       if (userCredential.user) {
         await userCredential.user.sendEmailVerification();
-        console.log('Correo de verificación enviado a:', user.email);
       }
 
       const userData: Omit<AppUser, 'token'> = {
@@ -79,11 +100,9 @@ export class AuthService {
       };
 
       await this.firestore.collection<Omit<AppUser, 'token'>>('Usuarios').doc(userData.uid).set(userData);
-      console.log('Datos del usuario guardados en Firestore:', userData);
-
       return userData;
     } catch (error) {
-      console.error('Error al registrar en Firebase Authentication:', error);
+      console.error('Error en registro:', error);
       throw error;
     }
   }
@@ -93,61 +112,44 @@ export class AuthService {
     const uid = userCredential.user?.uid;
 
     if (uid) {
-      const userSnapshot = await this.firestore.collection<AppUser>('Usuarios', ref => ref.where('email', '==', email)).get().toPromise();
+      localStorage.setItem('userId', uid);
+      localStorage.setItem('currentUserEmail', email);
 
+      const userSnapshot = await this.firestore.collection<AppUser>('Usuarios', ref => ref.where('email', '==', email)).get().toPromise();
       if (userSnapshot && !userSnapshot.empty) {
         const userDoc = userSnapshot.docs[0];
         const userData = userDoc.data() as AppUser;
-
         const userRole = userData.role ?? '';
-
-        localStorage.setItem('userRole', userRole);
-
-        localStorage.setItem('userType', 'usuario');
-        localStorage.setItem('id', uid);
-
+        this.setUserRole(userRole);
         return userData;
       }
     }
     return null;
   }
 
-
   setUserRole(role: string) {
     localStorage.setItem('userRole', role);
     this.userRoleSubject.next(role);
   }
 
-  async verifyUserByEmail(email: string): Promise<boolean> {
-    try {
-      const snapshot = await this.firestore
-        .collection('Usuarios', ref => ref.where('email', '==', email))
-        .get()
-        .toPromise();
+async verifyUserByEmail(email: string): Promise<boolean> {
+  try {
+    const snapshot = await this.firestore
+      .collection('Usuarios', ref => ref.where('email', '==', email))
+      .get()
+      .toPromise();
 
-      if (snapshot && !snapshot.empty) {
-        console.log('El correo ya existe en la base de datos.');
-        return true;
-      } else {
-        console.log('El correo no existe en la base de datos.');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error al verificar el correo:', error);
-      throw error;
-    }
+    return !!snapshot && !snapshot.empty;
+  } catch (error) {
+    console.error('Error al verificar el correo:', error);
+    return false;
   }
+}
+
 
   async resetPassword(email: string): Promise<void> {
-    try {
-      await this.afAuth.sendPasswordResetEmail(email);
-      console.log('Correo de restablecimiento de contraseña enviado.');
-    } catch (error) {
-      console.error('Error al enviar correo de restablecimiento de contraseña:', error);
-      throw error;
-    }
+    await this.afAuth.sendPasswordResetEmail(email);
   }
-
 
   getCurrentUserEmail(): Observable<string | null> {
     return this.afAuth.authState.pipe(
@@ -155,51 +157,32 @@ export class AuthService {
     );
   }
 
-
   private getStoredUserEmail(): string | undefined {
     return localStorage.getItem('currentUserEmail') || undefined;
   }
 
-
   async getUserById(userId: string): Promise<AppUser | null> {
     try {
       const docSnapshot = await this.firestore.collection('Usuarios').doc(userId).get().toPromise();
-      if (docSnapshot && docSnapshot.exists) {
-        return docSnapshot.data() as AppUser;
-      } else {
-        console.warn('No se encontró el usuario con ID:', userId);
-        return null;
-      }
+      return docSnapshot?.exists ? (docSnapshot.data() as AppUser) : null;
     } catch (error) {
       console.error('Error al obtener el usuario por ID:', error);
       return null;
     }
   }
 
-
-
   async updateUser(user: AppUser): Promise<void> {
-    try {
-      const updateData: any = {};
+    const updateData: any = {};
 
-      if (user.photoURL !== undefined) {
-        updateData.photoURL = user.photoURL;
-      }
+    if (user.photoURL !== undefined) updateData.photoURL = user.photoURL;
+    if (user.email !== undefined) updateData.email = user.email;
 
-      if (user.email !== undefined) {
-        updateData.email = user.email;
-      }
-
-      await this.firestore.collection('Usuarios').doc(user.uid).update(updateData);
-      console.log('✅ Usuario actualizado en Firestore.');
-    } catch (error) {
-      console.error('❌ Error al actualizar el usuario:', error);
-      throw error;
-    }
+    await this.firestore.collection('Usuarios').doc(user.uid).update(updateData);
   }
 
-
   async logout() {
-    return this.afAuth.signOut();
+    await this.afAuth.signOut();
+    localStorage.clear();
+    this.userRoleSubject.next(null);
   }
 }

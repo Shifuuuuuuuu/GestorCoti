@@ -6,7 +6,7 @@
     <ion-title style="color: white;">Administrar SOLPED</ion-title>
     <ion-buttons slot="end">
       <ion-button fill="clear" (click)="mostrarFiltros = !mostrarFiltros">
-        <ion-icon [name]="mostrarFiltros ? 'funnel-outline' : 'funnel-outline'" slot="icon-only" color="light"></ion-icon>
+        <ion-icon name="funnel-outline" slot="icon-only" color="light"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -14,100 +14,203 @@
 
 <ion-content [fullscreen]="true" class="ion-padding">
 
-  <ion-searchbar
-    [(ngModel)]="busqueda"
-    (ionInput)="filtrarSolpeds()"
-    placeholder="Buscar por número de SOLPED o usuario"
-    animated
-    show-clear-button="focus">
-  </ion-searchbar>
+<ion-card *ngIf="mostrarFiltros && modo === 'listado'" class="filtro-card">
+  <ion-card-header>
+    <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Estado</ion-label>
+            <ion-select [(ngModel)]="filtroEstado" placeholder="Todos" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let estado of estadosDisponibles" [value]="estado">{{ estado }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Centro de Costo</ion-label>
+            <ion-select [(ngModel)]="filtroCentro" placeholder="Todos" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let contrato of listaContratos" [value]="contrato">{{ contrato }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Responsable</ion-label>
+            <ion-select [(ngModel)]="filtroResponsable" placeholder="Todos" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let usuario of responsables" [value]="usuario">
+                {{ usuario }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="floating">Fecha</ion-label>
+            <ion-input type="date" [(ngModel)]="busqueda" (ionInput)="filtrarSolpeds()"></ion-input>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+      <ion-row>
+        <ion-col>
+          <ion-button expand="block" color="success" (click)="filtrarSolpeds()">Aplicar filtros</ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" color="danger" (click)="limpiarFiltros()">Limpiar</ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-card-content>
+</ion-card>
 
-  <ion-card *ngIf="mostrarFiltros" class="ion-margin-top">
-    <ion-card-header>
-      <ion-card-title class="ion-text-center">Filtros Avanzados</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-item lines="full">
-        <ion-icon name="business-outline" slot="start" color="medium"></ion-icon>
-        <ion-label>Centro de Costo</ion-label>
-        <ion-select [(ngModel)]="filtroCentro" (ionChange)="filtrarSolpeds()" interface="popover">
-          <ion-select-option value="">Todos</ion-select-option>
-          <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
-          <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
-          <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-          <ion-select-option value="30-10-07">30-10-07</ion-select-option>
-          <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-          <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
-          <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
-          <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
-          <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
-          <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
-          <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-          <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-          <ion-select-option value="30-10-59">30-10-59</ion-select-option>
-          <ion-select-option value="30-10-60">30-10-60</ion-select-option>
-          <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
-        </ion-select>
-      </ion-item>
 
-      <ion-item lines="full">
-        <ion-icon name="person-outline" slot="start" color="medium"></ion-icon>
-        <ion-label>Usuario</ion-label>
-        <ion-select [(ngModel)]="filtroResponsable" (ionChange)="filtrarSolpeds()" interface="popover">
-          <ion-select-option value="">Todos</ion-select-option>
-          <ion-select-option *ngFor="let responsable of responsables">{{ responsable }}</ion-select-option>
-        </ion-select>
-      </ion-item>
-    </ion-card-content>
-  </ion-card>
 
-  <ion-list *ngIf="solpedFiltrados.length > 0; else sinSolpeds">
-    <ion-card *ngFor="let solped of solpedFiltrados" class="ion-margin-bottom">
-      <ion-card-header>
-        <ion-card-title class="ion-text-wrap">📄 SOLPED Nº {{ solped.numero_solpe }}</ion-card-title>
+  <ion-segment [(ngModel)]="modo" (ionChange)="cambioModo()" class="ion-margin-bottom">
+    <ion-segment-button value="listado">
+      <ion-label>Listado</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="busqueda">
+      <ion-label>Búsqueda por Nº</ion-label>
+    </ion-segment-button>
+  </ion-segment>
 
-        <div style="margin-top: 6px; line-height: 1.3;">
-          <ion-label class="ion-text-small">
-            Usuario: <strong>{{ solped.usuario }}</strong>
+  <ng-container *ngIf="modo === 'busqueda'">
+    <ion-searchbar [(ngModel)]="busquedaExacta" placeholder="Buscar SOLPED exacta" (ionInput)="buscarPorNumeroExacto()"></ion-searchbar>
+
+    <ng-container *ngIf="resultadoBusqueda; else sinResultados">
+      <ion-card class="ion-margin-bottom">
+        <ion-card-header>
+          <ion-card-title color="primary">📄 SOLPED Nº {{ resultadoBusqueda.numero_solpe }}</ion-card-title>
+          <ion-label>Estado:
+            <strong [style.color]="getColorByStatus(resultadoBusqueda.estatus)">
+              {{ resultadoBusqueda.estatus || 'Sin estado' }}
+            </strong>
           </ion-label><br>
-          <ion-label class="ion-text-small">
-            Centro de Costo: <strong>{{ solped.numero_contrato || 'No definido' }}</strong>
-          </ion-label><br>
-          <ion-label class="ion-text-small">
-            Estado:
+          <ion-label>Centro de Costo: <strong>{{ resultadoBusqueda.numero_contrato || 'No definido' }}</strong></ion-label>
+        </ion-card-header>
+        <ion-card-content>
+          <ion-row class="ion-justify-content-between">
+            <ion-col size="6">
+              <ion-button color="primary" expand="block" size="small" (click)="editarCompleto(resultadoBusqueda)">Editar</ion-button>
+            </ion-col>
+            <ion-col size="6">
+              <ion-button color="danger" expand="block" size="small" (click)="eliminarSolped(resultadoBusqueda)">Eliminar</ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-card-content>
+      </ion-card>
+    </ng-container>
+
+    <ng-template #sinResultados>
+      <ion-card>
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="search-outline" size="large" color="medium"></ion-icon>
+          <h3>Ingresa un número válido para buscar.</h3>
+        </ion-card-content>
+      </ion-card>
+    </ng-template>
+  </ng-container>
+
+  <ng-container *ngIf="modo === 'listado'">
+    <div *ngIf="solpedFiltrados.length > 0" class="ion-text-center ion-padding">
+      <ion-button (click)="irAlInicio()" size="small">Inicio</ion-button>
+      <ion-button (click)="paginaAnterior()" [disabled]="paginaActual <= 1" size="small">Anterior</ion-button>
+      <ion-label class="ion-padding-horizontal">Página {{ paginaActual }} de {{ totalPaginas }}</ion-label>
+      <ion-button (click)="paginaSiguiente()" [disabled]="paginaActual >= totalPaginas" size="small">Siguiente</ion-button>
+      <ion-button (click)="irAlFinal()" size="small">Final</ion-button>
+    </div>
+
+    <ion-list *ngIf="solpedFiltrados.length > 0; else sinOCsListado">
+      <ion-card *ngFor="let solped of solpedFiltrados" [@fadeIn]>
+        <ion-card-header>
+          <ion-card-title color="primary">📄 SOLPED Nº {{ solped.numero_solpe }}</ion-card-title>
+          <ion-label>Usuario: <strong>{{ solped.usuario }}</strong></ion-label><br>
+          <ion-label>Centro de Costo: <strong>{{ solped.numero_contrato || 'No definido' }}</strong></ion-label><br>
+          <ion-label>Estado:
             <strong [style.color]="getColorByStatus(solped.estatus)">
               {{ solped.estatus || 'Sin estado' }}
             </strong>
           </ion-label>
-        </div>
-      </ion-card-header>
+        </ion-card-header>
 
-      <ion-card-content>
-        <ion-row class="ion-justify-content-between ion-align-items-center">
+        <ion-card-content>
+          <ion-row class="ion-justify-content-between">
+            <ion-col size="6">
+              <ion-button color="primary" expand="block" size="small" (click)="editarCompleto(solped)">Editar</ion-button>
+            </ion-col>
+            <ion-col size="6">
+              <ion-button color="danger" expand="block" size="small" (click)="eliminarSolped(solped)">Eliminar</ion-button>
+            </ion-col>
+          </ion-row>
+
+          <ion-item lines="none" *ngIf="solped.historial?.length">
+            <ion-label class="ion-text-wrap">
+              <strong>Historial:</strong>
+              <ion-list lines="none">
+                <ion-item *ngFor="let h of solped.historial">
+                  <ion-label class="ion-text-wrap">
+                    {{ h.fecha?.toDate() | date:'short' }} - <strong>{{ h.usuario }}</strong> cambió estado a <em>{{ h.estatus }}</em>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+            </ion-label>
+          </ion-item>
+        </ion-card-content>
+      </ion-card>
+    </ion-list>
+
+    <ng-template #sinOCsListado>
+      <ion-card>
+        <ion-card-content class="ion-text-center">
+          <ion-icon name="sad-outline" size="large" color="medium"></ion-icon>
+          <h3>No hay SOLPEDs registradas.</h3>
+        </ion-card-content>
+      </ion-card>
+    </ng-template>
+  </ng-container>
+
+  <ion-modal [isOpen]="mostrarModalEdicion" (didDismiss)="cerrarModalEdicion()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar style="--background: red;">
+          <ion-title style="color: white;">Editar SOLPED</ion-title>
+        </ion-toolbar>
+      </ion-header>
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-label position="floating">Usuario</ion-label>
+          <ion-input [(ngModel)]="solpedEditando.usuario"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Centro de Costo</ion-label>
+          <ion-input [(ngModel)]="solpedEditando.numero_contrato"></ion-input>
+        </ion-item>
+        <ion-item>
+          <ion-label position="floating">Fecha</ion-label>
+          <ion-datetime [(ngModel)]="solpedEditando.fecha" display-format="YYYY-MM-DD"></ion-datetime>
+        </ion-item>
+        <ion-item>
+          <ion-label>Estado</ion-label>
+          <ion-select [(ngModel)]="solpedEditando.estatus" interface="popover">
+            <ion-select-option *ngFor="let estado of estadosDisponibles" [value]="estado">{{ estado }}</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-row class="ion-justify-content-between ion-margin-top">
           <ion-col size="6">
-            <ion-button color="primary" expand="block" size="small" (click)="editarSolped(solped)">
-              Estado
-            </ion-button>
+            <ion-button expand="block" color="danger" (click)="cerrarModalEdicion()">Cerrar</ion-button>
           </ion-col>
           <ion-col size="6">
-            <ion-button color="danger" expand="block" size="small" (click)="eliminarSolped(solped)">
-              Eliminar
-            </ion-button>
+            <ion-button expand="block" color="success" (click)="guardarCambiosEdicion()">Guardar</ion-button>
           </ion-col>
         </ion-row>
-      </ion-card-content>
-    </ion-card>
-
-  </ion-list>
-
-  <ng-template #sinSolpeds>
-    <ion-card>
-      <ion-card-content class="ion-text-center">
-        <ion-icon name="sad-outline" size="large" color="medium"></ion-icon>
-        <h3>No se encontraron SOLPEDs.</h3>
-        <p>Intenta ajustar los filtros o revisar la búsqueda.</p>
-      </ion-card-content>
-    </ion-card>
-  </ng-template>
-
+      </ion-content>
+    </ng-template>
+  </ion-modal>
 </ion-content>

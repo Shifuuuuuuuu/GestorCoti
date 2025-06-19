@@ -2,11 +2,20 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { MenuController, ToastController } from '@ionic/angular';
 import { ArchivoPDF } from '../Interface/IArchivoPDF';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-historial-solpe',
   templateUrl: './historial-solpe.page.html',
   styleUrls: ['./historial-solpe.page.scss'],
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('400ms ease-in', style({ opacity: 1 }))
+      ])
+    ])
+  ]
 })
 export class HistorialSolpePage implements OnInit {
   segmentoSeleccionado: string = 'historial';

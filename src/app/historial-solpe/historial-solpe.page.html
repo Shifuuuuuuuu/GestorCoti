@@ -29,7 +29,7 @@
   <div *ngIf="segmentoSeleccionado === 'buscar'">
     <ion-card>
       <ion-card-header>
-        <ion-card-title>🔎 Buscar SOLPED por Número</ion-card-title>
+        <ion-card-title color="primary">🔎 Buscar SOLPED por Número</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -50,7 +50,7 @@
       </ion-card-content>
     </ion-card>
 
-    <ion-card *ngIf="solpeEncontrada">
+    <ion-card *ngIf="solpeEncontrada" [@fadeIn]>
       <ion-card-header>
         <ion-card-title>SOLPED #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
         <ion-card-subtitle>Fecha: {{ solpeEncontrada.fecha }}</ion-card-subtitle>
@@ -60,7 +60,7 @@
         <ion-card-subtitle>Nombre del centro: {{ solpeEncontrada.nombre_centro_costo }}</ion-card-subtitle>
       </ion-card-header>
 
-      <ion-card-content *ngFor="let item of solpeEncontrada.items">
+      <ion-card-content *ngFor="let item of solpeEncontrada.items" [@fadeIn]>
         <ion-card>
           <ion-card-header>
             <ion-card-title>Ítem {{ item.item }} - {{ item.descripcion }}</ion-card-title>
@@ -109,7 +109,7 @@
   <div *ngIf="segmentoSeleccionado === 'historial'">
     <ion-card *ngIf="mostrarFiltros">
       <ion-card-header>
-        <ion-card-title style="font-size: 18px;">🔍 Filtros</ion-card-title>
+        <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>
@@ -181,7 +181,7 @@
     <ion-card *ngFor="let solpe of solpesFiltradas">
       <ion-item lines="full">
         <ion-label>
-          <h2><strong>📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
+          <h2 color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</h2>
           <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} | Usuario: {{ solpe.usuario }} </p>
         </ion-label>
         <ion-badge [ngStyle]="{
@@ -202,10 +202,10 @@
       <p>No hay SOLPED disponibles con los filtros aplicados.</p>
     </ion-text>
   </div>
-  <div *ngIf="segmentoSeleccionado === 'estados'">
+  <div *ngIf="segmentoSeleccionado === 'estados'" [@fadeIn]>
     <ion-card>
       <ion-card-header>
-        <ion-card-title>📘 Historial de Estados</ion-card-title>
+        <ion-card-title color="primary">📘 Historial de Estados</ion-card-title>
       </ion-card-header>
       <ion-card-content>
         <ion-grid>

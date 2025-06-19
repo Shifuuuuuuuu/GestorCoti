@@ -3,11 +3,19 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastController } from '@ionic/angular';
-
+import { trigger, transition, style, animate } from '@angular/animations';
 @Component({
   selector: 'app-validar-oc',
   templateUrl: './validar-oc.page.html',
   styleUrls: ['./validar-oc.page.scss'],
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(10px)' }),
+        animate('400ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ])
+    ])
+  ]
 })
 export class ValidarOcPage implements OnInit {
   ocs: any[] = [];
@@ -104,7 +112,16 @@ cargarOCs() {
     : this.sanitizer.bypassSecurityTrustUrl(url);
 }
 
-
+  getColorByStatus(estatus: string): string {
+    switch (estatus) {
+      case 'Aprobado': return '#28a745';
+      case 'Rechazado': return '#dc3545';
+      case 'Preaprobado': return '#ffc107';
+      case 'OC enviada a proveedor': return '#17a2b8';
+      case 'Por Importación': return '#6f42c1';
+      default: return '#6c757d';
+    }
+  }
   crearPDFUrl(base64: string): SafeResourceUrl {
     const byteCharacters = atob(base64);
     const byteArrays = [];

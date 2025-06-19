@@ -68,7 +68,6 @@ async login() {
             this.presentToast('Este usuario no tiene un rol asignado. Contacte con soporte.', 'danger');
             return;
           }
-
           localStorage.setItem('userId', user.uid);
           localStorage.setItem('userEmail', user.email || '');
           localStorage.setItem('userRole', userData.role);

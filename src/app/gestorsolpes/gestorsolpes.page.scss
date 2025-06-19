@@ -102,3 +102,21 @@ ion-content {
 .boton-guardar {
   margin-top: 150px;
 }
+.fondo-item {
+  background-color: #f4f4f4;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+body.dark .fondo-item {
+  background-color: #2c2c2e !important;
+}
+
+.texto-item {
+  color: #000;
+}
+
+body.dark .texto-item {
+  color: #f1f1f1 !important;
+}
+

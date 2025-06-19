@@ -51,10 +51,6 @@
       <ion-item *ngIf="tipoCompra === 'patente'">
         <ion-input [(ngModel)]="destinoCompra" placeholder="Escribe la patente aquí"></ion-input>
       </ion-item>
-      <ion-item>
-      <ion-label position="floating">Comentario</ion-label>
-        <ion-textarea [(ngModel)]="comentario" placeholder="Agrega un comentario opcional..."></ion-textarea>
-      </ion-item>
 
       <ion-item>
         <ion-label>Archivo PDF o Imagen</ion-label>
@@ -68,7 +64,23 @@
         <ion-card-content>
           <iframe *ngIf="esPDF" [src]="vistaArchivoUrl" width="100%" height="400px" style="border: none;"></iframe>
           <img *ngIf="!esPDF" [src]="vistaArchivoUrl" style="width: 100%; max-height: 400px; object-fit: contain;" />
+        </ion-card-content>
+      </ion-card>
+      <ion-item>
+        <ion-label>Anexo PDF o Imagen</ion-label>
+        <input id="inputAnexo" type="file" accept="application/pdf,image/*" (change)="onAnexoSelected($event)" />
+      </ion-item>
 
+      <ion-card *ngIf="vistaAnexoUrl">
+        <ion-card-header>
+          <ion-card-title>Anexo Subido</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <iframe *ngIf="esAnexoPDF" [src]="vistaAnexoUrl" width="100%" height="400px" style="border: none;"></iframe>
+          <img *ngIf="!esAnexoPDF" [src]="vistaAnexoUrl" style="width: 100%; max-height: 400px; object-fit: contain;" />
+          <ion-button expand="block" fill="outline" color="primary" (click)="cambiarAnexo()">
+            Subir otro anexo
+          </ion-button>
         </ion-card-content>
       </ion-card>
 

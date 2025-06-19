@@ -1,69 +1,81 @@
 <ion-header [translucent]="true">
   <ion-toolbar style="--background: red; color: white;">
-    <ion-buttons slot="start" style="color: white;">
+    <ion-buttons slot="start">
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
     <ion-title>Validar Cotización</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="ion-padding">
+
   <ng-container *ngIf="ocs.length === 0; else listaOCs">
-    <ion-card color="light">
-      <ion-card-content class="ion-text-center">
-        <ion-icon name="information-circle-outline" size="large"></ion-icon>
-        <h2>No hay Cotizaciones con estado "Preaprobado"</h2>
-        <p>Actualmente no hay cotizaciones para validar.</p>
+    <ion-card color="light" class="ion-text-center">
+      <ion-card-content>
+        <ion-icon name="information-circle-outline" size="large" color="medium"></ion-icon>
+        <h2>No hay cotizaciones "Preaprobadas"</h2>
+        <p>No se han encontrado cotizaciones disponibles para validar.</p>
       </ion-card-content>
     </ion-card>
   </ng-container>
+
   <ng-template #listaOCs>
-    <ion-card *ngFor="let oc of ocs">
+    <ion-card *ngFor="let oc of ocs" class="ion-margin-bottom" [@fadeIn]>
       <ion-card-header>
-        <ion-card-title>Cotización #{{ oc.id }}</ion-card-title>
-        <ion-card-subtitle><strong>Estado:</strong> {{ oc.estatus }}</ion-card-subtitle>
+        <ion-card-title class="ion-text-wrap">📄 OC ID: {{ oc.id }}</ion-card-title>
+        <ion-card-subtitle>
+          <strong>Estado:</strong>
+          <span [style.color]="getColorByStatus(oc.estatus)">
+            {{ oc.estatus }}
+          </span>
+        </ion-card-subtitle>
       </ion-card-header>
 
       <ion-card-content>
-        <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }} | {{ oc.centroCostoNombre }} </p>
-        <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
-        <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
-        <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
+        <ion-list lines="none">
+          <ion-item>
+            <ion-label class="ion-text-wrap"><strong>Centro de Costo:</strong> {{ oc.centroCosto }} - {{ oc.centroCostoNombre }}</ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label class="ion-text-wrap"><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label class="ion-text-wrap"><strong>Destino:</strong> {{ oc.destinoCompra }}</ion-label>
+          </ion-item>
+          <ion-item *ngIf="oc.comentario">
+            <ion-label class="ion-text-wrap"><strong>Comentario:</strong> {{ oc.comentario }}</ion-label>
+          </ion-item>
 
-                <!-- Mostrar archivo -->
-        <ion-card *ngIf="oc.archivoUrl">
-          <iframe *ngIf="oc.esPDF"
-                  [src]="oc.archivoUrl"
-                  width="100%" height="600px"
-                  style="border: none;"></iframe>
+          <ion-item>
+            <ion-label class="ion-text-wrap"><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</ion-label>
+          </ion-item>
+          <ion-item>
+            <ion-label class="ion-text-wrap"><strong>Responsable:</strong> {{ oc.responsable }}</ion-label>
+          </ion-item>
+        </ion-list>
 
-          <img *ngIf="oc.esImagen"
-              [src]="oc.archivoUrl"
-              style="max-width: 100%; height: auto; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px;" />
-        </ion-card>
+        <div class="ion-padding">
+          <ng-container *ngIf="oc.archivoUrl">
+            <iframe *ngIf="oc.esPDF" [src]="oc.archivoUrl" width="100%" height="700px" style="border: none; border-radius: 10px;"></iframe>
+            <img *ngIf="oc.esImagen" [src]="oc.archivoUrl"
+              style="width: 100%; border-radius: 10px; border: 1px solid #ccc; margin-top: 10px;" />
+          </ng-container>
+        </div>
 
-
-        <ion-item>
+        <ion-item lines="inset" class="ion-margin-top">
           <ion-label position="floating">Comentario</ion-label>
           <ion-textarea [(ngModel)]="oc.comentarioTemporal"></ion-textarea>
         </ion-item>
 
-        <ion-grid *ngIf="oc.estatus !== 'Aprobado' && oc.estatus !== 'Rechazado'">
-          <ion-row>
-            <ion-col size="6">
-              <ion-button expand="block" color="success" (click)="aprobarOC(oc)">
-                Aprobar
-              </ion-button>
-            </ion-col>
-            <ion-col size="6">
-              <ion-button expand="block" color="danger" (click)="rechazarOC(oc)">
-                Rechazar
-              </ion-button>
-            </ion-col>
-          </ion-row>
-        </ion-grid>
+        <ion-row class="ion-justify-content-between ion-margin-top" *ngIf="oc.estatus !== 'Aprobado' && oc.estatus !== 'Rechazado'">
+          <ion-col style="color: white;" size="6">
+            <ion-button style="color: white;" expand="block" color="success" shape="block" (click)="aprobarOC(oc)">Aprobar</ion-button>
+          </ion-col>
+          <ion-col size="6">
+            <ion-button expand="block" color="danger" shape="block" (click)="rechazarOC(oc)">Rechazar</ion-button>
+          </ion-col>
+        </ion-row>
       </ion-card-content>
     </ion-card>
   </ng-template>
 </ion-content>
-

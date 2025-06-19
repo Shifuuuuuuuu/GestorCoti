@@ -12,6 +12,7 @@ export class AppComponent implements OnInit {
   public appPages = [
     { title: 'Menú de gestor', url: '/home', icon: 'home', roles: ['Aprobador/Editor','Admin'] },
     { title: 'Gestor de OC', url: '/menu-oc', icon: 'newspaper', roles: ['Aprobador/Editor','Editor','Admin'] },
+    { title: 'Gestor de Ordenes', url: '/menu-ordenes', icon: 'newspaper', roles: ['Aprobador/Editor','Editor','Admin'] },
     { title: 'Menú Admin', url: '/menu-admin', icon: 'desktop', roles: ['Admin'] },
     { title: 'Menú SOLPED', url: '/menu-solpe', icon: 'document-text', roles: ['Generador solped', 'Aprobador/Editor','Admin'] },
     { title: 'Menú de cruce de precios', url: '/menu-cotizador', icon: 'document-attach', roles: ['Editor', 'Aprobador/Editor','Admin'] },

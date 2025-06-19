@@ -3,18 +3,27 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastController } from '@ionic/angular';
-import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
+import {trigger,transition,style,animate} from '@angular/animations';
+
 @Component({
   selector: 'app-gestor-oc',
   templateUrl: './gestor-oc.page.html',
   styleUrls: ['./gestor-oc.page.scss'],
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('400ms ease-in', style({ opacity: 1 }))
+      ])
+    ])
+  ]
+
 })
 export class GestorOcPage implements OnInit {
   ocs: any[] = [];
   busquedaId: string = '';
   ocsOriginal: any[] = [];
-
   archivoSeleccionado: File | null = null;
   nombreArchivoSeleccionado: string | null = null;
   vistaPreviaPdf: SafeResourceUrl | null = null;

@@ -1,0 +1,127 @@
+<ion-header [translucent]="true">
+  <ion-toolbar style="--background: red; color: white;">
+    <ion-buttons slot="start">
+      <ion-back-button color="light" defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Revisión de Cotizaciones</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <ion-segment [(ngModel)]="modo" (ionChange)="cambioModo()" class="ion-margin-bottom">
+    <ion-segment-button value="listado">
+      <ion-label>Listado</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="busqueda">
+      <ion-label>Búsqueda por N° de Cotización</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+  <ng-container *ngIf="modo === 'busqueda'">
+    <ion-toolbar>
+      <ion-searchbar
+        [(ngModel)]="busqueda"
+        (ionInput)="buscarPorId()"
+        placeholder="Buscar por N° de cotización"
+        debounce="300">
+      </ion-searchbar>
+    </ion-toolbar>
+  </ng-container>
+
+  <ng-container *ngIf="loadingInicial && modo === 'listado'">
+    <div class="ion-text-center ion-padding">
+      <ion-spinner name="crescent" color="danger"></ion-spinner>
+      <p>Cargando órdenes...</p>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="!loadingInicial && modo === 'listado'">
+    <div class="ion-text-center ion-padding">
+      <ion-button size="small" (click)="irAlInicio()">Inicio</ion-button>
+      <ion-button size="small" (click)="paginaAnterior()" [disabled]="paginaActual <= 1">Anterior</ion-button>
+      <ion-label class="ion-padding-horizontal">Página {{ paginaActual }} de {{ totalPaginas }}</ion-label>
+      <ion-button size="small" (click)="paginaSiguiente()">Siguiente</ion-button>
+      <ion-button size="small" (click)="irAlFinal()">Final</ion-button>
+    </div>
+
+    <ng-container *ngIf="ordenes.length > 0; else sinResultados">
+      <ion-card *ngFor="let orden of ordenes; trackBy: trackById" [@fadeIn]>
+        <ng-container *ngTemplateOutlet="contenidoOrden; context: { orden: orden }"></ng-container>
+      </ion-card>
+    </ng-container>
+  </ng-container>
+
+  <ng-container *ngIf="!loadingInicial && modo === 'busqueda'">
+    <ng-container *ngIf="ordenesFiltradas.length > 0; else sinResultados">
+      <ion-card *ngFor="let orden of ordenesFiltradas" [@fadeIn]>
+        <ng-container *ngTemplateOutlet="contenidoOrden; context: { orden: orden }"></ng-container>
+      </ion-card>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #contenidoOrden let-orden="orden">
+    <ion-card-header>
+      <ion-card-title>OC Nº {{ orden.id }}</ion-card-title>
+      <ion-card-subtitle>Estatus: {{ orden.estatus }}</ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <p><strong>Centro de Costo:</strong> {{ orden.centroCostoNombre }}</p>
+      <p><strong>Tipo de Compra:</strong> {{ orden.tipoCompra }}</p>
+      <p *ngIf="orden.destinoCompra"><strong>Destino:</strong> {{ orden.destinoCompra }}</p>
+      <p><strong>Responsable:</strong> {{ orden.responsable }}</p>
+      <p><strong>Fecha Subida:</strong> {{ orden.fechaSubida | date:'short' }}</p>
+
+      <ion-grid>
+        <ion-row>
+          <ion-col size="12" size-md="6" *ngIf="orden.cotizacion">
+            <ion-button expand="block" fill="outline" (click)="mostrarArchivo(orden.cotizacion)">
+              {{ orden.cotizacion.mostrar ? 'Ocultar Cotización' : 'Ver Cotización' }}
+            </ion-button>
+            <div *ngIf="orden.cotizacion.mostrar" class="ion-padding">
+              <iframe *ngIf="orden.cotizacion.tipo === 'application/pdf'"
+                      [src]="orden.cotizacion.url"
+                      width="100%" height="400px"
+                      style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+              <img *ngIf="orden.cotizacion.tipo.startsWith('image/')"
+                   [src]="orden.cotizacion.url"
+                   style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px;" />
+            </div>
+          </ion-col>
+
+          <ion-col size="12" size-md="6" *ngIf="orden.anexo">
+            <ion-button expand="block" fill="outline" color="medium" (click)="mostrarArchivo(orden.anexo)">
+              {{ orden.anexo.mostrar ? 'Ocultar Anexo' : 'Ver Anexo' }}
+            </ion-button>
+            <div *ngIf="orden.anexo.mostrar" class="ion-padding">
+              <iframe *ngIf="orden.anexo.tipo === 'application/pdf'"
+                      [src]="orden.anexo.url"
+                      width="100%" height="400px"
+                      style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+              <img *ngIf="orden.anexo.tipo.startsWith('image/')"
+                   [src]="orden.anexo.url"
+                   style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px;" />
+            </div>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+
+      <ion-row class="ion-margin-top">
+        <ion-col>
+          <ion-button expand="block" color="success" (click)="cambiarEstado(orden.docId, 'Preaprobado')">Preaprobado</ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" color="danger" (click)="cambiarEstado(orden.docId, 'Rechazado')">Rechazar</ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-card-content>
+  </ng-template>
+  <ng-template #sinResultados>
+    <ion-card>
+      <ion-card-content class="ion-text-center">
+        <ion-icon name="alert-circle-outline" size="large" color="medium"></ion-icon>
+        <h2>No se encontraron órdenes</h2>
+        <p>No hay registros disponibles en este momento.</p>
+      </ion-card-content>
+    </ion-card>
+  </ng-template>
+</ion-content>

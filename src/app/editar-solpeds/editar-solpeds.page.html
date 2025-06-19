@@ -25,7 +25,7 @@
 
   <ion-card *ngIf="mostrarFiltros" class="filtro-card">
     <ion-card-header>
-      <ion-card-title style="font-size: 18px;">🔍 Filtros de búsqueda</ion-card-title>
+      <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
     </ion-card-header>
     <ion-card-content>
       <ion-grid>
@@ -91,11 +91,11 @@
       </ion-grid>
     </ion-card-content>
   </ion-card>
-  <ion-card *ngFor="let solpe of solpesFiltradas">
+  <ion-card *ngFor="let solpe of solpesFiltradas" [@fadeIn]>
     <ion-card-header class="ion-no-padding" (click)="toggleDetalle(solpe.id)" style="cursor: pointer;">
       <ion-item lines="full">
         <ion-label>
-          <h2><strong style="color: black;">📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
+          <h2><strong color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
           <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }}| Usuario: {{ solpe.usuario }} </p>
         </ion-label>
         <ion-badge [color]="getColorByStatus(solpe.estatus)"[ngStyle]="{
@@ -107,7 +107,7 @@
       </ion-item>
     </ion-card-header>
 
-    <ion-card-content *ngIf="solpeExpandidaId === solpe.id">
+    <ion-card-content *ngIf="solpeExpandidaId === solpe.id" [@fadeIn]>
       <ion-item lines="none" class="item-usuario-accion">
         <ion-icon name="person-circle-outline" slot="start"></ion-icon>
         <ion-label>

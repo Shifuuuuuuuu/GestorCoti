@@ -41,9 +41,10 @@ export class RegistrarUsuarioPage implements OnInit {
       'avacher@xtrememining.cl',
       'rsanhueza@xtrememining.cl',
       'pbustos@xtrememining.cl',
-      'ahernandez@xtrememining.cl'
+      'ahernandez@xtrememining.cl',
+      'dlizama@mining.cl',
+      'dlizama@xtrememining.cl'
     ];
-
     const emailLimpio = email.trim().toLowerCase();
     console.log('Correo ingresado:', emailLimpio);
     console.log('Está en la lista?', correosPermitidos.map(c => c.toLowerCase()).includes(emailLimpio));

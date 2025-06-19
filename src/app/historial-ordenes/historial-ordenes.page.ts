@@ -1,23 +1,23 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, OnInit } from '@angular/core';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
-import { animate, style, transition, trigger } from '@angular/animations';
-@Component({
-  selector: 'app-historial-oc',
-  templateUrl: './historial-oc.page.html',
-  styleUrls: ['./historial-oc.page.scss'],
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('400ms ease-in', style({ opacity: 1 }))
-      ])
-    ])
-  ]
 
+@Component({
+  selector: 'app-historial-ordenes',
+  templateUrl: './historial-ordenes.page.html',
+  styleUrls: ['./historial-ordenes.page.scss'],
+    animations: [
+      trigger('fadeIn', [
+        transition(':enter', [
+          style({ opacity: 0 }),
+          animate('400ms ease-in', style({ opacity: 1 }))
+        ])
+      ])
+    ]
 })
-export class HistorialOcPage implements OnInit {
+export class HistorialOrdenesPage implements OnInit {
   ocs: any[] = [];
   busquedaId: string = '';
   paginaActual: number = 1;
@@ -49,82 +49,87 @@ export class HistorialOcPage implements OnInit {
     });
   }
 
-  cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
-    this.loadingInicial = true;
+cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
+  this.loadingInicial = true;
 
-    const query = this.firestore.collection('ordenes_oc', ref => {
-      let q = ref.orderBy('fechaSubida', 'desc').limit(this.itemsPorPagina);
-      if (direccion === 'adelante' && this.lastVisible) {
-        q = q.startAfter(this.lastVisible);
-      }
-      if (direccion === 'atras' && this.historialPaginas.length >= 2) {
-        const prev = this.historialPaginas[this.historialPaginas.length - 2];
-        q = q.startAt(prev);
-      }
-      return q;
+  const query = this.firestore.collection('ordenes_oc', ref => {
+    let q = ref.orderBy('fechaSubida', 'desc').limit(this.itemsPorPagina);
+    if (direccion === 'adelante' && this.lastVisible) {
+      q = q.startAfter(this.lastVisible);
+    }
+    if (direccion === 'atras' && this.historialPaginas.length >= 2) {
+      const prev = this.historialPaginas[this.historialPaginas.length - 2];
+      q = q.startAt(prev);
+    }
+    return q;
+  });
+
+  query.get().subscribe(snapshot => {
+    const docsFiltrados = snapshot.docs.filter(doc => {
+      const data = doc.data() as any;
+      return data.estatus === 'Pendiente de Revisión' || data.estatus === 'Aprobado' || data.estatus === 'Rechazado';
+    });
+    this.ocs = docsFiltrados.map(doc => {
+      const data = doc.data() as any;
+      const fechaSubida = data.fechaSubida?.toDate?.() || data.fechaSubida || null;
+      const historial = (data.historial || []).map((h: any) => ({
+        ...h,
+        fecha: h.fecha?.toDate?.() || h.fecha || null
+      }));
+
+      const esPDFCot = data.archivoBase64?.startsWith('JVBERi');
+      const cotizacion = data.archivoBase64 ? {
+        base64: data.archivoBase64,
+        tipo: esPDFCot ? 'application/pdf' : 'image/jpeg',
+        nombre: 'Cotización',
+        url: null,
+        mostrar: false
+      } : null;
+
+      const archivoOC = data.archivosPDF?.archivoBase64 || null;
+      const nombreOC = data.archivosPDF?.nombrePDF || 'Orden de Compra';
+      const esPDFOC = archivoOC?.startsWith('JVBERi');
+      const ordenCompra = archivoOC ? {
+        base64: archivoOC,
+        tipo: esPDFOC ? 'application/pdf' : 'image/jpeg',
+        nombre: nombreOC,
+        url: null,
+        mostrar: false
+      } : null;
+
+      return {
+        ...data,
+        docId: doc.id,
+        fechaSubida,
+        historial,
+        cotizacion,
+        ordenCompra
+      };
     });
 
-    query.get().subscribe(snapshot => {
-      this.ocs = snapshot.docs.map(doc => {
-        const data = doc.data() as any;
-        const fechaSubida = data.fechaSubida?.toDate?.() || data.fechaSubida || null;
-        const historial = (data.historial || []).map((h: any) => ({
-          ...h,
-          fecha: h.fecha?.toDate?.() || h.fecha || null
-        }));
+    if (!snapshot.empty && docsFiltrados.length > 0) {
+      this.firstVisible = snapshot.docs[0];
+      this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
-        const esPDFCot = data.archivoBase64?.startsWith('JVBERi');
-        const cotizacion = data.archivoBase64 ? {
-          base64: data.archivoBase64,
-          tipo: esPDFCot ? 'application/pdf' : 'image/jpeg',
-          nombre: 'Cotización',
-          url: null,
-          mostrar: false
-        } : null;
-
-        const archivoOC = data.archivosPDF?.archivoBase64 || null;
-        const nombreOC = data.archivosPDF?.nombrePDF || 'Orden de Compra';
-        const esPDFOC = archivoOC?.startsWith('JVBERi');
-        const ordenCompra = archivoOC ? {
-          base64: archivoOC,
-          tipo: esPDFOC ? 'application/pdf' : 'image/jpeg',
-          nombre: nombreOC,
-          url: null,
-          mostrar: false
-        } : null;
-
-        return {
-          ...data,
-          docId: doc.id,
-          fechaSubida,
-          historial,
-          cotizacion,
-          ordenCompra
-        };
-      });
-
-      if (!snapshot.empty) {
-        this.firstVisible = snapshot.docs[0];
-        this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
-
-        if (direccion === 'adelante') {
-          if (this.paginaActual === 1 && this.historialPaginas.length === 0) {
-            this.historialPaginas.push(this.firstVisible);
-          } else {
-            this.historialPaginas.push(this.firstVisible);
-            this.paginaActual++;
-          }
-        } else if (direccion === 'atras' && this.historialPaginas.length > 1) {
-          this.historialPaginas.pop();
-          this.paginaActual--;
+      if (direccion === 'adelante') {
+        if (this.paginaActual === 1 && this.historialPaginas.length === 0) {
+          this.historialPaginas.push(this.firstVisible);
+        } else {
+          this.historialPaginas.push(this.firstVisible);
+          this.paginaActual++;
         }
-      } else if (direccion === 'adelante') {
+      } else if (direccion === 'atras' && this.historialPaginas.length > 1) {
+        this.historialPaginas.pop();
         this.paginaActual--;
       }
+    } else if (direccion === 'adelante') {
+      this.paginaActual--;
+    }
 
-      this.loadingInicial = false;
-    });
-  }
+    this.loadingInicial = false;
+  });
+}
+
 
   paginaSiguiente() {
     this.cargarPagina('adelante');
@@ -190,40 +195,45 @@ buscarPorId() {
       const doc = snapshot.docs[0];
       const data = doc.data() as any;
 
-      const fechaSubida = data.fechaSubida?.toDate?.() || data.fechaSubida || null;
-      const historial = (data.historial || []).map((h: any) => ({
-        ...h,
-        fecha: h.fecha?.toDate?.() || h.fecha || null
-      }));
+      const estatus = data.estatus;
+      if (estatus === 'Pendiente de Revisión' || estatus === 'Aprobado' || estatus === 'Rechazado') {
+        const fechaSubida = data.fechaSubida?.toDate?.() || data.fechaSubida || null;
+        const historial = (data.historial || []).map((h: any) => ({
+          ...h,
+          fecha: h.fecha?.toDate?.() || h.fecha || null
+        }));
 
-      const esPDFCot = data.archivoBase64?.startsWith('JVBERi');
-      const cotizacion = data.archivoBase64 ? {
-        base64: data.archivoBase64,
-        tipo: esPDFCot ? 'application/pdf' : 'image/jpeg',
-        nombre: 'Cotización',
-        url: null,
-        mostrar: false
-      } : null;
+        const esPDFCot = data.archivoBase64?.startsWith('JVBERi');
+        const cotizacion = data.archivoBase64 ? {
+          base64: data.archivoBase64,
+          tipo: esPDFCot ? 'application/pdf' : 'image/jpeg',
+          nombre: 'Cotización',
+          url: null,
+          mostrar: false
+        } : null;
 
-      const archivoOC = data.archivosPDF?.archivoBase64 || null;
-      const nombreOC = data.archivosPDF?.nombrePDF || 'Orden de Compra';
-      const esPDFOC = archivoOC?.startsWith('JVBERi');
-      const ordenCompra = archivoOC ? {
-        base64: archivoOC,
-        tipo: esPDFOC ? 'application/pdf' : 'image/jpeg',
-        nombre: nombreOC,
-        url: null,
-        mostrar: false
-      } : null;
+        const archivoOC = data.archivosPDF?.archivoBase64 || null;
+        const nombreOC = data.archivosPDF?.nombrePDF || 'Orden de Compra';
+        const esPDFOC = archivoOC?.startsWith('JVBERi');
+        const ordenCompra = archivoOC ? {
+          base64: archivoOC,
+          tipo: esPDFOC ? 'application/pdf' : 'image/jpeg',
+          nombre: nombreOC,
+          url: null,
+          mostrar: false
+        } : null;
 
-      this.ocs = [{
-        ...data,
-        docId: doc.id,
-        fechaSubida,
-        historial,
-        cotizacion,
-        ordenCompra
-      }];
+        this.ocs = [{
+          ...data,
+          docId: doc.id,
+          fechaSubida,
+          historial,
+          cotizacion,
+          ordenCompra
+        }];
+      } else {
+        this.ocs = [];
+      }
     } else {
       this.ocs = [];
     }
@@ -231,7 +241,6 @@ buscarPorId() {
     this.loadingInicial = false;
   });
 }
-
 
 
   async obtenerNombreUsuario(): Promise<string> {

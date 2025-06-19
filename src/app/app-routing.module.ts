@@ -87,6 +87,22 @@ const routes: Routes = [
     path: 'administrar-cotizaciones',
     loadChildren: () => import('./administrar-cotizaciones/administrar-cotizaciones.module').then( m => m.AdministrarCotizacionesPageModule)
   },
+  {
+    path: 'menu-ordenes',
+    loadChildren: () => import('./menu-ordenes/menu-ordenes.module').then( m => m.MenuOrdenesPageModule)
+  },
+  {
+    path: 'generador-ordenes',
+    loadChildren: () => import('./generador-ordenes/generador-ordenes.module').then( m => m.GeneradorOrdenesPageModule)
+  },
+  {
+    path: 'historial-ordenes',
+    loadChildren: () => import('./historial-ordenes/historial-ordenes.module').then( m => m.HistorialOrdenesPageModule)
+  },
+  {
+    path: 'gestor-ordenes',
+    loadChildren: () => import('./gestor-ordenes/gestor-ordenes.module').then( m => m.GestorOrdenesPageModule)
+  },
 
 
 

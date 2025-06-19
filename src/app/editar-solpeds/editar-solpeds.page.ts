@@ -6,11 +6,19 @@ import { Solpes } from '../Interface/ISolpes';
 import { Item } from '../Interface/IItem';
 import { Comparaciones } from '../Interface/Icompara';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
-
+import {trigger,transition,style,animate} from '@angular/animations';
 @Component({
   selector: 'app-editar-solpeds',
   templateUrl: './editar-solpeds.page.html',
   styleUrls: ['./editar-solpeds.page.scss'],
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('400ms ease-in', style({ opacity: 1 }))
+      ])
+    ])
+  ]
 })
 export class EditarSolpedsPage implements OnInit {
   segmentoSeleccionado: string = 'historial';
@@ -377,35 +385,45 @@ toggleDetalle(solpeId: string) {
       console.error('Error recuperando usuarios:', error);
     });
   }
-  filtrarSolpes() {
-    const normalize = (str: string) => str?.toLowerCase().trim();
+filtrarSolpes() {
+  const normalize = (str: string) => str?.toLowerCase().trim();
 
-    this.solpesFiltradas = this.solpesOriginal.filter(solpe => {
-      let fechaSolpe = '';
-      if (solpe.fecha) {
-        try {
-          if (typeof solpe.fecha === 'string' && solpe.fecha.includes('/')) {
-            const partes = solpe.fecha.split('/');
-            if (partes.length === 3) {
-              fechaSolpe = `${partes[2]}-${partes[1]}-${partes[0]}`;
-            }
+  this.solpesFiltradas = this.solpesOriginal.filter(solpe => {
+    let fechaSolpe = '';
+
+    if (solpe.fecha) {
+      try {
+        if (typeof solpe.fecha === 'string' && solpe.fecha.includes('/')) {
+          const partes = solpe.fecha.split('/');
+          if (partes.length === 3) {
+            fechaSolpe = `${partes[2]}-${partes[1]}-${partes[0]}`;
           }
-        } catch (error) {
-          console.error('Error procesando la fecha:', error);
-          fechaSolpe = '';
+        } else if (solpe.fecha.toDate) {
+          const d = solpe.fecha.toDate();
+          fechaSolpe = d.toISOString().slice(0, 10);
         }
+      } catch (error) {
+        console.error('Error procesando la fecha:', error);
+        fechaSolpe = '';
       }
+    }
 
-      const coincideFecha = this.filtroFecha ? fechaSolpe === this.filtroFecha : true;
-      const coincideEstatus = this.filtroEstatus ? normalize(solpe.estatus) === normalize(this.filtroEstatus) : true;
-      const coincideResponsable = this.filtroResponsable ? solpe.numero_contrato?.toLowerCase().includes(this.filtroResponsable) : true;
-      const pasaFiltro = coincideFecha && coincideEstatus && coincideResponsable;
-      console.log(pasaFiltro, solpe);
-      return pasaFiltro;
-    });
+    const coincideFecha = this.filtroFecha ? fechaSolpe === this.filtroFecha : true;
+    const coincideEstatus = this.filtroEstatus ? normalize(solpe.estatus) === normalize(this.filtroEstatus) : true;
+    const coincideUsuario = this.filtroUsuario
+      ? normalize(solpe.usuario || '') === normalize(this.filtroUsuario)
+      : true;
+    const coincideContrato = this.filtroContrato
+      ? solpe.numero_contrato === this.filtroContrato
+      : true;
 
-    console.log(this.solpesFiltradas);
-  }
+    return coincideFecha && coincideEstatus && coincideUsuario && coincideContrato;
+  });
+
+  this.solpeExpandidaId = null; // Opcional: colapsar detalles al filtrar
+}
+
+
 
 
   ordenarSolpes() {

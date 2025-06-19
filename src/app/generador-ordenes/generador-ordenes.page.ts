@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import firebase from 'firebase/compat/app';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastController } from '@ionic/angular';
+import firebase from 'firebase/compat/app';
 @Component({
-  selector: 'app-generador-oc',
-  templateUrl: './generador-oc.page.html',
-  styleUrls: ['./generador-oc.page.scss'],
+  selector: 'app-generador-ordenes',
+  templateUrl: './generador-ordenes.page.html',
+  styleUrls: ['./generador-ordenes.page.scss'],
 })
-export class GeneradorOcPage implements OnInit {
+export class GeneradorOrdenesPage implements OnInit {
   centroCosto: string = '';
   archivoPDF: File | null = null;
   historial: any[] = [];
@@ -23,7 +23,11 @@ export class GeneradorOcPage implements OnInit {
   vistaArchivoUrl: SafeResourceUrl | null = null;
   esPDF: boolean = false;
   nuevoIdVisual: number | null = null;
-  comentario: string = '';
+  anexoArchivo: File | null = null;
+  nombreAnexo: string = '';
+  tipoAnexo: string = '';
+  vistaAnexoUrl: SafeResourceUrl | null = null;
+  esAnexoPDF: boolean = false;
 
   centrosCosto: { [codigo: string]: string } = {
     "10-10-12": "ZEMAQ",
@@ -52,6 +56,58 @@ export class GeneradorOcPage implements OnInit {
   ngOnInit() {
     this.cargarSiguienteNumero();
   }
+async onAnexoSelected(event: any) {
+  const archivoOriginal = event.target.files[0];
+  if (!archivoOriginal) return;
+
+  this.nombreAnexo = archivoOriginal.name;
+  const esPDF = archivoOriginal.type === 'application/pdf';
+  const mimeType = archivoOriginal.type;
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64 = (reader.result as string).split(',')[1];
+
+    if (!esPDF) {
+      try {
+        const pdfBase64 = await this.convertirImagenAPdf(base64, mimeType);
+        const nombreFinal = this.nombreAnexo.replace(/\.[^/.]+$/, "") + ".pdf";
+        const pdfFile = this.base64ToFile(pdfBase64, nombreFinal, 'application/pdf');
+        this.anexoArchivo = pdfFile;
+        this.nombreAnexo = nombreFinal;
+        this.tipoAnexo = 'pdf';
+        this.esAnexoPDF = true;
+
+        const blob = this.base64ToBlob(pdfBase64, 'application/pdf');
+        const url = URL.createObjectURL(blob);
+        this.vistaAnexoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      } catch (error) {
+        console.error("Error al convertir anexo:", error);
+        this.mostrarToast("Error al convertir la imagen del anexo a PDF", 'danger');
+      }
+    } else {
+      this.anexoArchivo = archivoOriginal;
+      this.tipoAnexo = 'pdf';
+      this.esAnexoPDF = true;
+
+      const blob = this.base64ToBlob(base64, mimeType);
+      const url = URL.createObjectURL(blob);
+      this.vistaAnexoUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    }
+  };
+
+  reader.readAsDataURL(archivoOriginal);
+}
+cambiarAnexo() {
+  this.anexoArchivo = null;
+  this.nombreAnexo = '';
+  this.tipoAnexo = '';
+  this.vistaAnexoUrl = null;
+  this.esAnexoPDF = false;
+
+  const input = document.getElementById('inputAnexo') as HTMLInputElement;
+  if (input) input.value = '';
+}
 
 async onFileSelected(event: any) {
   const archivoOriginal = event.target.files[0];
@@ -197,9 +253,22 @@ async enviarOC() {
   reader.onload = async () => {
     const base64PDF = (reader.result as string).split(',')[1];
 
+    // Procesar anexo si hay uno
+    let anexoBase64 = '';
+    if (this.anexoArchivo) {
+      const anexoReader = new FileReader();
+      anexoBase64 = await new Promise<string>((resolve) => {
+        anexoReader.onload = () => {
+          const result = (anexoReader.result as string).split(',')[1];
+          resolve(result);
+        };
+        anexoReader.readAsDataURL(this.anexoArchivo!);
+      });
+    }
+
     const historialEntry = {
       usuario,
-      estatus: 'Preaprobado',
+      estatus: 'Pendiente de Revisión',
       fecha
     };
 
@@ -212,19 +281,21 @@ async enviarOC() {
         centroCostoNombre: centroNombre,
         tipoCompra: this.tipoCompra,
         destinoCompra: this.tipoCompra === 'patente' ? this.destinoCompra : '',
-        estatus: 'Preaprobado',
+        estatus: 'Pendiente de Revisión',
         fechaSubida: firebase.firestore.Timestamp.fromDate(new Date()),
         nombrePDF: this.nombrePDF,
         tipoArchivo: this.tipoArchivo,
         archivoBase64: base64PDF,
         historial: [historialEntry],
         responsable: usuario,
-        comentario: this.comentario || ''
+        anexo: anexoBase64 ? {
+          nombre: this.nombreAnexo,
+          tipo: this.tipoAnexo,
+          archivoBase64: anexoBase64
+        } : null
       });
 
       this.mostrarToast('Cotización enviada exitosamente.', 'success');
-
-
       this.centroCosto = '';
       this.archivoPDF = null;
       this.archivo = null;
@@ -235,13 +306,20 @@ async enviarOC() {
       this.vistaArchivoUrl = null;
       this.pdfUrl = null;
       this.esPDF = false;
-      this.comentario = '';
+      this.anexoArchivo = null;
+      this.nombreAnexo = '';
+      this.tipoAnexo = '';
+      this.vistaAnexoUrl = null;
+      this.esAnexoPDF = false;
+
       await this.cargarSiguienteNumero();
 
-      const inputElement = document.getElementById('inputArchivo') as HTMLInputElement;
-      if (inputElement) {
-        inputElement.value = '';
-      }
+      const inputArchivo = document.getElementById('inputArchivo') as HTMLInputElement;
+      if (inputArchivo) inputArchivo.value = '';
+
+      const inputAnexo = document.getElementById('inputAnexo') as HTMLInputElement;
+      if (inputAnexo) inputAnexo.value = '';
+
     } catch (error) {
       console.error('Error al enviar la cotización:', error);
       this.mostrarToast('Error al enviar la cotización.', 'danger');
@@ -252,10 +330,6 @@ async enviarOC() {
 
   reader.readAsDataURL(this.archivo);
 }
-
-
-
-
 
 
   base64ToBlob(base64: string, contentType: string): Blob {

@@ -57,13 +57,14 @@
       <br>
     </ion-card-header>
         <div *ngFor="let item of solpe.items" class="item-container">
-          <ion-row (click)="toggleItemDetalle(solpe.id, item.id)" style="background-color: #eee; border-bottom: 1px solid #ccc; cursor: pointer;">
+          <ion-row (click)="toggleItemDetalle(solpe.id, item.id)" style=" border-bottom: 1px solid #ccc; cursor: pointer;">
 
-            <ion-col size="10">
-              <strong>
-                Item {{ item.item }} - {{ item.descripcion?.toUpperCase() }}
-              </strong>
-            </ion-col>
+          <ion-col size="10">
+            <strong >
+              Item {{ item.item }} - {{ item.descripcion?.toUpperCase() }}
+            </strong>
+          </ion-col>
+
 
             <ion-col size="2" class="ion-text-end">
               <ion-icon [name]="itemExpandidoId === (solpe.id + '-' + item.id) ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>

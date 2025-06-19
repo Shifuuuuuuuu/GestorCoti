@@ -80,7 +80,6 @@
     <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida | date:'medium' }}</p>
     <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
     <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
-    <p *ngIf="oc.comentario"><strong>Comentario del solicitante:</strong> 📝 {{ oc.comentario }}</p>
     <p>
       <strong>Estado Actual:</strong> {{ oc.estatus }}
       <span *ngIf="oc.estatus === 'Rechazado'" style="background-color: #F8FF00; padding: 4px; border-radius: 4px;">
