@@ -9,7 +9,14 @@
 
 <ion-content [fullscreen]="true" class="ion-padding">
 
-  <ng-container *ngIf="ocs.length === 0; else listaOCs">
+  <ng-container *ngIf="loading">
+    <div class="ion-text-center ion-padding">
+      <ion-spinner name="crescent" color="danger"></ion-spinner>
+      <p>Cargando cotizaciones...</p>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="!loading && ocs.length === 0">
     <ion-card color="light" class="ion-text-center">
       <ion-card-content>
         <ion-icon name="information-circle-outline" size="large" color="medium"></ion-icon>
@@ -19,7 +26,7 @@
     </ion-card>
   </ng-container>
 
-  <ng-template #listaOCs>
+  <ng-container *ngIf="!loading && ocs.length > 0">
     <ion-card *ngFor="let oc of ocs" class="ion-margin-bottom" [@fadeIn]>
       <ion-card-header>
         <ion-card-title class="ion-text-wrap">📄 OC ID: {{ oc.id }}</ion-card-title>
@@ -45,7 +52,6 @@
           <ion-item *ngIf="oc.comentario">
             <ion-label class="ion-text-wrap"><strong>Comentario:</strong> {{ oc.comentario }}</ion-label>
           </ion-item>
-
           <ion-item>
             <ion-label class="ion-text-wrap"><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</ion-label>
           </ion-item>
@@ -54,12 +60,14 @@
           </ion-item>
         </ion-list>
 
-        <div class="ion-padding">
-          <ng-container *ngIf="oc.archivoUrl">
-            <iframe *ngIf="oc.esPDF" [src]="oc.archivoUrl" width="100%" height="700px" style="border: none; border-radius: 10px;"></iframe>
-            <img *ngIf="oc.esImagen" [src]="oc.archivoUrl"
-              style="width: 100%; border-radius: 10px; border: 1px solid #ccc; margin-top: 10px;" />
-          </ng-container>
+        <ion-button size="small" (click)="verArchivo(oc)" *ngIf="!oc.mostrarArchivo && oc.archivoBase64">
+          Mostrar Archivo
+        </ion-button>
+
+        <div class="ion-padding" *ngIf="oc.mostrarArchivo">
+          <iframe *ngIf="oc.esPDF" [src]="oc.archivoUrl" width="100%" height="700px" style="border: none; border-radius: 10px;"></iframe>
+          <img *ngIf="oc.esImagen" [src]="oc.archivoUrl"
+            style="width: 100%; border-radius: 10px; border: 1px solid #ccc; margin-top: 10px;" />
         </div>
 
         <ion-item lines="inset" class="ion-margin-top">
@@ -68,8 +76,8 @@
         </ion-item>
 
         <ion-row class="ion-justify-content-between ion-margin-top" *ngIf="oc.estatus !== 'Aprobado' && oc.estatus !== 'Rechazado'">
-          <ion-col style="color: white;" size="6">
-            <ion-button style="color: white;" expand="block" color="success" shape="block" (click)="aprobarOC(oc)">Aprobar</ion-button>
+          <ion-col size="6">
+            <ion-button expand="block" color="success" shape="block" (click)="aprobarOC(oc)">Aprobar</ion-button>
           </ion-col>
           <ion-col size="6">
             <ion-button expand="block" color="danger" shape="block" (click)="rechazarOC(oc)">Rechazar</ion-button>
@@ -77,5 +85,5 @@
         </ion-row>
       </ion-card-content>
     </ion-card>
-  </ng-template>
+  </ng-container>
 </ion-content>

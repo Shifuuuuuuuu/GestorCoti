@@ -80,7 +80,12 @@
       <ion-label>Búsqueda por ID</ion-label>
     </ion-segment-button>
   </ion-segment>
-
+  <ng-container *ngIf="cargando">
+    <div class="ion-text-center ion-padding">
+      <ion-spinner name="crescent" color="danger"></ion-spinner>
+      <p>Cargando datos...</p>
+    </div>
+  </ng-container>
   <ng-container *ngIf="modo === 'busqueda'">
     <ion-searchbar [(ngModel)]="busquedaExacta" placeholder="Buscar por ID exacto" (ionInput)="buscarPorId()"></ion-searchbar>
 
@@ -152,7 +157,7 @@
       <ion-button (click)="irAlFinal()" size="small">Final</ion-button>
     </div>
 
-    <ion-list *ngIf="ocsFiltradas.length > 0; else sinOCsListado">
+    <ion-list *ngIf="!cargando && ocsFiltradas.length > 0; else sinOCsListado">
       <ion-card *ngFor="let oc of ocsFiltradas" class="ion-margin-bottom" [@fadeIn]>
         <ion-card-header>
           <ion-card-title class="ion-text-wrap" color="primary">📄 OC ID: {{ oc.id }}</ion-card-title>
@@ -207,14 +212,17 @@
       <ion-button (click)="paginaSiguiente()" size="small">Siguiente</ion-button>
       <ion-button (click)="irAlFinal()" size="small">Final</ion-button>
     </div>
-    <ng-template #sinOCsListado>
+
+  <ng-template #sinOCsListado>
+    <ng-container *ngIf="!cargando">
       <ion-card>
         <ion-card-content class="ion-text-center">
           <ion-icon name="sad-outline" size="large" color="medium"></ion-icon>
           <h3>No hay cotizaciones registradas.</h3>
         </ion-card-content>
       </ion-card>
-    </ng-template>
+    </ng-container>
+  </ng-template>
   </ng-container>
 
 </ion-content>

@@ -3,6 +3,7 @@ import { AngularFirestore, QueryDocumentSnapshot } from '@angular/fire/compat/fi
 import { AlertController, MenuController } from '@ionic/angular';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-administrar-cotizaciones',
   templateUrl: './administrar-cotizaciones.page.html',
@@ -17,6 +18,7 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
   ]
 })
 export class AdministrarCotizacionesPage implements OnInit {
+  cargando: boolean = false;
   ocsFiltradas: any[] = [];
   busqueda: string = '';
   itemsPorPagina: number = 10;
@@ -134,15 +136,22 @@ async editarCamposAdicionales(oc: any) {
   await alert.present();
 }
 
-aplicarFiltros() {
+
+async aplicarFiltros() {
+  this.cargando = true;
   const estatus = this.filtroEstatus.toLowerCase().trim();
   const centro = this.filtroCentroCosto.toLowerCase().trim();
   const usuario = this.filtroUsuario.toLowerCase().trim();
   const fechaFiltro = this.filtroFecha.trim();
 
-  this.firestore.collection('ordenes_oc', ref => ref.orderBy('id', 'desc')).get().subscribe(snapshot => {
-    const docs = snapshot.docs;
-    const filtrados = docs
+  try {
+    const snapshot = await firstValueFrom(
+      this.firestore.collection('ordenes_oc', ref =>
+        ref.orderBy('fechaSubida', 'desc')
+      ).get()
+    );
+
+    const filtrados = snapshot.docs
       .map(doc => {
         const data: any = doc.data();
         return {
@@ -160,15 +169,19 @@ aplicarFiltros() {
         const coincideUsuario = !usuario || (oc.usuario && oc.usuario.toLowerCase().includes(usuario));
         const fechaString = oc.fechaSubida?.toDate?.().toISOString().split('T')[0] || '';
         const coincideFecha = !fechaFiltro || fechaString === fechaFiltro;
-
         return coincideEstatus && coincideCentro && coincideUsuario && coincideFecha;
       });
 
     this.ocsFiltradas = filtrados.slice(0, this.itemsPorPagina);
-    this.paginaActual = 1;
     this.totalPaginas = Math.ceil(filtrados.length / this.itemsPorPagina);
-  });
+    this.paginaActual = 1;
+  } catch (error) {
+    console.error('Error al aplicar filtros:', error);
+  } finally {
+    this.cargando = false;
+  }
 }
+
 async obtenerNombreUsuario(): Promise<string> {
   const user = await this.afAuth.currentUser;
   const uid = user?.uid;
@@ -205,12 +218,16 @@ limpiarFiltros() {
   this.historialPaginas = [];
   this.cargarPagina();
 }
-contarTotalPaginas() {
-  this.firestore.collection('ordenes_oc').get().subscribe(snapshot => {
+async contarTotalPaginas() {
+  try {
+    const snapshot = await firstValueFrom(this.firestore.collection('ordenes_oc').get());
     const total = snapshot.size;
     this.totalPaginas = Math.ceil(total / this.itemsPorPagina);
-  });
+  } catch (error) {
+    console.error('Error al contar páginas:', error);
+  }
 }
+
 irAlFinal() {
   this.firestore.collection('ordenes_oc', ref =>
     ref.orderBy('id', 'desc')
@@ -237,43 +254,52 @@ irAlFinal() {
 }
 
 
-  cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
-    let query = this.firestore.collection('ordenes_oc', ref => {
-      let q = ref.orderBy('id', 'desc').limit(this.itemsPorPagina);
-      if (direccion === 'adelante' && this.lastVisible) q = q.startAfter(this.lastVisible);
-      if (direccion === 'atras' && this.historialPaginas.length >= 2) {
-        const prev = this.historialPaginas[this.historialPaginas.length - 2];
-        q = q.startAt(prev);
-      }
-      return q;
-    });
-
-    query.get().subscribe(snapshot => {
-      if (!snapshot.empty) {
-        this.ocsFiltradas = snapshot.docs.map(doc => ({
-          docId: doc.id,
-          ...(doc.data() as any)
-        }));
-
-        this.firstVisible = snapshot.docs[0];
-        this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
-
-        if (direccion === 'adelante') {
-        if (this.paginaActual === 1 && this.historialPaginas.length === 0) {
-            this.historialPaginas.push(this.firstVisible);
-          } else {
-            this.historialPaginas.push(this.firstVisible);
-            this.paginaActual++;
-          }
-        }else if (direccion === 'atras' && this.historialPaginas.length > 1) {
-          this.historialPaginas.pop();
-          this.paginaActual--;
+async cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
+  this.cargando = true;
+  try {
+    const snapshot = await firstValueFrom(
+      this.firestore.collection('ordenes_oc', ref => {
+        let q = ref.orderBy('id', 'desc').limit(this.itemsPorPagina);
+        if (direccion === 'adelante' && this.lastVisible) q = q.startAfter(this.lastVisible);
+        if (direccion === 'atras' && this.historialPaginas.length >= 2) {
+          const prev = this.historialPaginas[this.historialPaginas.length - 2];
+          q = q.startAt(prev);
         }
-      } else if (direccion === 'adelante') {
+        return q;
+      }).get()
+    );
+
+    if (!snapshot.empty) {
+      this.ocsFiltradas = snapshot.docs.map(doc => ({
+        docId: doc.id,
+        ...(doc.data() as any)
+      }));
+
+      this.firstVisible = snapshot.docs[0];
+      this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
+
+      if (direccion === 'adelante') {
+        if (this.paginaActual === 1 && this.historialPaginas.length === 0) {
+          this.historialPaginas.push(this.firstVisible);
+        } else {
+          this.historialPaginas.push(this.firstVisible);
+          this.paginaActual++;
+        }
+      } else if (direccion === 'atras' && this.historialPaginas.length > 1) {
+        this.historialPaginas.pop();
         this.paginaActual--;
       }
-    });
+    } else if (direccion === 'adelante') {
+      this.paginaActual--;
+    }
+  } catch (error) {
+    console.error('Error al cargar página:', error);
+  } finally {
+    this.cargando = false;
   }
+}
+
+
 
   buscarActualizado() {
     const b = this.busqueda.toLowerCase();
