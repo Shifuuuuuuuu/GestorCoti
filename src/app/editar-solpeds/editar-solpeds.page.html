@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/" color="light"></ion-back-button>
     </ion-buttons>
-    <ion-title style="color: white;">Historial de SOLPED</ion-title>
+    <ion-title style="color: white;">Gestión de SOLPED</ion-title>
     <ion-buttons slot="end">
       <ion-button fill="clear" (click)="ordenarSolpes()">
         <ion-icon name="swap-vertical-outline" slot="icon-only" color="light"></ion-icon>
@@ -21,9 +21,137 @@
     <ion-segment-button value="historial">
       <ion-label>Historial</ion-label>
     </ion-segment-button>
+    <ion-segment-button value="buscar">
+      <ion-label>Buscar</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="estados">
+      <ion-label>Historial de Estados</ion-label>
+    </ion-segment-button>
   </ion-segment>
 
-  <ion-card *ngIf="mostrarFiltros" class="filtro-card">
+  <!-- BUSCAR POR NÚMERO -->
+  <div *ngIf="segmentoSeleccionado === 'buscar'">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title color="primary">🔎 Buscar SOLPED por Número</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="9">
+              <ion-item>
+                <ion-label position="floating">N.º SOLPED</ion-label>
+                <ion-input [(ngModel)]="numeroBusqueda" type="number"></ion-input>
+              </ion-item>
+            </ion-col>
+            <ion-col size="3">
+              <ion-button expand="block" color="danger" (click)="buscarSolpe('buscar')">
+                <ion-icon color="light" name="search-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-card *ngIf="solpeEncontrada">
+      <ion-card-header>
+        <ion-card-title>SOLPED #{{ solpeEncontrada.numero_solpe }}</ion-card-title>
+        <ion-card-subtitle>Nombre: {{ solpeEncontrada.nombre_solped }}</ion-card-subtitle>
+        <ion-card-subtitle>Fecha: {{ solpeEncontrada.fecha }}</ion-card-subtitle>
+        <ion-card-subtitle>Usuario: {{ solpeEncontrada.usuario }}</ion-card-subtitle>
+        <ion-card-subtitle>Estado: {{ solpeEncontrada.estatus }}</ion-card-subtitle>
+        <ion-card-subtitle>Contrato: {{ solpeEncontrada.numero_contrato }}</ion-card-subtitle>
+        <ion-card-subtitle>Centro: {{ solpeEncontrada.nombre_centro_costo }}</ion-card-subtitle>
+        <ion-card-subtitle>Tipo: {{ solpeEncontrada.tipo_solped }}</ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content *ngFor="let item of solpeEncontrada.items">
+        <ion-card class="detalle-oc">
+          <ion-card-header>
+            <ion-card-title>Ítem {{ item.item }} - {{ item.descripcion }}</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-grid>
+              <ion-row class="fila-detalle">
+                <ion-col size="5">📦 Cantidad:</ion-col>
+                <ion-col size="7">{{ item.cantidad }}</ion-col>
+              </ion-row>
+              <ion-row *ngIf="item.codigo_referencial">
+                <ion-col size="5">🔢 Código:</ion-col>
+                <ion-col size="7">{{ item.codigo_referencial }}</ion-col>
+              </ion-row>
+              <ion-row *ngIf="item.stock">
+                <ion-col size="5">📊 Stock:</ion-col>
+                <ion-col size="7">{{ item.stock }}</ion-col>
+              </ion-row>
+              <ion-row *ngIf="item.numero_interno">
+                <ion-col size="5">📁 Interno:</ion-col>
+                <ion-col size="7">{{ item.numero_interno }}</ion-col>
+              </ion-row>
+              <ion-row *ngIf="item.estado">
+                <ion-col size="5">✅ Estado:</ion-col>
+                <ion-col size="7">{{ item.estado }}</ion-col>
+              </ion-row>
+              <ion-row *ngIf="item.imagen_referencia_base64">
+                <ion-col size="12" style="text-align: center;">
+                  <img [src]="item.imagen_referencia_base64" width="200" />
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+            <ion-text *ngIf="!item.comparaciones?.length" color="medium">Sin productos</ion-text>
+          </ion-card-content>
+        </ion-card>
+      </ion-card-content>
+    </ion-card>
+
+    <ion-text *ngIf="buscado && !solpeEncontrada" color="danger">
+      <p>No se encontró la SOLPED con ese número.</p>
+    </ion-text>
+  </div>
+
+  <!-- HISTORIAL DE ESTADOS -->
+  <div *ngIf="segmentoSeleccionado === 'estados'">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>📘 Historial de Estados</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-grid>
+          <ion-row>
+            <ion-col size="9">
+              <ion-item>
+                <ion-label position="floating">N.º SOLPED</ion-label>
+                <ion-input [(ngModel)]="numeroBusqueda" type="number"></ion-input>
+              </ion-item>
+            </ion-col>
+            <ion-col size="3">
+              <ion-button expand="block" color="danger" (click)="buscarSolpe('estados')">
+                <ion-icon color="light" name="search-outline"></ion-icon>
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+
+        <ion-list *ngIf="historialEstados.length > 0">
+          <ion-item *ngFor="let h of historialEstados">
+            <ion-label>
+              <h3>{{ h.fecha | date:'dd/MM/yyyy HH:mm' }}</h3>
+              <p><strong>Estado:</strong> {{ h.estatus }}</p>
+              <p><strong>Usuario:</strong> {{ h.usuario }}</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+        <ion-text *ngIf="historialEstados.length === 0 && solpeEncontrada" color="medium">
+          <p>No hay cambios de estado registrados.</p>
+        </ion-text>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- HISTORIAL DE SOLPEDS -->
+  <div *ngIf="segmentoSeleccionado === 'historial'">
+   <ion-card *ngIf="mostrarFiltros" class="filtro-card">
     <ion-card-header>
       <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
     </ion-card-header>
@@ -80,23 +208,25 @@
         </ion-row>
         <ion-row>
           <ion-col>
-            <ion-button expand="block" color="success" (click)="filtrarSolpes()">Aplicar filtros
+            <ion-button expand="block" color="success"  (click)="filtrarSolpes()">
+              Aplicar filtros
             </ion-button>
           </ion-col>
           <ion-col>
-            <ion-button expand="block" color="danger"  (click)="limpiarFiltros()">Limpiar
+            <ion-button expand="block" color="danger"  (click)="limpiarFiltros()">
+              Limpiar
             </ion-button>
           </ion-col>
         </ion-row>
       </ion-grid>
     </ion-card-content>
   </ion-card>
-  <ion-card *ngFor="let solpe of solpesFiltradas" [@fadeIn]>
+  <ion-card *ngFor="let solpe of solpesFiltradas"[@fadeIn]>
     <ion-card-header class="ion-no-padding" (click)="toggleDetalle(solpe.id)" style="cursor: pointer;">
-      <ion-item lines="full">
+      <ion-item lines="none">
         <ion-label>
-          <h2><strong color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</strong></h2>
-          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }}| Usuario: {{ solpe.usuario }} </p>
+          <h2 color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</h2>
+          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} | Tipo: {{ solpe.tipo_solped }} | Nombre: {{ solpe.nombre_solped }}| Usuario: {{ solpe.usuario }}</p>
         </ion-label>
         <ion-badge [color]="getColorByStatus(solpe.estatus)"[ngStyle]="{
             'background-color': getColorByStatus(solpe.estatus),
@@ -107,15 +237,12 @@
       </ion-item>
     </ion-card-header>
 
-    <ion-card-content *ngIf="solpeExpandidaId === solpe.id" [@fadeIn]>
+    <ion-card-content *ngIf="solpeExpandidaId === solpe.id"[@fadeIn] >
       <ion-item lines="none" class="item-usuario-accion">
         <ion-icon name="person-circle-outline" slot="start"></ion-icon>
         <ion-label>
           Usuario: {{ solpe.usuario }}
         </ion-label>
-        <ion-button color="secondary" size="small"  slot="end" (click)="cambiarEstatus(solpe)">
-            Cambiar estado
-        </ion-button>
       </ion-item>
       <ion-list-header>
         <ion-label><strong>🛠 Ítems asociados</strong></ion-label>
@@ -125,41 +252,133 @@
           <ion-col>Ítem</ion-col>
           <ion-col>Descripción</ion-col>
           <ion-col>Cantidad</ion-col>
+          <ion-col>N° Interno/ Patente</ion-col>
           <ion-col>Imagen</ion-col>
-          <ion-col>Acciones</ion-col>
+          <ion-col>Estatus</ion-col>
         </ion-row>
         <ion-row *ngFor="let item of solpe.items" class="tabla-row">
           <ion-col>{{ item.item }}</ion-col>
           <ion-col>{{ item.descripcion }}</ion-col>
           <ion-col>{{ item.cantidad }}</ion-col>
+          <ion-col>{{ item.numero_interno }}</ion-col>
           <ion-col>
-            <img *ngIf="item.imagen_referencia_base64" [src]="item.imagen_referencia_base64" width="60" />
+            <img
+              *ngIf="item.imagen_referencia_base64"
+              [src]="item.imagen_referencia_base64"
+              width="60"
+              style="cursor: pointer; border: 1px solid #ccc; border-radius: 5px;"
+              (click)="abrirImagenModal(item.imagen_referencia_base64)"
+            />
           </ion-col>
           <ion-col>
-            <ion-button fill="clear" size="small" (click)="abrirComparacion(item, solpe.id)">
-              <ion-icon name="add-circle-outline" color="secondary"></ion-icon>
+            <ion-badge [ngStyle]="{
+              'background-color': getBadgeColor(item.estado || 'Pendiente'),
+              'color': 'white',
+              'padding': '4px 10px',
+              'font-weight': 'bold',
+              'border-radius': '12px'
+            }">
+              {{ item.estado || 'Pendiente' }}
+            </ion-badge>
+          </ion-col>
+
+          <!-- AQUI va el botón de editar -->
+          <ion-col>
+            <ion-button
+              size="small"
+              fill="outline"
+              color="primary"
+              *ngIf="puedeEditarCantidad(solpe.fecha)"
+              (click)="editarCantidad(solpe.id, item)"
+            >
+              Editar
             </ion-button>
           </ion-col>
         </ion-row>
       </ion-grid>
-        <ion-item lines="none">
-          <ion-label><strong>Archivos OC:</strong></ion-label>
-          <ion-chip *ngFor="let oc of ocsCargadas[solpe.id]">
-            <ion-label (click)="verOC(solpe.id, oc.id)" style="cursor: pointer;">{{ oc.nombre }}</ion-label>
-            <ion-icon name="close-circle" color="danger" (click)="eliminarOC(solpe.id, oc.id, oc.nombre)"></ion-icon>
-          </ion-chip>
-          <ion-button size="small" color="secondary" (click)="abrirInputOC(solpe.id)">
-            Subir OC
-          </ion-button>
+        <ion-list *ngIf="ocsCargadas[solpe.id]?.length">
+          <ion-list-header>
+            <ion-label><strong>📦 Detalles de OC generadas</strong></ion-label>
+          </ion-list-header>
+          <ion-accordion-group>
+          <ion-accordion *ngFor="let oc of ocsCargadas[solpe.id]">
+            <ion-item slot="header" color="light">
+              <ion-label>Cotización #{{ oc.id }} {{ oc.nombrePDF || oc.nombre }}</ion-label>
+              <ion-badge slot="end" [color]="getColorByStatus(oc.estatus || '')" *ngIf="oc.estatus">
+                {{ oc.estatus }}
+              </ion-badge>
+            </ion-item>
+
+            <div slot="content" class="ion-padding">
+              <ion-grid class="detalle-oc ion-padding-start">
+
+                <ion-row class="fila-detalle" *ngIf="oc.responsable">
+                  <ion-col size="5" class="label-detalle"><strong>👤 Responsable:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">{{ oc.responsable }}</ion-col>
+                </ion-row>
+
+                <ion-row class="fila-detalle" *ngIf="oc.nombre_centro_costo">
+                  <ion-col size="5" class="label-detalle"><strong>🏢 Centro de Costo:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">{{ oc.nombre_centro_costo }}</ion-col>
+                </ion-row>
+
+                <ion-row class="fila-detalle" *ngIf="oc.numero_contrato">
+                  <ion-col size="5" class="label-detalle"><strong>📄 Contrato:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">{{ oc.numero_contrato }}</ion-col>
+                </ion-row>
+
+                <ion-row class="fila-detalle" *ngIf="oc.fechaSubida">
+                  <ion-col size="5" class="label-detalle"><strong>📅 Fecha Subida:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">{{ oc.fechaSubida.toDate() | date:'longDate' }}</ion-col>
+                </ion-row>
+
+                <ion-row class="fila-detalle" *ngIf="oc.fechaAprobacion">
+                  <ion-col size="5" class="label-detalle"><strong>✅ Fecha Aprobación:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">{{ oc.fechaAprobacion | date:'longDate' }}</ion-col>
+                </ion-row>
+
+                <ion-row class="fila-detalle" *ngIf="oc.comentario">
+                  <ion-col size="5" class="label-detalle"><strong>💬 Comentario:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">{{ oc.comentario }}</ion-col>
+                </ion-row>
+
+                <ion-row class="fila-detalle" *ngIf="oc.destinoCompra">
+                  <ion-col size="5" class="label-detalle"><strong>📍 Destino:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">{{ oc.destinoCompra }}</ion-col>
+                </ion-row>
+
+
+                <ion-row class="fila-detalle" *ngIf="oc.items && oc.items.length > 0">
+                  <ion-col size="5" class="label-detalle"><strong>🧾 Ítems Cotizados:</strong></ion-col>
+                  <ion-col size="7" class="valor-detalle">
+                    <ul class="ion-padding-start" style="list-style-type: none; margin: 0; padding-left: 0;">
+                      <li *ngFor="let item of oc.items" style="margin-bottom: 4px;">
+                        {{ item.item }} - {{ item.descripcion }}
+                      </li>
+                    </ul>
+                  </ion-col>
+                </ion-row>
+
+              </ion-grid>
+
+              <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'cotizacion')">
+                Ver Cotización
+              </ion-button>
+              <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'oc')">
+                Ver OC
+              </ion-button>
+
+            </div>
+          </ion-accordion>
+        </ion-accordion-group>
           <input type="file" hidden [id]="'ocInput-' + solpe.id" (change)="subirOC($event, solpe.id)" accept="application/pdf" />
-        </ion-item>
+        </ion-list>
     </ion-card-content>
   </ion-card>
-
     <ion-text *ngIf="solpesFiltradas.length === 0" color="medium" class="ion-text-center">
       <p><ion-icon name="cloud-offline-outline" style="font-size: 32px;"></ion-icon></p>
       <p>No hay SOLPED disponibles con los filtros aplicados.</p>
     </ion-text>
+  </div>
 
-  <br><br><br>
 </ion-content>

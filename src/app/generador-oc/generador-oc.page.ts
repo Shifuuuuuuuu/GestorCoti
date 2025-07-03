@@ -24,12 +24,23 @@ export class GeneradorOcPage implements OnInit {
   esPDF: boolean = false;
   nuevoIdVisual: number | null = null;
   comentario: string = '';
+  solpedDisponibles: any[] = [];
+  solpedSeleccionadaId: string = '';
+  itemsSolped: any[] = [];
+  itemsSeleccionados: Set<string> = new Set();
+  usarSolped: boolean = false;
+  solpedSeleccionada: any = null;
+  precioTotalConIVA: number = 0;
+  aprobadorSugerido: string = '';
+  archivos: File[] = [];
+  vistasArchivos: { url: SafeResourceUrl, esPDF: boolean }[] = [];
+  precioFormateado: string = '';
 
   centrosCosto: { [codigo: string]: string } = {
     "10-10-12": "ZEMAQ",
     "20-10-01": "BENÍTEZ",
     "30-10-01": "CASA MATRIZ",
-    "30-10-07": "30-10-07",
+    "30-10-07": "PREDOSIFICADO- SAN BERNARDO",
     "30-10-08": "ÁRIDOS SAN JOAQUÍN",
     "30-10-42": "RAÚL ALFARO",
     "30-10-43": "DET NUEVO",
@@ -38,8 +49,8 @@ export class GeneradorOcPage implements OnInit {
     "30-10-54": "URBANO OLIVAR",
     "30-10-57": "CALAMA",
     "30-10-58": "GASTÓN CASTILLO",
-    "30-10-59": "30-10-59",
-    "30-10-60": "30-10-60",
+    "30-10-59": "INFRAESTRUCTURA",
+    "30-10-60": "PREDOSIFICADO - CALAMA",
     "30-10-61": "ALTO MAIPO"
   };
   constructor(
@@ -51,7 +62,104 @@ export class GeneradorOcPage implements OnInit {
 
   ngOnInit() {
     this.cargarSiguienteNumero();
+    this.cargarSolpedSolicitadas();
   }
+cargarSolpedSolicitadas() {
+  this.firestore.collection('solpes', ref =>
+    ref.where('estatus', '==', 'Solicitado')
+  ).get().subscribe(snapshot => {
+    this.solpedDisponibles = snapshot.docs
+      .map(doc => ({ id: doc.id, ...(doc.data() as any) }))
+      .sort((a, b) => (a.numero_solpe || 0) - (b.numero_solpe || 0));
+  });
+}
+formatearPrecio(event: any) {
+  const rawValue = event.detail.value.replace(/\D/g, '');
+  const numero = Number(rawValue);
+  this.precioTotalConIVA = numero;
+
+  this.precioFormateado = numero.toLocaleString('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+
+  this.calcularAprobador();
+}
+
+
+calcularAprobador() {
+  const total = this.precioTotalConIVA;
+
+  if (total <= 250000) {
+    this.aprobadorSugerido = 'Guillermo Manzor';
+  } else if (total <= 2500000) {
+    this.aprobadorSugerido = 'Juan Cubillos';
+  } else {
+    this.aprobadorSugerido = 'Alejandro Candia';
+  }
+}
+
+onChangeSolped() {
+  if (!this.solpedSeleccionadaId) return;
+
+  this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).get().subscribe(doc => {
+    const data: any = doc.data();
+    this.solpedSeleccionada = data;
+
+    this.centroCosto = data.numero_contrato || '';
+
+    const todosItems = data.items || [];
+    this.itemsSolped = todosItems
+      .filter((item: any) => item.estado === 'pendiente')
+      .map((item: any) => ({
+        ...item,
+        __tempId: `${item.item}-${item.descripcion}`
+      }));
+  });
+}
+
+
+async onMultipleFilesSelected(event: any) {
+  const archivosSeleccionados: File[] = Array.from(event.target.files);
+
+  for (const archivo of archivosSeleccionados) {
+    const reader = new FileReader();
+    const esPDF = archivo.type === 'application/pdf';
+    const mimeType = archivo.type;
+
+    reader.onload = async () => {
+      const base64 = (reader.result as string).split(',')[1];
+      let finalFile: File = archivo;
+      let finalUrl: SafeResourceUrl;
+
+      if (!esPDF) {
+        try {
+          const pdfBase64 = await this.convertirImagenAPdf(base64, mimeType);
+          const nombreFinal = archivo.name.replace(/\.[^/.]+$/, '') + '.pdf';
+          finalFile = this.base64ToFile(pdfBase64, nombreFinal, 'application/pdf');
+          finalUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+            URL.createObjectURL(this.base64ToBlob(pdfBase64, 'application/pdf'))
+          );
+        } catch (e) {
+          this.mostrarToast('Error al convertir imagen a PDF', 'danger');
+          return;
+        }
+      } else {
+        finalUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+          URL.createObjectURL(this.base64ToBlob(base64, mimeType))
+        );
+      }
+
+      this.archivos.push(finalFile);
+      this.vistasArchivos.push({ url: finalUrl, esPDF });
+    };
+
+    reader.readAsDataURL(archivo);
+  }
+}
+
 
 async onFileSelected(event: any) {
   const archivoOriginal = event.target.files[0];
@@ -157,22 +265,22 @@ async convertirImagenAPdf(base64Imagen: string, mimeType: string): Promise<strin
 }
 
 
-
-
-  async obtenerNuevoId(): Promise<number> {
-    const snap = await this.firestore.collection('ordenes_oc', ref => ref.orderBy('id', 'desc').limit(1)).get().toPromise();
-    const lastDoc = snap?.docs[0];
-    const lastId = (lastDoc?.data() as any)?.id || 0;
-    return lastId + 1;
-  }
-async cargarSiguienteNumero() {
-  this.nuevoIdVisual = await this.obtenerNuevoId();
-}
 async enviarOC() {
   if (this.enviando) return;
 
-  if (!this.archivo || !this.centroCosto) {
-    this.mostrarToast('Por favor selecciona un archivo y Centro de Costo.', 'warning');
+  // Validación básica
+  if (
+    this.archivos.length === 0 ||
+    !this.centroCosto ||
+    !this.precioTotalConIVA ||
+    this.precioTotalConIVA <= 0
+  ) {
+    this.mostrarToast('Completa todos los campos requeridos, incluyendo el precio total con IVA.', 'warning');
+    return;
+  }
+
+  if (this.usarSolped && !this.solpedSeleccionadaId) {
+    this.mostrarToast('Selecciona una SOLPED o desactiva el checkbox.', 'warning');
     return;
   }
 
@@ -192,70 +300,138 @@ async enviarOC() {
 
   const fecha = new Date().toISOString();
   const id = await this.obtenerNuevoId();
+  const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
+  const historialEntry = { usuario, estatus: 'Preaprobado', fecha };
 
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64PDF = (reader.result as string).split(',')[1];
+  this.calcularAprobador(); // Asegura que esté actualizado
 
-    const historialEntry = {
-      usuario,
-      estatus: 'Preaprobado',
-      fecha
-    };
-
-    const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
-
-    try {
-      await this.firestore.collection('ordenes_oc').add({
-        id,
-        centroCosto: this.centroCosto,
-        centroCostoNombre: centroNombre,
-        tipoCompra: this.tipoCompra,
-        destinoCompra: this.tipoCompra === 'patente' ? this.destinoCompra : '',
-        estatus: 'Preaprobado',
-        fechaSubida: firebase.firestore.Timestamp.fromDate(new Date()),
-        nombrePDF: this.nombrePDF,
-        tipoArchivo: this.tipoArchivo,
-        archivoBase64: base64PDF,
-        historial: [historialEntry],
-        responsable: usuario,
-        comentario: this.comentario || ''
-      });
-
-      this.mostrarToast('Cotización enviada exitosamente.', 'success');
-
-
-      this.centroCosto = '';
-      this.archivoPDF = null;
-      this.archivo = null;
-      this.nombrePDF = '';
-      this.tipoArchivo = '';
-      this.tipoCompra = 'stock';
-      this.destinoCompra = '';
-      this.vistaArchivoUrl = null;
-      this.pdfUrl = null;
-      this.esPDF = false;
-      this.comentario = '';
-      await this.cargarSiguienteNumero();
-
-      const inputElement = document.getElementById('inputArchivo') as HTMLInputElement;
-      if (inputElement) {
-        inputElement.value = '';
-      }
-    } catch (error) {
-      console.error('Error al enviar la cotización:', error);
-      this.mostrarToast('Error al enviar la cotización.', 'danger');
-    } finally {
-      this.enviando = false;
-    }
+  const dataToSave: any = {
+    id,
+    centroCosto: this.centroCosto,
+    centroCostoNombre: centroNombre,
+    tipoCompra: this.tipoCompra,
+    destinoCompra: this.tipoCompra === 'patente' ? this.destinoCompra : '',
+    estatus: 'Preaprobado',
+    fechaSubida: firebase.firestore.Timestamp.fromDate(new Date()),
+    historial: [historialEntry],
+    responsable: usuario,
+    comentario: this.comentario || '',
+    numero_contrato: this.centroCosto,
+    nombre_centro_costo: centroNombre,
+    precioTotalConIVA: this.precioTotalConIVA,
+    aprobadorSugerido: this.aprobadorSugerido,
+    archivosBase64: []
   };
 
-  reader.readAsDataURL(this.archivo);
+  // Leer todos los archivos como base64
+  for (const archivo of this.archivos) {
+    const base64: string = await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.readAsDataURL(archivo);
+    });
+
+    dataToSave.archivosBase64.push({
+      nombre: archivo.name,
+      tipo: archivo.type,
+      base64
+    });
+  }
+
+  // Asociar SOLPED si corresponde
+  if (this.usarSolped && this.solpedSeleccionadaId) {
+    dataToSave.solpedId = this.solpedSeleccionadaId;
+
+    const itemsFinal = this.itemsSolped.map((item) => {
+      const nuevoItem = { ...item };
+      delete nuevoItem.comparaciones;
+      delete nuevoItem.nombre_centro_costo;
+      delete nuevoItem.numero_contrato;
+      nuevoItem.estado = this.itemsSeleccionados.has(item.__tempId) ? 'aprobado' : 'pendiente';
+      return nuevoItem;
+    });
+
+    dataToSave.items = itemsFinal;
+  }
+
+  try {
+    await this.firestore.collection('ordenes_oc').add(dataToSave);
+
+    // Actualizar estado de ítems en la SOLPED
+    if (this.usarSolped && this.solpedSeleccionadaId) {
+      const docSnapshot = await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).get().toPromise();
+      if (docSnapshot?.exists) {
+        const data = docSnapshot.data() as { items: any[] };
+        const todosItemsOriginales = data.items || [];
+
+        const itemsActualizados = todosItemsOriginales.map((item: any) => {
+          const clave = `${item.item}-${item.descripcion}`;
+          if (this.itemsSeleccionados.has(clave)) {
+            return { ...item, estado: 'aprobado' };
+          }
+          return item;
+        });
+
+        const todosAprobados = itemsActualizados.every((item: any) => item.estado === 'aprobado');
+        const nuevoEstatusSolped = todosAprobados ? 'Aprobado' : 'Solicitado';
+
+        await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).update({
+          estatus: nuevoEstatusSolped,
+          items: itemsActualizados,
+        });
+      }
+    }
+
+    this.mostrarToast('Cotización enviada exitosamente.', 'success');
+
+    // Limpiar formulario
+    this.centroCosto = '';
+    this.tipoCompra = 'stock';
+    this.destinoCompra = '';
+    this.archivos = [];
+    this.vistasArchivos = [];
+    this.comentario = '';
+    this.itemsSeleccionados.clear();
+    this.usarSolped = false;
+    this.solpedSeleccionadaId = '';
+    this.itemsSolped = [];
+    this.precioTotalConIVA = 0;
+    this.precioFormateado = '';
+    this.aprobadorSugerido = '';
+    await this.cargarSiguienteNumero();
+
+    const inputElement = document.getElementById('inputArchivo') as HTMLInputElement;
+    if (inputElement) inputElement.value = '';
+
+  } catch (error) {
+    console.error('Error al enviar la cotización:', error);
+    this.mostrarToast('Error al enviar la cotización.', 'danger');
+  } finally {
+    this.enviando = false;
+  }
 }
 
 
 
 
+
+toggleSeleccion(id: string) {
+  if (this.itemsSeleccionados.has(id)) {
+    this.itemsSeleccionados.delete(id);
+  } else {
+    this.itemsSeleccionados.add(id);
+  }
+}
+
+  async obtenerNuevoId(): Promise<number> {
+    const snap = await this.firestore.collection('ordenes_oc', ref => ref.orderBy('id', 'desc').limit(1)).get().toPromise();
+    const lastDoc = snap?.docs[0];
+    const lastId = (lastDoc?.data() as any)?.id || 0;
+    return lastId + 1;
+  }
+async cargarSiguienteNumero() {
+  this.nuevoIdVisual = await this.obtenerNuevoId();
+}
 
 
   base64ToBlob(base64: string, contentType: string): Blob {

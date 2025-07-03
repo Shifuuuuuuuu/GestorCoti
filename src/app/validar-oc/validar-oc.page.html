@@ -39,37 +39,85 @@
       </ion-card-header>
 
       <ion-card-content>
-        <ion-list lines="none">
-          <ion-item>
-            <ion-label class="ion-text-wrap"><strong>Centro de Costo:</strong> {{ oc.centroCosto }} - {{ oc.centroCostoNombre }}</ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label class="ion-text-wrap"><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label class="ion-text-wrap"><strong>Destino:</strong> {{ oc.destinoCompra }}</ion-label>
-          </ion-item>
-          <ion-item *ngIf="oc.comentario">
-            <ion-label class="ion-text-wrap"><strong>Comentario:</strong> {{ oc.comentario }}</ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label class="ion-text-wrap"><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</ion-label>
-          </ion-item>
-          <ion-item>
-            <ion-label class="ion-text-wrap"><strong>Responsable:</strong> {{ oc.responsable }}</ion-label>
-          </ion-item>
-        </ion-list>
+          <ion-list lines="none">
+            <ion-item>
+              <ion-label class="ion-text-wrap"><strong>Centro de Costo:</strong> {{ oc.centroCosto }} - {{ oc.centroCostoNombre }}</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"><strong>Destino:</strong> {{ oc.destinoCompra }}</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"><strong>Tipo SOLPED:</strong> {{ oc.tipo_solped || 'N/A' }}</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"><strong>Nombre Centro de Costo:</strong> {{ oc.nombre_centro_costo || 'N/A' }}</ion-label>
+            </ion-item>
+            <ion-item *ngIf="oc.comentario">
+              <ion-label class="ion-text-wrap"><strong>Comentario:</strong> {{ oc.comentario }}</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap"><strong>Responsable:</strong> {{ oc.responsable }}</ion-label>
+            </ion-item>
+            <ion-item>
+              <ion-label class="ion-text-wrap">
+                <strong>Precio Total con IVA:</strong> {{ formatearCLP(oc.precioTotalConIVA) }}
+              </ion-label>
+            </ion-item>
+          </ion-list>
 
-        <ion-button size="small" (click)="verArchivo(oc)" *ngIf="!oc.mostrarArchivo && oc.archivoBase64">
-          Mostrar Archivo
-        </ion-button>
+        <!-- Archivos múltiples -->
+        <ion-card *ngIf="oc.archivosVisuales?.length > 0" class="ion-margin-top">
+          <ion-card-header>
+            <ion-card-title>📂 Archivos Adjuntos</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-item *ngFor="let archivo of oc.archivosVisuales; let i = index">
+              <ion-label class="ion-text-wrap">
+                <strong>{{ archivo.nombre }}</strong>
+                <div *ngIf="!archivo.mostrar">
+                  <ion-button fill="clear" size="small" (click)="verArchivoIndividual(archivo)">
+                    Mostrar
+                  </ion-button>
+                </div>
+              </ion-label>
+              <ion-buttons slot="end">
+                <ion-button color="danger" fill="clear" size="small" (click)="eliminarArchivoDeOC(oc, i)">
+                  <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+                </ion-button>
+              </ion-buttons>
+            </ion-item>
 
-        <div class="ion-padding" *ngIf="oc.mostrarArchivo">
-          <iframe *ngIf="oc.esPDF" [src]="oc.archivoUrl" width="100%" height="700px" style="border: none; border-radius: 10px;"></iframe>
-          <img *ngIf="oc.esImagen" [src]="oc.archivoUrl"
-            style="width: 100%; border-radius: 10px; border: 1px solid #ccc; margin-top: 10px;" />
-        </div>
+            <div *ngFor="let archivo of oc.archivosVisuales">
+              <iframe *ngIf="archivo.mostrar && archivo.esPDF" [src]="archivo.url" width="100%" height="400px" style="border: none; border-radius: 8px;"></iframe>
+              <img *ngIf="archivo.mostrar && archivo.esImagen" [src]="archivo.url" style="width: 100%; max-height: 400px; border-radius: 8px; object-fit: contain;" />
+            </div>
+          </ion-card-content>
+        </ion-card>
 
+        <!-- ÍTEMS DE LA SOLPED -->
+        <ion-card *ngIf="oc.itemsEvaluados?.length > 0" class="ion-margin-top">
+          <ion-card-header>
+            <ion-card-title>📦 Ítems Asociados</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list>
+              <ion-item *ngFor="let item of oc.itemsEvaluados">
+                <ion-label class="ion-text-wrap">
+                  <h3>{{ item.descripcion }}</h3>
+                  <p>Cantidad: {{ item.cantidad }} - Unidad: {{ item.unidad }}</p>
+                </ion-label>
+                <ion-badge [color]="getColorByEstado(item.estado)" slot="end" class="ion-padding-horizontal">
+                  {{ item.estado }}
+                </ion-badge>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Comentario general -->
         <ion-item lines="inset" class="ion-margin-top">
           <ion-label position="floating">Comentario</ion-label>
           <ion-textarea [(ngModel)]="oc.comentarioTemporal"></ion-textarea>

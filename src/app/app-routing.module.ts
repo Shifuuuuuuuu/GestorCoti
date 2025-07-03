@@ -25,16 +25,8 @@ const routes: Routes = [
     loadChildren: () => import('./perfil-usuario/perfil-usuario.module').then( m => m.PerfilUsuarioPageModule),     canActivate: [AuthGuard]
   },
   {
-    path: 'menu-cotizador',
-    loadChildren: () => import('./menu-cotizador/menu-cotizador.module').then( m => m.MenuCotizadorPageModule),     canActivate: [AuthGuard]
-  },
-  {
     path: 'solpe',
     loadChildren: () => import('./solpe/solpe.module').then( m => m.SolpePageModule),     canActivate: [AuthGuard]
-  },
-  {
-    path: 'historial-solpe',
-    loadChildren: () => import('./historial-solpe/historial-solpe.module').then( m => m.HistorialSolpePageModule),     canActivate: [AuthGuard]
   },
   {
     path: 'menu-solpe',
@@ -45,9 +37,6 @@ const routes: Routes = [
     loadChildren: () => import('./gestorsolpes/gestorsolpes.module').then( m => m.GestorsolpesPageModule),     canActivate: [AuthGuard]
   },
   {
-    path: 'visualizacion-solped',
-    loadChildren: () => import('./visualizacion-solped/visualizacion-solped.module').then( m => m.VisualizacionSolpedPageModule),     canActivate: [AuthGuard]
-  },  {
     path: 'editar-solped',
     loadChildren: () => import('./editar-solped/editar-solped.module').then( m => m.EditarSolpedPageModule)
   },
@@ -95,16 +84,6 @@ const routes: Routes = [
     path: 'generador-ordenes',
     loadChildren: () => import('./generador-ordenes/generador-ordenes.module').then( m => m.GeneradorOrdenesPageModule)
   },
-  {
-    path: 'historial-ordenes',
-    loadChildren: () => import('./historial-ordenes/historial-ordenes.module').then( m => m.HistorialOrdenesPageModule)
-  },
-  {
-    path: 'gestor-ordenes',
-    loadChildren: () => import('./gestor-ordenes/gestor-ordenes.module').then( m => m.GestorOrdenesPageModule)
-  },
-
-
 
 ];
 

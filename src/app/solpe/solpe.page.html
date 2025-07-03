@@ -27,17 +27,37 @@
             <ion-label position="floating">Fecha</ion-label>
             <ion-input [(ngModel)]="solpe.fecha" type="date" readonly></ion-input>
           </ion-item>
-
+          <ion-item>
+            <ion-label position="floating">Nombre de la SOLPED</ion-label>
+            <ion-input
+              [(ngModel)]="solpe.nombre_solped"
+              (ionInput)="solpe.nombre_solped = solpe.nombre_solped?.toUpperCase()">
+            </ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="floating">Tipo de SOLPED</ion-label>
+            <ion-select [(ngModel)]="solpe.tipo_solped" placeholder="Seleccionar tipo">
+              <ion-select-option value="EPP">EPP</ion-select-option>
+              <ion-select-option value="INSUMOS DE OFICINA">INSUMOS DE OFICINA</ion-select-option>
+              <ion-select-option value="SERVICIOS DE TERCEROS">SERVICIOS DE TERCEROS</ion-select-option>
+              <ion-select-option value="REPUESTOS">REPUESTOS</ion-select-option>
+              <ion-select-option value="MATERIALES">MATERIALES</ion-select-option>
+              <ion-select-option value="HERRAMIENTAS">HERRAMIENTAS</ion-select-option>
+              <ion-select-option value="LUBRICANTES">LUBRICANTES</ion-select-option>
+              <ion-select-option value="NEUMÁTICOS">NEUMÁTICOS</ion-select-option>
+            </ion-select>
+          </ion-item>
           <ion-item>
             <ion-label position="floating">Centro de Costo</ion-label>
             <ion-select [(ngModel)]="solpe.numero_contrato"  (ionChange)="actualizarCentroCosto($event)" required>
-                  <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
+                  <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
                   <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
                   <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
                   <ion-select-option value="30-10-07">30-10-07</ion-select-option>
                   <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
                   <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
                   <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43">TALLER CANECHE</ion-select-option>
                   <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
                   <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
                   <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
@@ -67,10 +87,10 @@
               <tr>
                 <th>#</th>
                 <th>Descripción</th>
-                <th>Código</th>
+                <th>Código(En caso de que tenga)</th>
                 <th>Cantidad</th>
                 <th>Stock</th>
-                <th>Interno</th>
+                <th>N° Interno/ Patente</th>
                 <th>Imagen</th>
                 <th>Acciones</th>
               </tr>

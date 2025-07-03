@@ -7,6 +7,7 @@ import { Item } from '../Interface/IItem';
 import { Comparaciones } from '../Interface/Icompara';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import {trigger,transition,style,animate} from '@angular/animations';
+import * as XLSX from 'xlsx';
 @Component({
   selector: 'app-editar-solpeds',
   templateUrl: './editar-solpeds.page.html',
@@ -21,6 +22,8 @@ import {trigger,transition,style,animate} from '@angular/animations';
   ]
 })
 export class EditarSolpedsPage implements OnInit {
+  historialEstados: Array<{ fecha: any; estatus: string; usuario: string }> = [];
+  archivoTemporalUrl: string | null = null;
   segmentoSeleccionado: string = 'historial';
   numeroBusqueda: number | undefined;
   solpeEncontrada: any = null;
@@ -43,7 +46,8 @@ export class EditarSolpedsPage implements OnInit {
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
   loading: boolean = true;
-  ocsCargadas: { [solpeId: string]: { id: string, nombre: string }[] } = {};
+  ocsCargadas: { [solpeId: string]: any[] } = {};
+
 
   constructor(
     private firestore: AngularFirestore,
@@ -79,6 +83,56 @@ export class EditarSolpedsPage implements OnInit {
       input.click();
     }
   }
+descargarExcel(solpe: any) {
+  const worksheetData: any[][] = [];
+
+  worksheetData.push(['SOLICITUD DE COMPRA']);
+  worksheetData.push(['Solicitante:', solpe.usuario]);
+  worksheetData.push(['Fecha:', solpe.fecha]);
+  worksheetData.push(['N° Contrato:', solpe.numero_contrato]);
+  worksheetData.push([]);
+
+  const empresasSet = new Set<string>();
+  solpe.items.forEach((item: Item) => {
+    item.comparaciones?.forEach((comp: Comparaciones) => {
+      if (comp.empresa) {
+        empresasSet.add(comp.empresa.toUpperCase());
+      }
+    });
+  });
+
+  const empresas = Array.from(empresasSet);
+  worksheetData.push(['ITEM', 'CANTIDAD', 'DESCRIPCIÓN', ...empresas]);
+
+  solpe.items.forEach((item: Item, index: number) => {
+    const filaBase = [
+      item.item || (index + 1),
+      item.cantidad || '',
+      item.descripcion || ''
+    ];
+
+    const preciosPorEmpresa: { [empresa: string]: string | number } = {};
+    item.comparaciones?.forEach((comp: Comparaciones) => {
+      const empresa = comp.empresa?.toUpperCase();
+      if (empresa) {
+        const precioDesc = `${comp.precioBase || comp.precio} (desc. ${comp.descuento || 0}%)`;
+        preciosPorEmpresa[empresa] = precioDesc;
+      }
+    });
+
+    const preciosEnOrden = empresas.map(nombre => preciosPorEmpresa[nombre] || '');
+    worksheetData.push([...filaBase, ...preciosEnOrden]);
+  });
+
+  const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const workbook: XLSX.WorkBook = XLSX.utils.book_new();
+  const sheetName = `SOLPED_${solpe.numero_solpe}`;
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+  const fechaActual = new Date().toISOString().split('T')[0];
+  const nombreArchivo = `SOLPED_${solpe.numero_solpe}_${fechaActual}.xlsx`;
+  XLSX.writeFile(workbook, nombreArchivo);
+}
 
   subirOC(event: any, solpeId: string) {
     const archivo: File = event.target.files[0];
@@ -120,48 +174,127 @@ export class EditarSolpedsPage implements OnInit {
       this.mostrarToast('No se pudo eliminar la OC', 'danger');
     }
   }
-  verOC(solpedId: string, ocId: string) {
-    this.firestore.collection('solpes').doc(solpedId).collection('ocs').doc(ocId).get().subscribe(doc => {
-      if (!doc.exists) {
-        this.mostrarToast('La OC no fue encontrada', 'danger');
-        return;
-      }
-
-      const data = doc.data() as { base64: string, nombre?: string };
-      const base64 = data.base64;
-
-      if (!base64) {
-        this.mostrarToast('El archivo está vacío', 'danger');
-        return;
-      }
-
-      const blob = this.base64ToBlob(base64, 'application/pdf');
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    });
+verOC(solpedId: string, archivoBase64: string) {
+  if (!archivoBase64) {
+    this.mostrarToast('El archivo está vacío o no se encontró.', 'danger');
+    return;
   }
 
+  const blob = this.base64ToBlob(archivoBase64, 'application/pdf');
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
 
+formatearCLP(valor: number): string {
+  return valor?.toLocaleString('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }) || '$0';
+}
+
+async abrirImagenModal(imagenBase64: string) {
+  const alert = await this.alertController.create({
+    header: '',
+    message: '',
+    buttons: [
+      {
+        text: 'Cerrar',
+        role: 'cancel',
+        cssClass: 'alert-button-cerrar'
+      }
+    ],
+    cssClass: 'custom-img-alert zoomable-alert',
+    mode: 'ios',
+    backdropDismiss: true
+  });
+
+  await alert.present();
+
+  const alertEl = document.querySelector('ion-alert .alert-message');
+  if (alertEl) {
+    alertEl.innerHTML = `
+      <div class="contenedor-img-zoom">
+        <img src="${imagenBase64}" class="imagen-zoom" />
+      </div>
+    `;
+  }
+}
 toggleDetalle(solpeId: string) {
   this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
 
   if (this.solpeExpandidaId) {
-    if (!this.ocsCargadas[solpeId]) {
-      this.firestore
-        .collection('solpes')
-        .doc(solpeId)
-        .collection('ocs')
-        .get()
-        .subscribe(snapshot => {
-          this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
-            id: doc.id,
-            nombre: doc.data()['nombre']
-          }));
-          this.cdRef.detectChanges();
-        });
-    }
+    console.log('📦 Consultando OCs para SOLPED ID:', solpeId);
+
+    this.firestore
+      .collection('solpes')
+      .doc(solpeId)
+      .collection('ocs')
+      .get()
+      .subscribe(snapshot => {
+        console.log(`📋 Documentos encontrados: ${snapshot.size}`);
+        snapshot.docs.forEach(doc => console.log('✅ OC encontrada:', doc.id, doc.data()));
+
+        this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        this.cdRef.detectChanges();
+      }, error => {
+        console.error('❌ Error al cargar OCs:', error);
+      });
   }
 }
+
+buscarSolpe(modo: 'buscar' | 'estados' = 'buscar') {
+  this.firestore
+    .collection('solpes', ref => ref.where('numero_solpe', '==', this.numeroBusqueda))
+    .get()
+    .subscribe(snapshot => {
+      this.buscado = true;
+
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        const data = doc.data() as any;
+        this.solpeEncontrada = { id: doc.id, ...data };
+
+        if (modo === 'estados') {
+          this.cargarHistorialEstados(doc.id);
+        }
+      } else {
+        this.solpeEncontrada = null;
+        this.historialEstados = [];
+      }
+    });
+}
+cargarHistorialEstados(solpeId: string) {
+  this.firestore
+    .collection('solpes')
+    .doc(solpeId)
+    .collection('historialEstados', ref => ref.orderBy('fecha', 'asc'))
+    .get()
+    .subscribe(snapshot => {
+      this.historialEstados = snapshot.docs.map(doc => {
+        const d: any = doc.data();
+        let fechaDate: Date;
+        if (d.fecha?.toDate) {
+          fechaDate = d.fecha.toDate();
+        } else {
+          fechaDate = new Date(d.fecha);
+        }
+        return {
+          fecha: fechaDate,
+          estatus: d.estatus,
+          usuario: d.usuario
+        };
+      });
+    }, error => {
+      console.error('Error cargando historial de estados:', error);
+      this.historialEstados = [];
+    });
+}
+
 
   async eliminarComparacionFirestore(solpedId: string, itemId: string, comparacionId: number) {
     const solpedRef = this.firestore.collection('solpes').doc(solpedId);
@@ -325,25 +458,40 @@ toggleDetalle(solpeId: string) {
       this.guardarComparacionesEnFirestore(solpe);
     }
   }
-  guardarComparacionesEnFirestore(solpe: any) {
-    solpe.items.forEach((item: any) => {
-      if (!item.comparaciones || item.comparaciones.length === 0) {
-        item.comparaciones = [{
-          empresa: 'Sin proveedor válido',
-          precio: 0,
-          observacion: 'Este proveedor no tenía lo que se buscaba'
-        }];
-      }
+async guardarComparacionesEnFirestore(solpe: any) {
+  try {
+    const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
+    const solpeSnap = await solpeRef.get().toPromise();
+
+    if (!solpeSnap || !solpeSnap.exists) {
+      throw new Error('SOLPE no encontrada');
+    }
+
+    const solpeData = solpeSnap.data() as any;
+    const itemsFirestore = solpeData.items || [];
+
+    const itemsActualizados = itemsFirestore.map((item: any) => {
+      const itemLocal = solpe.items.find((i: any) => i.id === item.id || i.item === item.item);
+      return {
+        ...item,
+        comparaciones: itemLocal?.comparaciones?.length > 0
+          ? itemLocal.comparaciones
+          : [{
+              empresa: 'Sin proveedor válido',
+              precio: 0,
+              observacion: 'Este proveedor no tenía lo que se buscaba'
+            }]
+      };
     });
 
-    this.firestore.collection('solpes').doc(solpe.id).update({
-      items: solpe.items
-    }).then(() => {
-      console.log('Comparaciones subidas a Firestore automáticamente');
-    }).catch(err => {
-      console.error('Error al subir comparaciones:', err);
-    });
+    await solpeRef.update({ items: itemsActualizados });
+    this.mostrarToast('Comparaciones subidas correctamente a Firestore', 'success');
+  } catch (err) {
+    console.error('Error al subir comparaciones:', err);
+    this.mostrarToast('Error al subir comparaciones', 'danger');
   }
+}
+
   validarComparaciones(solpe: any): boolean {
     return solpe.items.every((item: any) => item.comparaciones && item.comparaciones.length > 0);
   }
@@ -420,10 +568,8 @@ filtrarSolpes() {
     return coincideFecha && coincideEstatus && coincideUsuario && coincideContrato;
   });
 
-  this.solpeExpandidaId = null; // Opcional: colapsar detalles al filtrar
+  this.solpeExpandidaId = null;
 }
-
-
 
 
   ordenarSolpes() {
@@ -464,7 +610,189 @@ filtrarSolpes() {
     }
   }
 
+getBadgeColor(estatus: string): string {
+  switch (estatus?.toLowerCase()) {
+    case 'aprobado':
+      return '#28a745';
+    case 'rechazado':
+      return '#dc3545';
+    case 'solicitado':
+      return 'warning';
+    case 'tránsito a faena':
+      return 'primary';
+    case 'preaprobado':
+      return 'medium';
+    case 'oc enviada a proveedor':
+      return 'tertiary';
+    case 'por importación':
+      return 'dark';
+    default:
+      return 'medium';
+  }
+}
 
+verOCDesdeSolped(solpedId: string, ocId: string, tipoArchivo: 'cotizacion' | 'oc') {
+  if (!solpedId || !ocId) {
+    this.mostrarToast('IDs inválidos para buscar OC.', 'danger');
+    return;
+  }
+
+  const ocRef = this.firestore.collection('solpes').doc(solpedId).collection('ocs').doc(ocId);
+
+  ocRef.get().subscribe(docSnapshot => {
+    if (!docSnapshot.exists) {
+      this.mostrarToast('OC no encontrada en esta SOLPED.', 'danger');
+      return;
+    }
+
+    const data = docSnapshot.data() as { [key: string]: any };
+
+    const archivosBase64 = Array.isArray(data['archivosBase64']) ? data['archivosBase64'] : [];
+    const archivoCotizacion = archivosBase64.length > 0 ? archivosBase64[0] : null;
+    const base64Cot = archivoCotizacion?.['base64'];
+    const tipoCot = archivoCotizacion?.['tipo'] || 'application/pdf';
+    const nombreCot = archivoCotizacion?.['nombre'] || 'Cotización';
+
+    const archivoOC = data['archivosPDF'];
+    const base64OC = archivoOC?.['archivoBase64'];
+    const nombreOC = archivoOC?.['nombrePDF'] || 'Orden de Compra';
+    const tipoOC = 'application/pdf';
+
+    if (tipoArchivo === 'cotizacion') {
+      if (base64Cot) {
+        const url = this.crearArchivoUrl(base64Cot, tipoCot);
+        this.abrirArchivoEnNuevaVentana(url, nombreCot);
+      } else {
+        this.mostrarToast('No se encontró archivo de cotización.', 'danger');
+      }
+    } else if (tipoArchivo === 'oc') {
+      if (base64OC) {
+        const url = this.crearArchivoUrl(base64OC, tipoOC);
+        this.abrirArchivoEnNuevaVentana(url, nombreOC);
+      } else {
+        this.mostrarToast('No se encontró archivo de OC.', 'danger');
+      }
+    }
+
+  }, error => {
+    console.error('Error al obtener OC:', error);
+    this.mostrarToast('Error al cargar archivos de la OC.', 'danger');
+  });
+}
+
+
+abrirArchivoEnNuevaVentana(url: string, nombre: string) {
+  const ventana = window.open();
+  if (ventana) {
+    ventana.document.title = nombre;
+    ventana.document.write(`
+      <html>
+        <head>
+          <title>${nombre}</title>
+          <style>
+            body { margin: 0; font-family: sans-serif; }
+            h2 { margin: 10px; text-align: center; color: #333; }
+            iframe { width: 100%; height: calc(100% - 50px); border: none; }
+          </style>
+        </head>
+        <body>
+          <h2>${nombre}</h2>
+          <iframe src="${url}"></iframe>
+        </body>
+      </html>
+    `);
+  }
+}
+
+
+crearArchivoUrl(base64: string, tipo: string): string {
+  const byteCharacters = atob(base64);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    byteArrays.push(new Uint8Array(byteNumbers));
+  }
+
+  const blob = new Blob(byteArrays, { type: tipo });
+  return URL.createObjectURL(blob);
+}
+puedeEditarCantidad(fechaCreacion: any): boolean {
+  try {
+    let fecha: Date;
+    if (fechaCreacion?.toDate) {
+      fecha = fechaCreacion.toDate(); // Timestamp de Firestore
+    } else {
+      fecha = new Date(fechaCreacion); // String ISO o similar
+    }
+
+    const ahora = new Date();
+    const diferenciaMs = ahora.getTime() - fecha.getTime();
+    const horasPasadas = diferenciaMs / (1000 * 60 * 60);
+
+    return horasPasadas <= 24;
+  } catch (error) {
+    console.error('Error evaluando fecha de edición:', error);
+    return false;
+  }
+}
+
+async editarCantidad(solpeId: string, item: any) {
+  const alert = await this.alertController.create({
+    header: `Editar cantidad del ítem ${item.item}`,
+    inputs: [
+      {
+        name: 'nuevaCantidad',
+        type: 'number',
+        placeholder: 'Nueva cantidad',
+        value: item.cantidad
+      }
+    ],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Guardar',
+        handler: async (data) => {
+          const nuevaCantidad = Number(data.nuevaCantidad);
+          if (isNaN(nuevaCantidad) || nuevaCantidad <= 0) {
+            this.mostrarToast('Cantidad inválida.', 'danger');
+            return false;
+          }
+
+          try {
+            // Obtener doc y actualizar ítem
+            const solpeRef = this.firestore.collection('solpes').doc(solpeId);
+            const solpeSnap = await solpeRef.get().toPromise();
+            if (!solpeSnap?.exists) return;
+
+            const solpeData = solpeSnap.data() as any;
+            const items = solpeData.items || [];
+            const idx = items.findIndex((i: any) => i.item === item.item);
+            if (idx === -1) return;
+
+            items[idx].cantidad = nuevaCantidad;
+            await solpeRef.update({ items });
+
+            item.cantidad = nuevaCantidad; // actualizar en UI
+            this.cdRef.detectChanges();
+            this.mostrarToast('Cantidad actualizada.', 'success');
+          } catch (err) {
+            console.error(err);
+            this.mostrarToast('Error al actualizar cantidad.', 'danger');
+          }
+
+          return true;
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
 
   verPDFComparacion(solpedId: string, pdfId: string) {
     this.firestore.collection('solpes').doc(solpedId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
@@ -539,11 +867,6 @@ filtrarSolpes() {
     const alert = await this.alertController.create({
       header: 'Cambiar Estado de la SOLPED',
       inputs: [
-        { name: 'estatus', type: 'radio', label: 'Aprobado', value: 'Aprobado' },
-        { name: 'estatus', type: 'radio', label: 'Rechazado', value: 'Rechazado' },
-        { name: 'estatus', type: 'radio', label: 'Solicitado', value: 'Solicitado' },
-        { name: 'estatus', type: 'radio', label: 'Tránsito a faena', value: 'Tránsito a faena' },
-        { name: 'estatus', type: 'radio', label: 'Preaprobado', value: 'Preaprobado' },
         { name: 'estatus', type: 'radio', label: 'OC enviada a proveedor', value: 'OC enviada a proveedor' },
         { name: 'estatus', type: 'radio', label: 'Por importación', value: 'Por importación' },
       ],

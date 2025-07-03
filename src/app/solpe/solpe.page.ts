@@ -6,7 +6,6 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { ViewChildren, QueryList, ElementRef } from '@angular/core';
 import imageCompression from 'browser-image-compression';
 import { Item } from '../Interface/IItem';
-import { Comparaciones } from '../Interface/Icompara';
 @Component({
   selector: 'app-solpe',
   templateUrl: './solpe.page.html',
@@ -20,11 +19,14 @@ export class SolpePage implements OnInit  {
     fecha: '',
     numero_contrato: '',
     usuario: '',
+    nombre_solped: '',
+    tipo_solped: '',
     items: [] as Item[],
     estatus: 'Solicitado',
   };
+
   centrosCosto: { [key: string]: string } = {
-  '10-10-12': 'ZAMAQ',
+  '10-10-12': 'ZEMAQ',
   '20-10-01': 'BENÍTEZ',
   '30-10-01': 'CASA MATRIZ',
   '30-10-07': '30-10-07',
@@ -276,9 +278,11 @@ editarItem(index: number) {
         item.stock = 0;
       }
     }
-
+    this.solpe.nombre_solped = this.solpe.nombre_solped?.toUpperCase() || '';
     const solpeAGuardar = {
       ...this.solpe,
+      nombre_solped: this.solpe.nombre_solped,
+      tipo_solped: this.solpe.tipo_solped,
       items: this.solpe.items.map((item: any, index: number) => ({
         item: index + 1,
         descripcion: item.descripcion,
@@ -286,10 +290,11 @@ editarItem(index: number) {
         cantidad: item.cantidad,
         stock: item.stock,
         numero_interno: item.numero_interno,
+        nombre_centro_costo: this.solpe.nombre_centro_costo || this.centrosCosto[this.solpe.numero_contrato] || '',
         imagen_referencia_base64: item.imagen_referencia_base64 || null,
+        estado: 'pendiente'
       }))
     };
-
     this.firestore
       .collection('solpes')
       .add(solpeAGuardar)
@@ -335,11 +340,14 @@ resetearFormulario() {
     fecha: '',
     numero_contrato: '',
     usuario: '',
+    nombre_solped: '',
+    tipo_solped: '',
     items: [],
     estatus: 'Solicitado'
   };
   this.obtenerUltimoNumeroSolpe();
 }
+
 
 
   async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {

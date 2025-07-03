@@ -10,13 +10,11 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 })
 export class AppComponent implements OnInit {
   public appPages = [
-    { title: 'Menú de gestor', url: '/home', icon: 'home', roles: ['Aprobador/Editor','Admin'] },
-    { title: 'Gestor de OC', url: '/menu-oc', icon: 'newspaper', roles: ['Aprobador/Editor','Editor','Admin'] },
-    { title: 'Gestor de Ordenes', url: '/menu-ordenes', icon: 'newspaper', roles: ['Aprobador/Editor','Editor','Admin'] },
-    { title: 'Menú Admin', url: '/menu-admin', icon: 'desktop', roles: ['Admin'] },
-    { title: 'Menú SOLPED', url: '/menu-solpe', icon: 'document-text', roles: ['Generador solped', 'Aprobador/Editor','Admin'] },
-    { title: 'Menú de cruce de precios', url: '/menu-cotizador', icon: 'document-attach', roles: ['Editor', 'Aprobador/Editor','Admin'] },
-    { title: 'Perfil de usuario', url: '/perfil-usuario', icon: 'person-circle', roles: ['Generador solped', 'Editor', 'Aprobador/Editor','Admin'] },
+  { title: 'Panel de Gestión', url: '/home', icon: 'home', roles: ['Aprobador/Editor','Admin'] },
+  { title: 'Administrar Cotizaciones', url: '/menu-oc', icon: 'reader', roles: ['Aprobador/Editor','Editor','Admin'] },
+  { title: 'Panel Administrativo', url: '/menu-admin', icon: 'settings', roles: ['Admin'] },
+  { title: 'Mi Solped', url: '/menu-solpe', icon: 'document-text', roles: ['Generador solped', 'Aprobador/Editor','Admin'] },
+  { title: 'Mi Perfil', url: '/perfil-usuario', icon: 'person-circle', roles: ['Generador solped', 'Editor', 'Aprobador/Editor','Admin'] },
   ];
 
   filteredPages: any[] = [];

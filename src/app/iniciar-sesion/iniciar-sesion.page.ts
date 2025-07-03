@@ -91,7 +91,7 @@ redirigirPorRol(userRole: string) {
   if (userRole === 'Admin') {
     this.router.navigate(['/menu-admin']);
   } else if (userRole === 'Editor') {
-    this.router.navigate(['/menu-cotizador']);
+    this.router.navigate(['/menu-oc']);
   } else if (userRole === 'Aprobador/Editor') {
     this.router.navigate(['/home']);
   } else if (userRole === 'Generador solped') {

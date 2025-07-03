@@ -4,10 +4,78 @@
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
     <ion-title>Historial de Cotizaciones</ion-title>
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="mostrarFiltros = !mostrarFiltros">
+        <ion-icon name="funnel-outline" slot="icon-only" color="light"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
+
 <ion-content class="ion-padding">
+<ion-card *ngIf="modo === 'listado' && mostrarFiltros"class="ion-padding">
+  <ion-card-header>
+    <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
+  </ion-card-header>
+
+  <ion-card-content>
+    <ion-grid>
+      <ion-row>
+        <!-- Estado -->
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Estado</ion-label>
+            <ion-select [(ngModel)]="filtroEstado" placeholder="Todos" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let estado of estadosDisponibles" [value]="estado">{{ estado }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <!-- Centro de costo / Contrato -->
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Centro de Costo</ion-label>
+            <ion-select [(ngModel)]="filtroCentro" placeholder="Todos" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let contrato of listaContratos" [value]="contrato">{{ contrato }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <!-- Responsable -->
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Responsable</ion-label>
+            <ion-select [(ngModel)]="filtroResponsable" placeholder="Todos" interface="popover">
+              <ion-select-option value="">Todos</ion-select-option>
+              <ion-select-option *ngFor="let usuario of responsables" [value]="usuario">{{ usuario }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <!-- Fecha -->
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Fecha</ion-label>
+            <ion-input type="date" [(ngModel)]="filtroFecha"></ion-input>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col>
+          <ion-button expand="block" color="success" (click)="aplicarFiltros()">Aplicar filtros</ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" color="danger" (click)="limpiarFiltros()">Limpiar</ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-card-content>
+</ion-card>
+
 
   <ion-segment [(ngModel)]="modo" (ionChange)="cambioModo()" value="listado" class="ion-margin-bottom">
     <ion-segment-button value="listado">
@@ -58,6 +126,13 @@
         </ion-card-content>
       </ion-card>
     </ng-container>
+        <div class="ion-text-center ion-padding">
+      <ion-button size="small" (click)="irAlInicio()">Inicio</ion-button>
+      <ion-button size="small" (click)="paginaAnterior()" [disabled]="paginaActual <= 1">Anterior</ion-button>
+      <ion-label class="ion-padding-horizontal">Página {{ paginaActual }} de {{ totalPaginas }}</ion-label>
+      <ion-button size="small" (click)="paginaSiguiente()">Siguiente</ion-button>
+      <ion-button size="small" (click)="irAlFinal()">Final</ion-button>
+    </div>
   </ng-container>
 
 <ng-container *ngIf="!loadingInicial && modo === 'busqueda'">
@@ -78,7 +153,15 @@
   <ng-template #contenidoCard let-oc="oc">
     <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }} | {{ oc.centroCostoNombre }}</p>
     <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida | date:'medium' }}</p>
-    <p><strong>Nombre PDF:</strong> {{ oc.nombrePDF }}</p>
+    <p *ngIf="oc.nombrePDF">
+      <strong>Nombre PDF:</strong> {{ oc.nombrePDF }}
+    </p>
+
+    <ng-container *ngIf="!oc.nombrePDF && oc.archivosBase64?.length">
+      <p *ngFor="let archivo of oc.archivosBase64">
+        <strong>Archivo subido:</strong> {{ archivo.nombre }}
+      </p>
+    </ng-container>
     <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
     <p *ngIf="oc.comentario"><strong>Comentario del solicitante:</strong> 📝 {{ oc.comentario }}</p>
     <p>
@@ -99,29 +182,35 @@
                     [src]="oc.cotizacion.url"
                     width="100%" height="700px"
                     style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+
             <img *ngIf="oc.cotizacion.tipo.startsWith('image/')"
-                 [src]="oc.cotizacion.url"
-                 style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+                [src]="oc.cotizacion.url"
+                style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
           </div>
         </ion-col>
+        <ion-col size="12" size-md="6" *ngIf="oc.archivosBase64?.length">
+          <div *ngFor="let archivo of oc.archivosBase64">
+            <p>
+              <strong>Archivo:</strong> {{ archivo.nombre }}
+              <ion-button fill="outline" expand="block" (click)="mostrarArchivoDesdeArray(archivo)">
+                {{ archivo.mostrar ? 'Ocultar' : 'Ver archivo' }}
+              </ion-button>
+            </p>
 
-        <ion-col size="12" size-md="6" *ngIf="oc.ordenCompra">
-          <ion-button expand="block" fill="outline" (click)="mostrarArchivo(oc.ordenCompra)">
-            {{ oc.ordenCompra.mostrar ? 'Ocultar Orden de Compra' : 'Ver Orden de Compra' }}
-          </ion-button>
-          <div *ngIf="oc.ordenCompra.mostrar" class="ion-padding">
-            <iframe *ngIf="oc.ordenCompra.tipo === 'application/pdf'"
-                    [src]="oc.ordenCompra.url"
-                    width="100%" height="700px"
-                    style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
-            <img *ngIf="oc.ordenCompra.tipo.startsWith('image/')"
-                 [src]="oc.ordenCompra.url"
-                 style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+            <div *ngIf="archivo.mostrar" class="ion-padding">
+              <iframe *ngIf="archivo.tipo === 'application/pdf'"
+                      [src]="archivo.url"
+                      width="100%" height="700px"
+                      style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+
+              <img *ngIf="archivo.tipo.startsWith('image/')"
+                  [src]="archivo.url"
+                  style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+            </div>
           </div>
         </ion-col>
       </ion-row>
     </ion-grid>
-
     <ng-container *ngIf="oc.estatus === 'Rechazado'">
       <ion-item class="ion-margin-top">
         <ion-label position="stacked">Comentario antes de subir nueva cotización</ion-label>

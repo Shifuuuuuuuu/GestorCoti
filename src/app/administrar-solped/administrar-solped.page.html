@@ -136,9 +136,12 @@
             <strong [style.color]="getColorByStatus(solped.estatus)">
               {{ solped.estatus || 'Sin estado' }}
             </strong>
+          </ion-label><br>
+          <ion-label *ngIf="solped.precioTotalConIVA">
+            Precio Total con IVA:
+            <strong>{{ formatearCLP(solped.precioTotalConIVA) }}</strong>
           </ion-label>
         </ion-card-header>
-
         <ion-card-content>
           <ion-row class="ion-justify-content-between">
             <ion-col size="6">

@@ -9,30 +9,15 @@
 
 <ion-content id="main-content">
   <div class="menu-grid">
-    <div class="menu-item" (click)="navigateTo('visualizacion-solped')">
-      <ion-icon name="eye-outline" class="menu-icon"></ion-icon>
-      <div class="icon-wrapper">
-        <ion-badge *ngIf="preAprobadasCount > 0" class="contador-preaprobado">
-          {{ preAprobadasCount }}
-        </ion-badge>
-      </div>
-      <p>Aprobación de solped</p>
-      <span>Podrás aprobar o rechazar solped</span>
-    </div>
-    <div class="menu-item" (click)="navigateTo('historial-solpe')">
-      <ion-icon name="file-tray-outline" class="menu-icon"></ion-icon>
-      <p>Historial solped</p>
-      <span>Revisa el estado en que esta la solped</span>
-    </div>
-    <div class="menu-item" (click)="navigateTo('editar-solpeds')">
-      <ion-icon name="create-outline" class="menu-icon"></ion-icon>
-      <p>Editar solped</p>
-      <span>Podras editar las solped</span>
-    </div>
     <div class="menu-item" (click)="navigateTo('validar-oc')">
       <ion-icon name="checkmark-done-outline" class="menu-icon"></ion-icon>
       <p>Aprobador de Cotización</p>
       <span>Revisa y valida las cotizaciones</span>
+    </div>
+    <div class="menu-item" (click)="navigateTo('editar-solped')">
+      <ion-icon name="reader-outline" class="menu-icon"></ion-icon>
+      <p>Historial de SOLPED</p>
+      <span>Revisa y edita el historial de solicitudes SOLPED</span>
     </div>
     <div class="menu-item" (click)="navigateTo('historial-oc')">
       <ion-icon name="time-outline" class="menu-icon"></ion-icon>

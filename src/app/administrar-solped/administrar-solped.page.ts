@@ -77,6 +77,14 @@ export class AdministrarSolpedPage implements OnInit {
       this.totalPaginas = Math.ceil(total / this.itemsPorPagina);
     });
   }
+formatearCLP(valor: number): string {
+  return valor?.toLocaleString('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }) || '$0';
+}
 
   cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     let query = this.firestore.collection('solpes', ref => {
