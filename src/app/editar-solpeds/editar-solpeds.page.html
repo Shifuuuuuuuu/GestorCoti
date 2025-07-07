@@ -226,14 +226,29 @@
       <ion-item lines="none">
         <ion-label>
           <h2 color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</h2>
-          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} | Tipo: {{ solpe.tipo_solped }} | Nombre: {{ solpe.nombre_solped }}| Usuario: {{ solpe.usuario }}</p>
+          <p style="font-size: 14px;">
+            Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} |
+            Tipo: {{ solpe.tipo_solped }} | Nombre: {{ solpe.nombre_solped }} | Usuario: {{ solpe.usuario }}
+          </p>
         </ion-label>
-        <ion-badge [color]="getColorByStatus(solpe.estatus)"[ngStyle]="{
+
+        <div style="display: flex; align-items: center;">
+          <ion-badge [ngStyle]="{
             'background-color': getColorByStatus(solpe.estatus),
             'color': 'white',
             'padding': '4px 10px',
             'font-weight': 'bold'
-          }" style="height: 25px; font-size: 12px;">{{ solpe.estatus }}</ion-badge>
+          }" style="height: 25px; font-size: 12px;">
+            {{ solpe.estatus }}
+          </ion-badge>
+
+          <ion-badge
+            *ngIf="solpe.comentarios?.length > 0 && solpe.usuario_uid === userUid && !solpe.comentariosVistos?.[userUid]"
+            class="badge-comentarios"
+          >
+            💬 {{ solpe.comentarios.length }}
+          </ion-badge>
+        </div>
       </ion-item>
     </ion-card-header>
 
@@ -251,15 +266,21 @@
         <ion-row class="tabla-header">
           <ion-col>Ítem</ion-col>
           <ion-col>Descripción</ion-col>
+          <ion-col>Codigo</ion-col>
           <ion-col>Cantidad</ion-col>
+          <ion-col>Cantidad cotizada</ion-col>
           <ion-col>N° Interno/ Patente</ion-col>
           <ion-col>Imagen</ion-col>
           <ion-col>Estatus</ion-col>
+          <ion-col></ion-col>
+          <ion-col></ion-col>
         </ion-row>
         <ion-row *ngFor="let item of solpe.items" class="tabla-row">
           <ion-col>{{ item.item }}</ion-col>
           <ion-col>{{ item.descripcion }}</ion-col>
+          <ion-col>{{ item.codigo_referencial }}</ion-col>
           <ion-col>{{ item.cantidad }}</ion-col>
+          <ion-col>{{ item.cantidad_cotizada }}</ion-col>
           <ion-col>{{ item.numero_interno }}</ion-col>
           <ion-col>
             <img
@@ -281,19 +302,29 @@
               {{ item.estado || 'Pendiente' }}
             </ion-badge>
           </ion-col>
-
-          <!-- AQUI va el botón de editar -->
           <ion-col>
             <ion-button
               size="small"
               fill="outline"
               color="primary"
               *ngIf="puedeEditarCantidad(solpe.fecha)"
-              (click)="editarCantidad(solpe.id, item)"
+              (click)="editarItem(solpe.id, item)"
+
             >
               Editar
             </ion-button>
           </ion-col>
+          <ion-col>
+          <ion-button
+            size="small"
+            fill="outline"
+            color="danger"
+            *ngIf="puedeEditarCantidad(solpe.fecha)"
+            (click)="confirmarEliminacionItem(solpe.id, item)"
+          >
+            Eliminar
+          </ion-button>
+        </ion-col>
         </ion-row>
       </ion-grid>
         <ion-list *ngIf="ocsCargadas[solpe.id]?.length">
@@ -367,11 +398,32 @@
               <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'oc')">
                 Ver OC
               </ion-button>
-
             </div>
           </ion-accordion>
         </ion-accordion-group>
-          <input type="file" hidden [id]="'ocInput-' + solpe.id" (change)="subirOC($event, solpe.id)" accept="application/pdf" />
+        </ion-list>
+        <ion-item>
+          <ion-label position="stacked">💬 Agregar Comentario</ion-label>
+          <ion-textarea [(ngModel)]="solpe.nuevoComentario" autoGrow="true" placeholder="Escribe un comentario..."></ion-textarea>
+        </ion-item>
+
+        <ion-button expand="block" color="primary" (click)="agregarComentario(solpe)">
+          Enviar
+        </ion-button>
+        <!-- Mostrar comentarios anteriores -->
+        <ion-list *ngIf="solpe.comentarios?.length > 0">
+          <ion-list-header>
+            <ion-label><strong>🗂 Comentarios anteriores</strong></ion-label>
+          </ion-list-header>
+          <ion-item *ngFor="let comentario of solpe.comentarios">
+            <ion-label>
+              <p>
+                {{ (comentario.fecha?.toDate ? comentario.fecha.toDate() : comentario.fecha) | date:'dd/MM/yyyy HH:mm' }}
+              </p>
+              <h3>{{ comentario.usuario }}</h3>
+              <p>{{ comentario.texto }}</p>
+            </ion-label>
+          </ion-item>
         </ion-list>
     </ion-card-content>
   </ion-card>

@@ -234,6 +234,11 @@
             'padding': '4px 10px',
             'font-weight': 'bold'
           }" style="height: 25px; font-size: 12px;">{{ solpe.estatus }}</ion-badge>
+          <ion-badge
+            *ngIf="solpe.comentarios?.length > 0 && userUid && solpe.usuario_uid === userUid && !solpe.comentariosVistos?.[userUid]"
+            class="badge-comentarios">
+            💬 {{ solpe.comentarios.length }}
+          </ion-badge>
       </ion-item>
     </ion-card-header>
 
@@ -257,6 +262,7 @@
         <ion-row class="tabla-header">
           <ion-col>Ítem</ion-col>
           <ion-col>Descripción</ion-col>
+          <ion-col>Codigo</ion-col>
           <ion-col>Cantidad</ion-col>
           <ion-col>N° Interno/ Patente</ion-col>
           <ion-col>Imagen</ion-col>
@@ -265,6 +271,7 @@
         <ion-row *ngFor="let item of solpe.items" class="tabla-row">
           <ion-col>{{ item.item }}</ion-col>
           <ion-col>{{ item.descripcion }}</ion-col>
+          <ion-col>{{ item.codigo_referencial }}</ion-col>
           <ion-col>{{ item.cantidad }}</ion-col>
           <ion-col>{{ item.numero_interno }}</ion-col>
           <ion-col>
@@ -364,7 +371,30 @@
             </div>
           </ion-accordion>
         </ion-accordion-group>
-          <input type="file" hidden [id]="'ocInput-' + solpe.id" (change)="subirOC($event, solpe.id)" accept="application/pdf" />
+        </ion-list>
+                <ion-item>
+          <ion-label position="stacked">💬 Agregar Comentario</ion-label>
+          <ion-textarea [(ngModel)]="solpe.nuevoComentario" autoGrow="true" placeholder="Escribe un comentario..."></ion-textarea>
+        </ion-item>
+
+        <ion-button expand="block" color="primary" (click)="agregarComentario(solpe)">
+          Enviar
+        </ion-button>
+
+        <!-- Mostrar comentarios anteriores -->
+        <ion-list *ngIf="solpe.comentarios?.length">
+          <ion-list-header>
+            <ion-label><strong>🗂 Comentarios anteriores</strong></ion-label>
+          </ion-list-header>
+          <ion-item *ngFor="let comentario of solpe.comentarios">
+            <ion-label>
+              <p>
+                {{ (comentario.fecha?.toDate ? comentario.fecha.toDate() : comentario.fecha) | date:'dd/MM/yyyy HH:mm' }}
+              </p>
+              <h3>{{ comentario.usuario }}</h3>
+              <p>{{ comentario.texto }}</p>
+            </ion-label>
+          </ion-item>
         </ion-list>
     </ion-card-content>
   </ion-card>

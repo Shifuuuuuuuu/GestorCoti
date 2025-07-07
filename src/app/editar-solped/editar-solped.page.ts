@@ -50,6 +50,7 @@ export class EditarSolpedPage implements OnInit {
   ordenAscendente: boolean = true;
   loading: boolean = true;
   ocsCargadas: { [solpeId: string]: any[] } = {};
+  userUid: string = '';
 
 
   constructor(
@@ -105,13 +106,14 @@ descargarExcel(solpe: any) {
   });
 
   const empresas = Array.from(empresasSet);
-  worksheetData.push(['ITEM', 'CANTIDAD', 'DESCRIPCIÓN', ...empresas]);
+  worksheetData.push(['ITEM', 'CANTIDAD', 'DESCRIPCIÓN','CODIGO_REFERENCIAL', ...empresas]);
 
   solpe.items.forEach((item: Item, index: number) => {
     const filaBase = [
       item.item || (index + 1),
       item.cantidad || '',
-      item.descripcion || ''
+      item.descripcion || '',
+      item.codigo_referencial || '',
     ];
 
     const preciosPorEmpresa: { [empresa: string]: string | number } = {};
@@ -227,28 +229,25 @@ async abrirImagenModal(imagenBase64: string) {
 toggleDetalle(solpeId: string) {
   this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
 
-  if (this.solpeExpandidaId) {
-    console.log('📦 Consultando OCs para SOLPED ID:', solpeId);
+  const solpe = this.solpes.find(s => s.id === solpeId);
 
-    this.firestore
-      .collection('solpes')
-      .doc(solpeId)
-      .collection('ocs')
-      .get()
-      .subscribe(snapshot => {
-        console.log(`📋 Documentos encontrados: ${snapshot.size}`);
-        snapshot.docs.forEach(doc => console.log('✅ OC encontrada:', doc.id, doc.data()));
-
-        this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        this.cdRef.detectChanges();
-      }, error => {
-        console.error('❌ Error al cargar OCs:', error);
-      });
+  if (solpe?.usuario_uid === this.userUid && !solpe.comentariosVistos?.[this.userUid]) {
+    const updateData = { [`comentariosVistos.${this.userUid}`]: true };
+    this.firestore.collection('solpes').doc(solpeId).update(updateData);
+    solpe.comentariosVistos = { ...(solpe.comentariosVistos || {}), [this.userUid]: true };
   }
+
+  this.firestore.collection('solpes').doc(solpeId).collection('ocs').get().subscribe(snapshot => {
+    this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    this.cdRef.detectChanges();
+  }, error => {
+    console.error('❌ Error al cargar OCs:', error);
+  });
 }
+
 
 buscarSolpe(modo: 'buscar' | 'estados' = 'buscar') {
   this.firestore
@@ -504,25 +503,76 @@ async guardarComparacionesEnFirestore(solpe: any) {
 
     itemRef.update({ comparaciones: item.comparaciones });
   }
-  cargarSolpes() {
-    this.firestore
-      .collection('solpes', ref =>
-        ref.orderBy('numero_solpe', 'desc')
-      )
-      .get()
-      .subscribe(snapshot => {
-        const solpesTemp: any[] = [];
-        snapshot.docs.forEach((doc: any) => {
-          const solpe = doc.data();
-          solpe.id = doc.id;
-          solpesTemp.push(solpe);
-        });
-        this.solpesOriginal = solpesTemp;
-        this.solpesFiltradas = [...this.solpesOriginal];
-        this.loading = false;
+cargarSolpes() {
+  this.firestore
+    .collection('solpes', ref => ref.orderBy('numero_solpe', 'desc'))
+    .get()
+    .subscribe(snapshot => {
+      const solpesTemp: any[] = [];
+
+      snapshot.docs.forEach((doc: any) => {
+        const data = doc.data();
+        const solpe = {
+          id: doc.id,
+          ...data,
+          comentarios: data.comentarios || [],
+          comentariosVistos: data.comentariosVistos || {},
+          usuario_uid: data.usuario_uid || null
+        };
+        solpesTemp.push(solpe);
       });
+
+      this.solpesOriginal = solpesTemp;
+      this.solpesFiltradas = [...this.solpesOriginal];
+      this.loading = false;
+    });
+}
+
+async agregarComentario(solpe: any) {
+  const texto = (solpe.nuevoComentario || '').trim();
+  if (!texto) {
+    this.mostrarToast('Debes ingresar un comentario.', 'danger');
+    return;
   }
 
+  const usuario = await this.obtenerNombreUsuario();
+
+  const nuevoComentario = {
+    texto: texto,
+    fecha: new Date(),
+    usuario: usuario
+  };
+
+  try {
+    const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
+    const solpeSnap = await solpeRef.get().toPromise();
+    if (!solpeSnap?.exists) {
+      throw new Error('SOLPED no encontrada');
+    }
+
+    const solpeData = solpeSnap.data() as any;
+    const comentariosActuales = solpeData.comentarios || [];
+
+    comentariosActuales.push(nuevoComentario);
+    await solpeRef.update({ comentarios: comentariosActuales });
+
+    solpe.comentarios = comentariosActuales;
+    solpe.nuevoComentario = '';
+    this.mostrarToast('Comentario agregado', 'success');
+  } catch (err) {
+    console.error(err);
+    this.mostrarToast('Error al guardar el comentario.', 'danger');
+  }
+}
+private async obtenerNombreUsuario(): Promise<string> {
+  const afUser = await this.afAuth.currentUser;
+  if (afUser?.uid) {
+    const userSnap = await this.firestore.collection('Usuarios').doc(afUser.uid).get().toPromise();
+    const userData = userSnap?.data() as any;
+    return userData?.fullName || 'Anónimo';
+  }
+  return 'Anónimo';
+}
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
       this.listaUsuarios = snapshot.docs.map(doc => {

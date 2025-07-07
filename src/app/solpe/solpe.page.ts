@@ -21,9 +21,11 @@ export class SolpePage implements OnInit  {
     usuario: '',
     nombre_solped: '',
     tipo_solped: '',
+    empresa: '',
     items: [] as Item[],
     estatus: 'Solicitado',
   };
+  enviandoSolpe = false;
 
   centrosCosto: { [key: string]: string } = {
   '10-10-12': 'ZEMAQ',
@@ -51,15 +53,20 @@ export class SolpePage implements OnInit  {
     private menu: MenuController,
   ) {}
 
-  ngOnInit() {
-    const hoy = new Date();
-    this.solpe.fecha = this.formatDate(hoy);
-    this.obtenerUltimoNumeroSolpe();
-    this.obtenerNombreUsuario();
+ngOnInit() {
+  const hoy = new Date();
+  this.solpe.fecha = this.formatDate(hoy);
+  this.obtenerNombreUsuario();
+
+  if (this.solpe.empresa) {
+    this.obtenerUltimoNumeroSolpePorEmpresa(this.solpe.empresa);
+  }
+
   if (!this.solpe.numero_solpe) {
     this.cargarDatosDeLocalStorage();
   }
-  }
+}
+
 formatDate(date: Date): string {
   const year = date.getFullYear();
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -121,17 +128,28 @@ guardarSolpeEnLocalStorage() {
 
 
 
-  obtenerUltimoNumeroSolpe() {
-    this.solpeService.obtenerUltimaSolpe().subscribe((solpes: any[]) => {
-      if (solpes.length > 0) {
-        const ultimoNumero = solpes[0].numero_solpe;
-        this.solpe.numero_solpe = ultimoNumero + 1;
-      } else {
-        this.solpe.numero_solpe = 1;
-      }
-      this.guardarDatosEnLocalStorage();
-    });
-  }
+obtenerUltimoNumeroSolpePorEmpresa(empresa: string) {
+  if (!empresa) return;
+
+  this.firestore.collection('solpes', ref =>
+    ref.where('empresa', '==', empresa)
+  ).get().subscribe((snapshot: any) => {
+    const cantidadExistente = snapshot.size;
+    this.solpe.numero_solpe = cantidadExistente + 1;
+
+    this.guardarDatosEnLocalStorage();
+  });
+}
+
+
+
+
+actualizarEmpresa(event: any) {
+  const empresaSeleccionada = event.detail.value;
+  this.solpe.empresa = empresaSeleccionada;
+  this.obtenerUltimoNumeroSolpePorEmpresa(empresaSeleccionada);
+}
+
 
   ionViewWillEnter() {
     this.menu.enable(true);
@@ -252,73 +270,77 @@ editarItem(index: number) {
     });
   }
 
-  async guardarSolpe() {
-    if (!this.solpe.numero_contrato) {
-      this.mostrarToast('Debes seleccionar un Centro de Costo', 'warning');
-      return;
-    }
-
-    if (this.solpe.items.length === 0) {
-      this.mostrarToast('Debes agregar al menos un item', 'warning');
-      return;
-    }
-
-    for (let item of this.solpe.items) {
-      if (!item.descripcion || !item.numero_interno || item.numero_interno.trim() === '') {
-        this.mostrarToast('Todos los campos excepto Código Referencial son obligatorios', 'warning');
-        return;
-      }
-      if (!item.codigo_referencial || item.codigo_referencial.trim() === '') {
-        item.codigo_referencial = '0';
-      }
-      if (item.cantidad == null || item.cantidad === '') {
-        item.cantidad = 0;
-      }
-      if (item.stock == null || item.stock === '') {
-        item.stock = 0;
-      }
-    }
-    this.solpe.nombre_solped = this.solpe.nombre_solped?.toUpperCase() || '';
-    const solpeAGuardar = {
-      ...this.solpe,
-      nombre_solped: this.solpe.nombre_solped,
-      tipo_solped: this.solpe.tipo_solped,
-      items: this.solpe.items.map((item: any, index: number) => ({
-        item: index + 1,
-        descripcion: item.descripcion,
-        codigo_referencial: item.codigo_referencial,
-        cantidad: item.cantidad,
-        stock: item.stock,
-        numero_interno: item.numero_interno,
-        nombre_centro_costo: this.solpe.nombre_centro_costo || this.centrosCosto[this.solpe.numero_contrato] || '',
-        imagen_referencia_base64: item.imagen_referencia_base64 || null,
-        estado: 'pendiente'
-      }))
-    };
-    this.firestore
-      .collection('solpes')
-      .add(solpeAGuardar)
-      .then(async docRef => {
-        await this.firestore
-          .collection('solpes')
-          .doc(docRef.id)
-          .collection('historialEstados')
-          .add({
-            fecha: new Date(),
-            estatus: solpeAGuardar.estatus,
-            usuario: this.solpe.usuario
-          });
-        this.mostrarToast('SOLPE guardada con éxito', 'success');
-        this.resetearFormulario();
-        this.eliminarDatosDeLocalStorage();
-      })
-      .catch(err => {
-        console.error(err);
-        this.mostrarToast('Error al guardar la SOLPE', 'danger');
-      });
+async guardarSolpe() {
+  if (this.enviandoSolpe) {
+    this.mostrarToast('Espera antes de enviar otra SOLPED', 'warning');
+    return;
   }
 
+  this.enviandoSolpe = true;  // bloqueo de botón
 
+  setTimeout(() => {
+    this.enviandoSolpe = false;  // desbloqueo tras 5 segundos
+  }, 5000);  // puedes ajustar el tiempo si deseas
+
+  if (!this.solpe.numero_contrato) {
+    this.mostrarToast('Debes seleccionar un Centro de Costo', 'warning');
+    return;
+  }
+
+  if (this.solpe.items.length === 0) {
+    this.mostrarToast('Debes agregar al menos un item', 'warning');
+    return;
+  }
+
+  for (let item of this.solpe.items) {
+    if (!item.descripcion || !item.numero_interno || !this.solpe.empresa ||  item.numero_interno.trim() === '') {
+      this.mostrarToast('Todos los campos excepto Código Referencial son obligatorios', 'warning');
+      return;
+    }
+    item.codigo_referencial = item.codigo_referencial?.trim() || '0';
+    item.cantidad = item.cantidad || 0;
+    item.stock = item.stock || 0;
+  }
+
+  // Asegurar que la fecha esté actualizada antes de guardar
+  this.solpe.fecha = this.formatDate(new Date());
+
+  this.solpe.nombre_solped = this.solpe.nombre_solped?.toUpperCase() || '';
+
+  const solpeAGuardar = {
+    ...this.solpe,
+    nombre_solped: this.solpe.nombre_solped,
+    tipo_solped: this.solpe.tipo_solped,
+    empresa: this.solpe.empresa,
+    items: this.solpe.items.map((item: any, index: number) => ({
+      item: index + 1,
+      descripcion: item.descripcion,
+      codigo_referencial: item.codigo_referencial,
+      cantidad: item.cantidad,
+      stock: item.stock,
+      numero_interno: item.numero_interno,
+      nombre_centro_costo: this.solpe.nombre_centro_costo || this.centrosCosto[this.solpe.numero_contrato] || '',
+      imagen_referencia_base64: item.imagen_referencia_base64 || null,
+      estado: 'pendiente'
+    }))
+  };
+
+  try {
+    const docRef = await this.firestore.collection('solpes').add(solpeAGuardar);
+    await this.firestore.collection('solpes').doc(docRef.id).collection('historialEstados').add({
+      fecha: new Date(),
+      estatus: solpeAGuardar.estatus,
+      usuario: this.solpe.usuario
+    });
+
+    this.mostrarToast('SOLPE guardada con éxito', 'success');
+    this.resetearFormulario();
+    this.eliminarDatosDeLocalStorage();
+  } catch (err) {
+    console.error(err);
+    this.mostrarToast('Error al guardar la SOLPE', 'danger');
+  }
+}
 
 
 eliminarDatosDeLocalStorage() {
@@ -335,18 +357,27 @@ eliminarDatosDeLocalStorage() {
   }
 
 resetearFormulario() {
+  const hoy = this.formatDate(new Date());
+  const empresaActual = this.solpe.empresa;
+
   this.solpe = {
     numero_solpe: null,
-    fecha: '',
+    fecha: hoy,
     numero_contrato: '',
-    usuario: '',
+    usuario: this.solpe.usuario,
     nombre_solped: '',
     tipo_solped: '',
+    empresa: empresaActual,
     items: [],
-    estatus: 'Solicitado'
+    estatus: 'Solicitado',
   };
-  this.obtenerUltimoNumeroSolpe();
+
+  if (empresaActual) {
+    this.obtenerUltimoNumeroSolpePorEmpresa(empresaActual);
+  }
 }
+
+
 
 
 

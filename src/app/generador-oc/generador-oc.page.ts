@@ -28,13 +28,14 @@ export class GeneradorOcPage implements OnInit {
   solpedSeleccionadaId: string = '';
   itemsSolped: any[] = [];
   itemsSeleccionados: Set<string> = new Set();
-  usarSolped: boolean = false;
+  usarSolped: boolean = true;
   solpedSeleccionada: any = null;
   precioTotalConIVA: number = 0;
   aprobadorSugerido: string = '';
   archivos: File[] = [];
   vistasArchivos: { url: SafeResourceUrl, esPDF: boolean }[] = [];
   precioFormateado: string = '';
+  moneda: string = 'CLP';
 
   centrosCosto: { [codigo: string]: string } = {
     "10-10-12": "ZEMAQ",
@@ -66,13 +67,14 @@ export class GeneradorOcPage implements OnInit {
   }
 cargarSolpedSolicitadas() {
   this.firestore.collection('solpes', ref =>
-    ref.where('estatus', '==', 'Solicitado')
+    ref.where('estatus', 'in', ['Solicitado', 'Cotizando'])  // Incluye también "Cotizando"
   ).get().subscribe(snapshot => {
     this.solpedDisponibles = snapshot.docs
       .map(doc => ({ id: doc.id, ...(doc.data() as any) }))
       .sort((a, b) => (a.numero_solpe || 0) - (b.numero_solpe || 0));
   });
 }
+
 formatearPrecio(event: any) {
   const rawValue = event.detail.value.replace(/\D/g, '');
   const numero = Number(rawValue);
@@ -100,6 +102,11 @@ calcularAprobador() {
     this.aprobadorSugerido = 'Alejandro Candia';
   }
 }
+eliminarArchivo(index: number) {
+  this.archivos.splice(index, 1);
+  this.vistasArchivos.splice(index, 1);
+  this.mostrarToast('Archivo eliminado correctamente.', 'success');
+}
 
 onChangeSolped() {
   if (!this.solpedSeleccionadaId) return;
@@ -111,15 +118,17 @@ onChangeSolped() {
     this.centroCosto = data.numero_contrato || '';
 
     const todosItems = data.items || [];
+
     this.itemsSolped = todosItems
-      .filter((item: any) => item.estado === 'pendiente')
+      .filter((item: any) => item.estado !== 'completado') // ✅ FILTRAR ítems completados
       .map((item: any) => ({
         ...item,
+        cantidad_cotizada: item.cantidad_cotizada || 0,
+        cantidad_para_cotizar: 0,
         __tempId: `${item.item}-${item.descripcion}`
       }));
   });
 }
-
 
 async onMultipleFilesSelected(event: any) {
   const archivosSeleccionados: File[] = Array.from(event.target.files);
@@ -268,19 +277,39 @@ async convertirImagenAPdf(base64Imagen: string, mimeType: string): Promise<strin
 async enviarOC() {
   if (this.enviando) return;
 
-  // Validación básica
-  if (
-    this.archivos.length === 0 ||
-    !this.centroCosto ||
-    !this.precioTotalConIVA ||
-    this.precioTotalConIVA <= 0
-  ) {
-    this.mostrarToast('Completa todos los campos requeridos, incluyendo el precio total con IVA.', 'warning');
+  // ✅ Validaciones obligatorias
+  if (!this.centroCosto.trim()) {
+    this.mostrarToast('Debes seleccionar un Centro de Costo.', 'warning');
+    return;
+  }
+
+  if (!this.tipoCompra) {
+    this.mostrarToast('Debes seleccionar el tipo de compra.', 'warning');
+    return;
+  }
+
+  if (this.tipoCompra === 'patente' && !this.destinoCompra.trim()) {
+    this.mostrarToast('Debes ingresar la patente para el tipo de compra "Patente".', 'warning');
+    return;
+  }
+
+  if (!this.precioTotalConIVA || this.precioTotalConIVA <= 0) {
+    this.mostrarToast('Debes ingresar un precio total con IVA válido.', 'warning');
+    return;
+  }
+
+  if (!this.moneda) {
+    this.mostrarToast('Debes seleccionar una moneda.', 'warning');
+    return;
+  }
+
+  if (this.archivos.length === 0) {
+    this.mostrarToast('Debes subir al menos un archivo.', 'warning');
     return;
   }
 
   if (this.usarSolped && !this.solpedSeleccionadaId) {
-    this.mostrarToast('Selecciona una SOLPED o desactiva el checkbox.', 'warning');
+    this.mostrarToast('Selecciona una SOLPED o desactiva la opción.', 'warning');
     return;
   }
 
@@ -303,7 +332,7 @@ async enviarOC() {
   const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
   const historialEntry = { usuario, estatus: 'Preaprobado', fecha };
 
-  this.calcularAprobador(); // Asegura que esté actualizado
+  this.calcularAprobador();
 
   const dataToSave: any = {
     id,
@@ -318,12 +347,12 @@ async enviarOC() {
     comentario: this.comentario || '',
     numero_contrato: this.centroCosto,
     nombre_centro_costo: centroNombre,
+    moneda: this.moneda,
     precioTotalConIVA: this.precioTotalConIVA,
     aprobadorSugerido: this.aprobadorSugerido,
     archivosBase64: []
   };
 
-  // Leer todos los archivos como base64
   for (const archivo of this.archivos) {
     const base64: string = await new Promise(resolve => {
       const reader = new FileReader();
@@ -338,17 +367,28 @@ async enviarOC() {
     });
   }
 
-  // Asociar SOLPED si corresponde
   if (this.usarSolped && this.solpedSeleccionadaId) {
     dataToSave.solpedId = this.solpedSeleccionadaId;
 
     const itemsFinal = this.itemsSolped.map((item) => {
-      const nuevoItem = { ...item };
-      delete nuevoItem.comparaciones;
-      delete nuevoItem.nombre_centro_costo;
-      delete nuevoItem.numero_contrato;
-      nuevoItem.estado = this.itemsSeleccionados.has(item.__tempId) ? 'aprobado' : 'pendiente';
-      return nuevoItem;
+      const cantidadTotal = item.cantidad;
+      const cantidadAnterior = item.cantidad_cotizada || 0;
+      const cantidadNueva = Number(item.cantidad_para_cotizar || 0);
+      const cantidadActualizada = cantidadAnterior + cantidadNueva;
+
+      let nuevoEstado = 'pendiente';
+      if (cantidadActualizada >= cantidadTotal) {
+        nuevoEstado = 'completado';
+      } else if (cantidadActualizada > 0) {
+        nuevoEstado = 'parcial';
+      }
+
+      return {
+        ...item,
+        cantidad_cotizada: cantidadActualizada,
+        cantidad_para_cotizar: cantidadNueva,
+        estado: nuevoEstado
+      };
     });
 
     dataToSave.items = itemsFinal;
@@ -357,7 +397,7 @@ async enviarOC() {
   try {
     await this.firestore.collection('ordenes_oc').add(dataToSave);
 
-    // Actualizar estado de ítems en la SOLPED
+    // 👉 Actualizar SOLPED
     if (this.usarSolped && this.solpedSeleccionadaId) {
       const docSnapshot = await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).get().toPromise();
       if (docSnapshot?.exists) {
@@ -366,25 +406,53 @@ async enviarOC() {
 
         const itemsActualizados = todosItemsOriginales.map((item: any) => {
           const clave = `${item.item}-${item.descripcion}`;
-          if (this.itemsSeleccionados.has(clave)) {
-            return { ...item, estado: 'aprobado' };
+          const actualizado = this.itemsSolped.find(i => i.__tempId === clave);
+
+          if (actualizado) {
+            const cantidadAnterior = item.cantidad_cotizada || 0;
+            const cantidadNueva = Number(actualizado.cantidad_para_cotizar || 0);
+            const cantidadTotal = item.cantidad;
+            const cantidadFinal = cantidadAnterior + cantidadNueva;
+
+            let nuevoEstado = 'pendiente';
+            if (cantidadFinal >= cantidadTotal) {
+              nuevoEstado = 'completado';
+            } else if (cantidadFinal > 0) {
+              nuevoEstado = 'parcial';
+            }
+
+            return {
+              ...item,
+              cantidad_cotizada: cantidadFinal,
+              estado: nuevoEstado
+            };
           }
+
           return item;
         });
 
-        const todosAprobados = itemsActualizados.every((item: any) => item.estado === 'aprobado');
-        const nuevoEstatusSolped = todosAprobados ? 'Aprobado' : 'Solicitado';
+        // 👉 Calcular estado general de la SOLPED
+        const todosCompletados = itemsActualizados.every(i => i.estado === 'completado');
+        const todosPendientes = itemsActualizados.every(i => i.estado === 'pendiente');
+        const hayParciales = itemsActualizados.some(i => i.estado === 'parcial');
+
+        let nuevoEstatusSolped = 'Solicitado';
+        if (todosCompletados) {
+          nuevoEstatusSolped = 'Aprobado';
+        } else if (hayParciales || !todosPendientes) {
+          nuevoEstatusSolped = 'Cotizando';
+        }
 
         await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).update({
-          estatus: nuevoEstatusSolped,
           items: itemsActualizados,
+          estatus: nuevoEstatusSolped
         });
       }
     }
 
     this.mostrarToast('Cotización enviada exitosamente.', 'success');
 
-    // Limpiar formulario
+    // ✅ Limpiar formulario
     this.centroCosto = '';
     this.tipoCompra = 'stock';
     this.destinoCompra = '';
@@ -392,12 +460,13 @@ async enviarOC() {
     this.vistasArchivos = [];
     this.comentario = '';
     this.itemsSeleccionados.clear();
-    this.usarSolped = false;
+    this.usarSolped = true;
     this.solpedSeleccionadaId = '';
     this.itemsSolped = [];
     this.precioTotalConIVA = 0;
     this.precioFormateado = '';
     this.aprobadorSugerido = '';
+    this.moneda = 'CLP';
     await this.cargarSiguienteNumero();
 
     const inputElement = document.getElementById('inputArchivo') as HTMLInputElement;
@@ -410,7 +479,6 @@ async enviarOC() {
     this.enviando = false;
   }
 }
-
 
 
 

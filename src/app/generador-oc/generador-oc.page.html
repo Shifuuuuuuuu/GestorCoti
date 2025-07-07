@@ -68,22 +68,25 @@
           <ion-card-content>
             <ion-list>
               <ion-item *ngFor="let item of itemsSolped">
-                <ion-checkbox
-                  slot="start"
-                  [checked]="itemsSeleccionados.has(item.__tempId)"
-                  (ionChange)="toggleSeleccion(item.__tempId)">
-                </ion-checkbox>
                 <ion-label class="ion-text-wrap">
                   <h3>{{ item.descripcion }}</h3>
-                  <p>Cantidad: {{ item.cantidad }} - Unidad: {{ item.unidad }}</p>
+                  <p>
+                    Cantidad Total: {{ item.cantidad }} <br>
+                    Cotizado antes: {{ item.cantidad_cotizada || 0 }}
+                  </p>
+                  <ion-input
+                    type="number"
+                    placeholder="Cantidad a cotizar"
+                    min="0"
+                    [max]="item.cantidad - item.cantidad_cotizada"
+                    [(ngModel)]="item.cantidad_para_cotizar">
+                  </ion-input>
                 </ion-label>
               </ion-item>
             </ion-list>
           </ion-card-content>
         </ion-card>
       </ng-container>
-
-
       <ion-item>
         <ion-label position="floating">Centro de Costo</ion-label>
         <ion-select [(ngModel)]="centroCosto" required>
@@ -108,7 +111,6 @@
         </ion-select>
       </ion-item>
 
-      <!-- Tipo de compra -->
       <ion-item>
         <ion-label position="floating">N° Patente/ Stock</ion-label>
         <ion-select [(ngModel)]="tipoCompra" interface="popover" required>
@@ -119,6 +121,14 @@
       <ion-item *ngIf="tipoCompra === 'patente'">
         <ion-input [(ngModel)]="destinoCompra" placeholder="Escribe la patente aquí"></ion-input>
       </ion-item>
+      <ion-item>
+      <ion-label position="floating">Moneda</ion-label>
+      <ion-select [(ngModel)]="moneda" interface="popover">
+        <ion-select-option value="CLP">CLP - Peso Chileno</ion-select-option>
+        <ion-select-option value="USD">USD - Dólar</ion-select-option>
+        <ion-select-option value="UF">UF - Unidad de Fomento</ion-select-option>
+      </ion-select>
+    </ion-item>
       <ion-item>
         <ion-label position="floating">Precio Total con IVA</ion-label>
         <ion-input
@@ -134,13 +144,11 @@
         </ion-label>
       </ion-item>
 
-      <!-- Comentario -->
       <ion-item>
         <ion-label position="floating">Comentario</ion-label>
         <ion-textarea [(ngModel)]="comentario" placeholder="Agrega un comentario opcional..."></ion-textarea>
       </ion-item>
 
-      <!-- Subida de archivo -->
       <ion-item>
         <ion-label>Archivos PDF o Imagen (Se puede subir más PDF)</ion-label>
         <input
@@ -153,16 +161,24 @@
       </ion-item>
 
       <!-- Vista previa del archivo -->
-      <ion-card *ngFor="let vista of vistasArchivos">
-        <ion-card-header>
+      <ion-card *ngFor="let vista of vistasArchivos; let i = index">
+        <ion-card-header class="ion-align-items-center ion-justify-content-between">
           <ion-card-title>Archivo Subido</ion-card-title>
+          <ion-button
+            fill="clear"
+            color="danger"
+            size="small"
+            (click)="eliminarArchivo(i)"
+            style="margin-left: auto;"
+          >
+            <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+          </ion-button>
         </ion-card-header>
         <ion-card-content>
           <iframe *ngIf="vista.esPDF" [src]="vista.url" width="100%" height="400px" style="border: none;"></iframe>
           <img *ngIf="!vista.esPDF" [src]="vista.url" style="width: 100%; max-height: 400px; object-fit: contain;" />
         </ion-card-content>
       </ion-card>
-
       <!-- Botón de envío -->
       <ion-button expand="block" style="--background: red; color: white;" (click)="enviarOC()" [disabled]="enviando">
         Enviar Cotización

@@ -47,7 +47,8 @@ export class EditarSolpedsPage implements OnInit {
   ordenAscendente: boolean = true;
   loading: boolean = true;
   ocsCargadas: { [solpeId: string]: any[] } = {};
-
+  comentariosVistos: { [solpeId: string]: boolean } = {};
+  userUid: string = '';
 
   constructor(
     private firestore: AngularFirestore,
@@ -57,7 +58,11 @@ export class EditarSolpedsPage implements OnInit {
     private toastController: ToastController,
     private cdRef: ChangeDetectorRef,
     private afAuth: AngularFireAuth
-  ) {}
+  ) {
+      this.afAuth.user.subscribe(user => {
+    if (user) this.userUid = user.uid;
+  });
+  }
 
   ngOnInit() {
     const solpeId = this.route.snapshot.paramMap.get('id');
@@ -224,28 +229,26 @@ async abrirImagenModal(imagenBase64: string) {
 toggleDetalle(solpeId: string) {
   this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
 
-  if (this.solpeExpandidaId) {
-    console.log('📦 Consultando OCs para SOLPED ID:', solpeId);
-
-    this.firestore
-      .collection('solpes')
-      .doc(solpeId)
-      .collection('ocs')
-      .get()
-      .subscribe(snapshot => {
-        console.log(`📋 Documentos encontrados: ${snapshot.size}`);
-        snapshot.docs.forEach(doc => console.log('✅ OC encontrada:', doc.id, doc.data()));
-
-        this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        this.cdRef.detectChanges();
-      }, error => {
-        console.error('❌ Error al cargar OCs:', error);
-      });
+  const solpe = this.solpes.find(s => s.id === solpeId);
+  if (solpe && solpe.usuario_uid === this.userUid && !solpe.comentariosVistos?.[this.userUid]) {
+    const updateData = { [`comentariosVistos.${this.userUid}`]: true };
+    this.firestore.collection('solpes').doc(solpeId).update(updateData);
+    solpe.comentariosVistos = { ...(solpe.comentariosVistos || {}), [this.userUid]: true };
   }
+
+  // Si necesitas cargar otra info como OCs:
+  this.firestore.collection('solpes').doc(solpeId).collection('ocs').get().subscribe(snapshot => {
+    this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    this.cdRef.detectChanges();
+  }, error => {
+    console.error('❌ Error al cargar OCs:', error);
+  });
 }
+
+
 
 buscarSolpe(modo: 'buscar' | 'estados' = 'buscar') {
   this.firestore
@@ -501,24 +504,25 @@ async guardarComparacionesEnFirestore(solpe: any) {
 
     itemRef.update({ comparaciones: item.comparaciones });
   }
-  cargarSolpes() {
-    this.firestore
-      .collection('solpes', ref =>
-        ref.orderBy('numero_solpe', 'desc')
-      )
-      .get()
-      .subscribe(snapshot => {
-        const solpesTemp: any[] = [];
-        snapshot.docs.forEach((doc: any) => {
-          const solpe = doc.data();
-          solpe.id = doc.id;
-          solpesTemp.push(solpe);
-        });
-        this.solpesOriginal = solpesTemp;
-        this.solpesFiltradas = [...this.solpesOriginal];
-        this.loading = false;
+cargarSolpes() {
+  this.firestore
+    .collection('solpes', ref =>
+      ref.orderBy('numero_solpe', 'desc')
+    )
+    .get()
+    .subscribe(snapshot => {
+      const solpesTemp: any[] = [];
+      snapshot.docs.forEach((doc: any) => {
+        const solpe = doc.data();
+        solpe.id = doc.id;
+        solpe.comentarios = solpe.comentarios || []; // <- ASEGÚRATE DE INCLUIR ESTO
+        solpesTemp.push(solpe);
       });
-  }
+      this.solpesOriginal = solpesTemp;
+      this.solpesFiltradas = [...this.solpesOriginal];
+      this.loading = false;
+    });
+}
 
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
@@ -741,15 +745,21 @@ puedeEditarCantidad(fechaCreacion: any): boolean {
   }
 }
 
-async editarCantidad(solpeId: string, item: any) {
+async editarItem(solpeId: string, item: any) {
   const alert = await this.alertController.create({
-    header: `Editar cantidad del ítem ${item.item}`,
+    header: `Editar ítem ${item.item}`,
     inputs: [
       {
         name: 'nuevaCantidad',
         type: 'number',
         placeholder: 'Nueva cantidad',
         value: item.cantidad
+      },
+      {
+        name: 'nuevaDescripcion',
+        type: 'textarea',
+        placeholder: 'Nueva descripción',
+        value: item.descripcion
       }
     ],
     buttons: [
@@ -758,13 +768,14 @@ async editarCantidad(solpeId: string, item: any) {
         text: 'Guardar',
         handler: async (data) => {
           const nuevaCantidad = Number(data.nuevaCantidad);
+          const nuevaDescripcion = data.nuevaDescripcion?.trim();
+
           if (isNaN(nuevaCantidad) || nuevaCantidad <= 0) {
             this.mostrarToast('Cantidad inválida.', 'danger');
             return false;
           }
 
           try {
-            // Obtener doc y actualizar ítem
             const solpeRef = this.firestore.collection('solpes').doc(solpeId);
             const solpeSnap = await solpeRef.get().toPromise();
             if (!solpeSnap?.exists) return;
@@ -775,14 +786,19 @@ async editarCantidad(solpeId: string, item: any) {
             if (idx === -1) return;
 
             items[idx].cantidad = nuevaCantidad;
+            items[idx].descripcion = nuevaDescripcion;
+
             await solpeRef.update({ items });
 
-            item.cantidad = nuevaCantidad; // actualizar en UI
+            // Actualiza en la UI
+            item.cantidad = nuevaCantidad;
+            item.descripcion = nuevaDescripcion;
             this.cdRef.detectChanges();
-            this.mostrarToast('Cantidad actualizada.', 'success');
+
+            this.mostrarToast('Ítem actualizado correctamente.', 'success');
           } catch (err) {
             console.error(err);
-            this.mostrarToast('Error al actualizar cantidad.', 'danger');
+            this.mostrarToast('Error al actualizar ítem.', 'danger');
           }
 
           return true;
@@ -793,7 +809,141 @@ async editarCantidad(solpeId: string, item: any) {
 
   await alert.present();
 }
+tieneComentariosRecientes(comentarios: any[]): boolean {
+  if (!comentarios || comentarios.length === 0) return false;
+  const ahora = new Date();
+  return comentarios.some(c => {
+    const fecha = c.fecha?.toDate ? c.fecha.toDate() : new Date(c.fecha);
+    const horas = (ahora.getTime() - fecha.getTime()) / (1000 * 60 * 60);
+    return horas <= 24;
+  });
+}
 
+async confirmarEliminacionItem(solpeId: string, item: any) {
+  const alert = await this.alertController.create({
+    header: `Eliminar ítem ${item.item}`,
+    inputs: [
+      {
+        name: 'justificacion',
+        type: 'textarea',
+        placeholder: 'Justifica por qué se elimina este ítem'
+      }
+    ],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Eliminar',
+        handler: async (data) => {
+          const justificacion = data.justificacion?.trim();
+          if (!justificacion) {
+            this.mostrarToast('Debes ingresar una justificación.', 'danger');
+            return false;
+          }
+
+          await this.eliminarItemConJustificacion(solpeId, item, justificacion);
+          return true;
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
+async eliminarItemConJustificacion(solpeId: string, item: any, justificacion: string) {
+  const usuario = await this.obtenerNombreUsuario();
+  const solpeRef = this.firestore.collection('solpes').doc(solpeId);
+
+  try {
+    const solpeSnap = await solpeRef.get().toPromise();
+    if (!solpeSnap?.exists) throw new Error('SOLPED no encontrada');
+
+    const solpeData = solpeSnap.data() as any;
+    const items = solpeData.items || [];
+
+    const nuevosItems = items.filter((i: any) => i.item !== item.item);
+    const comentarios = solpeData.comentarios || [];
+
+    const comentarioTexto = `🗑 Ítem ${item.item} eliminado. Justificación: ${justificacion}`;
+
+    // ➕ Agregar al arreglo de comentarios
+    comentarios.push({
+      texto: comentarioTexto,
+      fecha: new Date(),
+      usuario: usuario
+    });
+
+    // 🔄 Actualizar los ítems y comentarios en Firestore
+    await solpeRef.update({ items: nuevosItems, comentarios });
+
+    // ✅ También agregar al historialEstados
+    await solpeRef.collection('historialEstados').add({
+      fecha: new Date(),
+      estatus: 'Ítem eliminado',
+      usuario: usuario,
+      descripcion: comentarioTexto
+    });
+
+    // 🔄 Actualizar en la UI
+    const solpeUI = this.solpesFiltradas.find(s => s.id === solpeId);
+    if (solpeUI) {
+      solpeUI.items = nuevosItems;
+      solpeUI.comentarios = comentarios;
+    }
+
+    this.cdRef.detectChanges();
+    this.mostrarToast('Ítem eliminado y registrado en historial', 'success');
+  } catch (err) {
+    console.error('Error al eliminar ítem:', err);
+    this.mostrarToast('No se pudo eliminar el ítem', 'danger');
+  }
+}
+
+
+async agregarComentario(solpe: any) {
+  const texto = (solpe.nuevoComentario || '').trim();
+  if (!texto) {
+    this.mostrarToast('Debes ingresar un comentario.', 'danger');
+    return;
+  }
+
+  const usuario = await this.obtenerNombreUsuario();
+
+  const nuevoComentario = {
+    texto: texto,
+    fecha: new Date(),
+    usuario: usuario
+  };
+
+  try {
+    const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
+    const solpeSnap = await solpeRef.get().toPromise();
+    if (!solpeSnap?.exists) {
+      throw new Error('SOLPED no encontrada');
+    }
+
+    const solpeData = solpeSnap.data() as any;
+    const comentariosActuales = solpeData.comentarios || [];
+
+    comentariosActuales.push(nuevoComentario);
+    await solpeRef.update({ comentarios: comentariosActuales });
+
+    solpe.comentarios = comentariosActuales;
+    solpe.nuevoComentario = '';
+    this.mostrarToast('Comentario agregado', 'success');
+  } catch (err) {
+    console.error(err);
+    this.mostrarToast('Error al guardar el comentario.', 'danger');
+  }
+}
+private async obtenerNombreUsuario(): Promise<string> {
+  const afUser = await this.afAuth.currentUser;
+  if (afUser?.uid) {
+    const userSnap = await this.firestore.collection('Usuarios').doc(afUser.uid).get().toPromise();
+    const userData = userSnap?.data() as any;
+    return userData?.fullName || 'Anónimo';
+  }
+  return 'Anónimo';
+}
   verPDFComparacion(solpedId: string, pdfId: string) {
     this.firestore.collection('solpes').doc(solpedId).collection('pdfs').doc(pdfId).get().subscribe(doc => {
       if (!doc.exists) {

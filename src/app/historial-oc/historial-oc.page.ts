@@ -352,20 +352,21 @@ buscarPorId() {
 
 
 
-  async obtenerNombreUsuario(): Promise<string> {
-    const user = await this.afAuth.currentUser;
-    const uid = user?.uid;
-    if (!uid) return 'Desconocido';
+async obtenerNombreUsuario(): Promise<string> {
+  const user = await this.afAuth.currentUser;
+  const uid = user?.uid;
+  if (!uid) return 'Desconocido';
 
-    try {
-      const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
-      const data = userDoc?.data() as { fullName?: string };
-      return data?.fullName || 'Desconocido';
-    } catch (error) {
-      console.error('Error obteniendo usuario:', error);
-      return 'Desconocido';
-    }
+  try {
+    const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
+    const data = userDoc?.data() as { fullName?: string };
+    return data?.fullName || 'Desconocido';
+  } catch (error) {
+    console.error('Error obteniendo usuario:', error);
+    return 'Desconocido';
   }
+}
+
 
   mostrarArchivo(archivo: any) {
     if (!archivo.url && archivo.base64 && archivo.tipo) {
@@ -390,20 +391,22 @@ mostrarArchivoDesdeArray(archivo: any) {
   archivo.mostrar = !archivo.mostrar;
 }
 
-  crearArchivoUrl(base64: string, tipo: string): SafeResourceUrl {
-    const byteCharacters = atob(base64);
-    const byteArrays = [];
-    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-      const slice = byteCharacters.slice(offset, offset + 512);
-      const byteNumbers = new Array(slice.length);
-      for (let i = 0; i < slice.length; i++) {
-        byteNumbers[i] = slice.charCodeAt(i);
-      }
-      byteArrays.push(new Uint8Array(byteNumbers));
+
+crearArchivoUrl(base64: string, tipo: string): SafeResourceUrl {
+  const byteCharacters = atob(base64);
+  const byteArrays = [];
+  for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+    const slice = byteCharacters.slice(offset, offset + 512);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
     }
-    const blob = new Blob(byteArrays, { type: tipo });
-    return this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob));
+    byteArrays.push(new Uint8Array(byteNumbers));
   }
+  const blob = new Blob(byteArrays, { type: tipo });
+  return this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob));
+}
+
 
   convertirFecha(fecha: any): Date {
     return fecha?.toDate ? fecha.toDate() : fecha;
@@ -426,6 +429,8 @@ async subirNuevaCotizacion(oc: any) {
     reader.onload = async () => {
       const base64 = (reader.result as string).split(',')[1];
       const fecha = new Date();
+      const tipo = file.type;
+      const nombre = file.name;
 
       const nombreUsuario = await this.obtenerNombreUsuario();
       const comentario = oc.comentarioNuevo?.trim() || 'Nueva cotización subida tras rechazo';
@@ -437,18 +442,39 @@ async subirNuevaCotizacion(oc: any) {
         comentario: comentario
       };
 
-      // Actualiza tanto historial como campo 'comentario'
-      await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
-        archivoBase64: base64,
-        nombrePDF: file.name,
-        fechaSubida: fecha,
+      const nuevoArchivo = {
+        base64: base64,
+        nombre: nombre,
+        fecha: fecha,
+        tipo: tipo
+      };
+
+      // 🔄 Obtener datos actuales desde Firestore
+      const docRef = this.firestore.collection('ordenes_oc').doc(oc.docId);
+      const docSnap = await docRef.get().toPromise();
+      const data = docSnap?.data() as any;
+
+      const archivosPrevios = Array.isArray(data?.archivosBase64) ? data.archivosBase64 : [];
+      const historialPrevio = Array.isArray(data?.historial) ? data.historial : [];
+
+      // 🔎 Verificar si ya hay un archivo con el mismo nombre
+      const yaExiste = archivosPrevios.some((a: any) => a.nombre === nombre);
+      if (yaExiste) {
+        alert(`Ya existe un archivo con el nombre "${nombre}". Cambia el nombre antes de subir.`);
+        return;
+      }
+
+      // 🔥 Actualizar Firestore con el nuevo archivo
+      await docRef.update({
+        archivosBase64: [nuevoArchivo, ...archivosPrevios],
         estatus: 'Preaprobado',
-        comentario: comentario, // ACTUALIZA el campo de comentario principal
-        historial: oc.historial ? [...oc.historial, nuevoHistorial] : [nuevoHistorial]
+        comentario: comentario,
+        fechaSubida: fecha,
+        historial: [...historialPrevio, nuevoHistorial]
       });
 
       alert('Nueva cotización subida correctamente.');
-      this.irAlInicio();
+      this.irAlInicio(); // Refresca la vista
     };
 
     reader.readAsDataURL(file);
@@ -456,6 +482,9 @@ async subirNuevaCotizacion(oc: any) {
 
   input.click();
 }
+
+
+
 
 cambioModo() {
   this.ocs = [];

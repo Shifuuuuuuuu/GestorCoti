@@ -22,7 +22,14 @@
             <ion-label position="floating">Número de SOLPED</ion-label>
             <ion-input [(ngModel)]="solpe.numero_solpe" type="number" readonly></ion-input>
           </ion-item>
-
+          <ion-item>
+            <ion-label position="floating">Empresa</ion-label>
+            <ion-select [(ngModel)]="solpe.empresa" (ionChange)="actualizarEmpresa($event)" placeholder="Selecciona empresa">
+              <ion-select-option value="Xtreme Mining">Xtreme Mining</ion-select-option>
+              <ion-select-option value="Xtreme Servicio">Xtreme Servicios</ion-select-option>
+              <ion-select-option value="Xtreme Hormigones">Xtreme Hormigones</ion-select-option>
+            </ion-select>
+          </ion-item>
           <ion-item>
             <ion-label position="floating">Fecha</ion-label>
             <ion-input [(ngModel)]="solpe.fecha" type="date" readonly></ion-input>
@@ -58,6 +65,8 @@
                   <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
                   <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
                   <ion-select-option value="30-10-43">TALLER CANECHE</ion-select-option>
+                  <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43">ESTODCADA 8</ion-select-option>
                   <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
                   <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
                   <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>

@@ -252,3 +252,21 @@ ion-content {
 .contenedor-img-zoom img:hover {
   cursor: zoom-in;
 }
+.badge-comentarios {
+  background-color: #ffc107 !important;
+  color: black !important;
+  font-weight: bold;
+  animation: pulse 1s infinite alternate;
+  margin-left: 10px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+@keyframes pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.15);
+  }
+}
