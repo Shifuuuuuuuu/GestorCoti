@@ -284,15 +284,15 @@
             />
           </ion-col>
           <ion-col>
-            <ion-badge [ngStyle]="{
-              'background-color': getBadgeColor(item.estado || 'Pendiente'),
-              'color': 'white',
-              'padding': '4px 10px',
-              'font-weight': 'bold',
-              'border-radius': '12px'
-            }">
-              {{ item.estado || 'Pendiente' }}
-            </ion-badge>
+          <ion-badge [ngStyle]="{
+            'background-color': getBadgeColor(item.estado || 'Pendiente'),
+            'color': 'white',
+            'padding': '4px 10px',
+            'font-weight': 'bold',
+            'border-radius': '12px'
+          }">
+            {{ item.estado || 'Pendiente' }}
+          </ion-badge>
           </ion-col>
         </ion-row>
       </ion-grid>

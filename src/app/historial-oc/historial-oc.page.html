@@ -63,6 +63,17 @@
           </ion-item>
         </ion-col>
       </ion-row>
+      <ion-col size="12">
+        <ion-item>
+          <ion-label position="stacked">Buscar por Comentario</ion-label>
+          <ion-input
+            [(ngModel)]="filtroComentario"
+            placeholder="Texto o palabra clave..."
+            debounce="300"
+            (ionInput)="aplicarFiltros()">
+          </ion-input>
+        </ion-item>
+      </ion-col>
 
       <ion-row>
         <ion-col>

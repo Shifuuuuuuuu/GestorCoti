@@ -36,7 +36,8 @@ export class PerfilUsuarioPage implements OnInit {
     'rsanhueza@xtrememining.cl',
     'ahernandez@xtrememining.cl',
     'dlizama@xtrememining.cl',
-    'cpalma@xtrememining.cl'
+    'cpalma@xtrememining.cl',
+    'mballesteros@xtrememining.cl'
   ];
 
   constructor(

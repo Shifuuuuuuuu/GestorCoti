@@ -36,6 +36,7 @@ export class HistorialOcPage implements OnInit {
   filtroEstado: string = '';
   filtroFecha: string = '';
   mostrarFiltros: boolean = false;
+  filtroComentario: string = '';
 
   listaContratos: string[] = [
     '10-10-12',
@@ -97,7 +98,8 @@ aplicarFiltros() {
       };
     });
 
-    // Aplicar filtros
+    // 🔍 Aplicar filtros
+
     if (this.filtroEstado) {
       docs = docs.filter(d => d.estatus === this.filtroEstado);
     }
@@ -118,6 +120,14 @@ aplicarFiltros() {
       });
     }
 
+    if (this.filtroComentario) {
+      const texto = this.filtroComentario.toLowerCase().trim();
+      docs = docs.filter(d =>
+        d.comentario?.toLowerCase().includes(texto) ||
+        d.historial?.some((h: any) => h.comentario?.toLowerCase().includes(texto))
+      );
+    }
+
     // 👉 Ordenar de más reciente a más antiguo
     docs.sort((a, b) => b.fechaSubida.getTime() - a.fechaSubida.getTime());
 
@@ -127,6 +137,7 @@ aplicarFiltros() {
     this.loadingInicial = false;
   });
 }
+
 
 
 limpiarFiltros() {

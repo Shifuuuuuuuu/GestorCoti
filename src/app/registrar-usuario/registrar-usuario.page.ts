@@ -45,7 +45,8 @@ export class RegistrarUsuarioPage implements OnInit {
       'ahernandez@xtrememining.cl',
       'dlizama@mining.cl',
       'dlizama@xtrememining.cl',
-      'cpalma@xtrememining.cl'
+      'cpalma@xtrememining.cl',
+      'mballesteros@xtrememining.cl'
     ].map(c => c.trim().toLowerCase());
 
     const emailLimpio = email.trim().toLowerCase();

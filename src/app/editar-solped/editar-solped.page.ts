@@ -664,25 +664,26 @@ filtrarSolpes() {
   }
 
 getBadgeColor(estatus: string): string {
-  switch (estatus?.toLowerCase()) {
+  const estado = estatus?.toLowerCase() || '';
+  switch (estado) {
+    case 'pendiente':
+      return '#ffc107'; // Amarillo
     case 'aprobado':
-      return '#28a745';
+    case 'completado':
+      return '#28a745'; // Verde
     case 'rechazado':
-      return '#dc3545';
+      return '#dc3545'; // Rojo
     case 'solicitado':
-      return 'warning';
+      return '#fd7e14'; // Naranja
     case 'tránsito a faena':
-      return 'primary';
+      return '#007bff'; // Azul
     case 'preaprobado':
-      return 'medium';
-    case 'oc enviada a proveedor':
-      return 'tertiary';
-    case 'por importación':
-      return 'dark';
+      return '#6c757d'; // Gris oscuro
     default:
-      return 'medium';
+      return '#6c757d'; // Gris por defecto
   }
 }
+
 
 verOCDesdeSolped(solpedId: string, ocId: string, tipoArchivo: 'cotizacion' | 'oc') {
   if (!solpedId || !ocId) {
