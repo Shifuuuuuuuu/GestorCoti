@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/storage';
+import 'firebase/compat/firestore';
 import { animate, style, transition, trigger } from '@angular/animations';
 @Component({
   selector: 'app-historial-oc',
@@ -21,7 +24,7 @@ export class HistorialOcPage implements OnInit {
   ocs: any[] = [];
   busquedaId: string = '';
   paginaActual: number = 1;
-  itemsPorPagina: number = 10;
+  itemsPorPagina: number = 5;
   lastVisible: any = null;
   firstVisible: any = null;
   historialPaginas: any[] = [];
@@ -56,7 +59,7 @@ export class HistorialOcPage implements OnInit {
     '30-10-61'
   ];
   estadosDisponibles: string[] = ['Preaprobado', 'Rechazado', 'Aprobado', 'Enviada a proveedor'];
-responsables: string[] = [];
+  responsables: string[] = [];
   constructor(
     private firestore: AngularFirestore,
     private sanitizer: DomSanitizer,
@@ -148,20 +151,37 @@ limpiarFiltros() {
   this.irAlInicio();
 }
 
-  contarTotalPaginas() {
-    this.firestore.collection('ordenes_oc').get().subscribe(snapshot => {
-      const total = snapshot.size;
-      this.totalPaginas = Math.ceil(total / this.itemsPorPagina);
-    });
+contarTotalPaginas() {
+  const ref = this.firestore.firestore.collection('ordenes_oc'); // Acceso nativo a Firestore
+  let query: firebase.firestore.Query = ref;
+
+  if (this.filtroEstado) {
+    query = query.where('estatus', '==', this.filtroEstado);
   }
+  if (this.filtroCentro) {
+    query = query.where('centroCosto', '==', this.filtroCentro);
+  }
+  if (this.filtroResponsable) {
+    query = query.where('responsable', '==', this.filtroResponsable);
+  }
+
+  query.get().then(snapshot => {
+    const total = snapshot.size;
+    this.totalPaginas = Math.ceil(total / this.itemsPorPagina);
+  }).catch(error => {
+    console.error('❌ Error al contar total de páginas:', error);
+  });
+}
+
 cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   this.loadingInicial = true;
 
   const query = this.firestore.collection('ordenes_oc', ref => {
     let q = ref.orderBy('fechaSubida', 'desc').limit(this.itemsPorPagina);
-    if (direccion === 'adelante' && this.lastVisible) {
-      q = q.startAfter(this.lastVisible);
-    }
+    if (this.filtroEstado) q = q.where('estatus', '==', this.filtroEstado);
+    if (this.filtroCentro) q = q.where('centroCosto', '==', this.filtroCentro);
+    if (this.filtroResponsable) q = q.where('responsable', '==', this.filtroResponsable);
+    if (direccion === 'adelante' && this.lastVisible) q = q.startAfter(this.lastVisible);
     if (direccion === 'atras' && this.historialPaginas.length >= 2) {
       const prev = this.historialPaginas[this.historialPaginas.length - 2];
       q = q.startAt(prev);
@@ -172,53 +192,51 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   query.get().subscribe(snapshot => {
     this.ocs = snapshot.docs.map(doc => {
       const data = doc.data() as any;
-      const fechaSubida = data.fechaSubida?.toDate?.() || data.fechaSubida || null;
+
+      const fechaSubida = this.convertirFechaFirestore(data.fechaSubida);
       const historial = (data.historial || []).map((h: any) => ({
         ...h,
-        fecha: h.fecha?.toDate?.() || h.fecha || null
+        fecha: this.convertirFechaFirestore(h.fecha)
       }));
 
-      const esPDFCot = data.archivoBase64?.startsWith('JVBERi');
-      const cotizacion = data.archivoBase64 ? {
-        base64: data.archivoBase64,
-        tipo: esPDFCot ? 'application/pdf' : 'image/jpeg',
-        nombre: 'Cotización',
-        url: null,
-        mostrar: false
-      } : null;
+      // ⚡️ Solo se procesan si existen
+      const archivosBase64 = Array.isArray(data.archivosBase64)
+        ? data.archivosBase64.map((archivo: any) => {
+            const esPDF = archivo.base64?.startsWith('JVBERi');
+            return {
+              ...archivo,
+              tipo: esPDF ? 'application/pdf' : 'image/jpeg',
+              url: null,
+              mostrar: false
+            };
+          })
+        : [];
 
-      const archivoOC = data.archivosPDF?.archivoBase64 || null;
-      const nombreOC = data.archivosPDF?.nombrePDF || 'Orden de Compra';
-      const esPDFOC = archivoOC?.startsWith('JVBERi');
-      const ordenCompra = archivoOC ? {
-        base64: archivoOC,
-        tipo: esPDFOC ? 'application/pdf' : 'image/jpeg',
-        nombre: nombreOC,
-        url: null,
-        mostrar: false
-      } : null;
-
-      const archivosBase64 = (data.archivosBase64 || []).map((archivo: any) => {
-        const esPDF = archivo.base64?.startsWith('JVBERi');
-        return {
-          ...archivo,
-          tipo: esPDF ? 'application/pdf' : 'image/jpeg',
-          url: null,
-          mostrar: false
-        };
-      });
+      const archivosVisuales = Array.isArray(data.archivosStorage)
+        ? data.archivosStorage.map((archivo: any, index: number) => {
+            const tipo = archivo.tipo || 'application/pdf';
+            return {
+              nombre: archivo.nombre || `archivo_${index + 1}`,
+              tipo,
+              esPDF: tipo === 'application/pdf',
+              esImagen: tipo.startsWith('image/'),
+              url: this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url),
+              mostrar: false
+            };
+          })
+        : [];
 
       return {
         ...data,
         docId: doc.id,
         fechaSubida,
         historial,
-        cotizacion,
-        ordenCompra,
-        archivosBase64
+        archivosBase64,
+        archivosVisuales
       };
     });
 
+    // Manejo de navegación
     if (!snapshot.empty) {
       this.firstVisible = snapshot.docs[0];
       this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
@@ -241,6 +259,11 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     this.loadingInicial = false;
   });
 }
+
+  // ✅ NUEVO METODO CENTRALIZADO PARA CONVERTIR FECHAS
+  convertirFechaFirestore(fecha: any): Date {
+    return fecha?.toDate ? fecha.toDate() : fecha;
+  }
 
 
   paginaSiguiente() {
@@ -288,7 +311,6 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     });
   }
 
-
 buscarPorId() {
   const idBuscado = this.busquedaId.trim();
   const idNumerico = Number(idBuscado);
@@ -313,26 +335,6 @@ buscarPorId() {
         fecha: h.fecha?.toDate?.() || h.fecha || null
       }));
 
-      const esPDFCot = data.archivoBase64?.startsWith('JVBERi');
-      const cotizacion = data.archivoBase64 ? {
-        base64: data.archivoBase64,
-        tipo: esPDFCot ? 'application/pdf' : 'image/jpeg',
-        nombre: 'Cotización',
-        url: null,
-        mostrar: false
-      } : null;
-
-      const archivoOC = data.archivosPDF?.archivoBase64 || null;
-      const nombreOC = data.archivosPDF?.nombrePDF || 'Orden de Compra';
-      const esPDFOC = archivoOC?.startsWith('JVBERi');
-      const ordenCompra = archivoOC ? {
-        base64: archivoOC,
-        tipo: esPDFOC ? 'application/pdf' : 'image/jpeg',
-        nombre: nombreOC,
-        url: null,
-        mostrar: false
-      } : null;
-
       const archivosBase64 = (data.archivosBase64 || []).map((archivo: any) => {
         const esPDF = archivo.base64?.startsWith('JVBERi');
         return {
@@ -343,14 +345,26 @@ buscarPorId() {
         };
       });
 
+      // ✅ archivosVisuales desde Storage con url segura
+      const archivosVisuales = (data.archivosStorage || []).map((archivo: any, index: number) => {
+        const tipo = archivo.tipo || 'application/pdf';
+        return {
+          nombre: archivo.nombre || `archivo_${index + 1}`,
+          tipo,
+          esPDF: tipo === 'application/pdf',
+          esImagen: tipo.startsWith('image/'),
+          url: this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url),
+          mostrar: false
+        };
+      });
+
       this.ocs = [{
         ...data,
         docId: doc.id,
         fechaSubida,
         historial,
-        cotizacion,
-        ordenCompra,
-        archivosBase64
+        archivosBase64,
+        archivosVisuales // 👈 importante
       }];
     } else {
       this.ocs = [];
@@ -359,6 +373,7 @@ buscarPorId() {
     this.loadingInicial = false;
   });
 }
+
 
 
 
@@ -379,27 +394,29 @@ async obtenerNombreUsuario(): Promise<string> {
 }
 
 
-  mostrarArchivo(archivo: any) {
+  // ✅ HTML LAZY LOAD
+  mostrarArchivoDesdeArray(archivo: any) {
     if (!archivo.url && archivo.base64 && archivo.tipo) {
-      const url = this.crearArchivoUrl(archivo.base64, archivo.tipo);
-      archivo.url = url;
+      const byteCharacters = atob(archivo.base64);
+      const byteNumbers = Array.from(byteCharacters, c => c.charCodeAt(0));
+      const blob = new Blob([new Uint8Array(byteNumbers)], { type: archivo.tipo });
+      const url = URL.createObjectURL(blob);
+      archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(url);
     }
     archivo.mostrar = !archivo.mostrar;
   }
-mostrarArchivoDesdeArray(archivo: any) {
-  if (!archivo.url && archivo.base64 && archivo.tipo) {
-    const byteCharacters = atob(archivo.base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+
+  // ✅ CONVERTIR URL SEGURA LAZY CARGA
+  mostrarArchivo(archivo: any) {
+    if (!archivo.url && archivo.downloadUrl && archivo.tipo) {
+      archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(archivo.downloadUrl);
     }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: archivo.tipo });
-    const url = URL.createObjectURL(blob);
-    archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    archivo.mostrar = !archivo.mostrar;
   }
 
-  archivo.mostrar = !archivo.mostrar;
+
+convertirURLSegura(url: string): SafeResourceUrl {
+  return this.sanitizer.bypassSecurityTrustResourceUrl(url);
 }
 
 
@@ -436,63 +453,78 @@ async subirNuevaCotizacion(oc: any) {
     const file = input.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const base64 = (reader.result as string).split(',')[1];
-      const fecha = new Date();
-      const tipo = file.type;
-      const nombre = file.name;
+    const fecha = new Date();
+    const tipo = file.type;
+    const nombre = file.name;
 
-      const nombreUsuario = await this.obtenerNombreUsuario();
-      const comentario = oc.comentarioNuevo?.trim() || 'Nueva cotización subida tras rechazo';
+    const nombreUsuario = await this.obtenerNombreUsuario();
+    const comentario = oc.comentarioNuevo?.trim() || 'Nueva cotización subida tras rechazo';
 
-      const nuevoHistorial = {
-        fecha: fecha,
-        estatus: 'Preaprobado',
-        usuario: nombreUsuario,
-        comentario: comentario
-      };
+    const nuevoHistorial = {
+      fecha: fecha,
+      estatus: 'Preaprobado',
+      usuario: nombreUsuario,
+      comentario: comentario
+    };
 
-      const nuevoArchivo = {
-        base64: base64,
-        nombre: nombre,
-        fecha: fecha,
-        tipo: tipo
-      };
+    const docRef = this.firestore.collection('ordenes_oc').doc(oc.docId);
 
-      // 🔄 Obtener datos actuales desde Firestore
-      const docRef = this.firestore.collection('ordenes_oc').doc(oc.docId);
+    try {
+      // 🔥 1. Eliminar archivo anterior de Storage (si existe)
       const docSnap = await docRef.get().toPromise();
       const data = docSnap?.data() as any;
 
-      const archivosPrevios = Array.isArray(data?.archivosBase64) ? data.archivosBase64 : [];
-      const historialPrevio = Array.isArray(data?.historial) ? data.historial : [];
+      if (Array.isArray(data.archivosStorage) && data.archivosStorage.length > 0) {
+        const anterior = data.archivosStorage[0];
+        const storageUrl = anterior.url;
 
-      // 🔎 Verificar si ya hay un archivo con el mismo nombre
-      const yaExiste = archivosPrevios.some((a: any) => a.nombre === nombre);
-      if (yaExiste) {
-        alert(`Ya existe un archivo con el nombre "${nombre}". Cambia el nombre antes de subir.`);
-        return;
+        if (storageUrl) {
+          const pathMatch = storageUrl.match(/\/o\/(.*?)\?alt=/);
+          const path = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
+
+          if (path) {
+            const storageRef = firebase.storage().ref().child(path);
+            await storageRef.delete();
+          }
+        }
       }
 
-      // 🔥 Actualizar Firestore con el nuevo archivo
+      // ⬆️ 2. Subir nuevo archivo a Firebase Storage
+      const storagePath = `cotizaciones_oc/${oc.docId}/nueva_cot_${Date.now()}_${file.name}`;
+      const fileRef = firebase.storage().ref().child(storagePath);
+      await fileRef.put(file);
+      const url = await fileRef.getDownloadURL();
+
+      // 📄 3. Crear nuevo archivo
+      const nuevoArchivo = {
+        nombre: nombre,
+        tipo: tipo,
+        url: url,
+        fecha: fecha,
+        fechaEliminacion: new Date(Date.now() + 24 * 60 * 60 * 1000) // opcional
+      };
+
+      // 🔄 4. Guardar en Firestore
       await docRef.update({
-        archivosBase64: [nuevoArchivo, ...archivosPrevios],
+        archivosStorage: [nuevoArchivo],
         estatus: 'Preaprobado',
         comentario: comentario,
         fechaSubida: fecha,
-        historial: [...historialPrevio, nuevoHistorial]
+        historial: firebase.firestore.FieldValue.arrayUnion(nuevoHistorial)
       });
 
-      alert('Nueva cotización subida correctamente.');
-      this.irAlInicio(); // Refresca la vista
-    };
+      alert('✅ Nueva cotización subida correctamente.');
+      this.irAlInicio();
 
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('❌ Error al subir nueva cotización:', error);
+      alert('Ocurrió un error al subir el archivo.');
+    }
   };
 
   input.click();
 }
+
 
 
 

@@ -22,67 +22,71 @@ const routes: Routes = [
   },
   {
     path: 'perfil-usuario',
-    loadChildren: () => import('./perfil-usuario/perfil-usuario.module').then( m => m.PerfilUsuarioPageModule),     canActivate: [AuthGuard]
+    loadChildren: () => import('./perfil-usuario/perfil-usuario.module').then( m => m.PerfilUsuarioPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'solpe',
-    loadChildren: () => import('./solpe/solpe.module').then( m => m.SolpePageModule),     canActivate: [AuthGuard]
+    loadChildren: () => import('./solpe/solpe.module').then( m => m.SolpePageModule),canActivate: [AuthGuard]
   },
   {
     path: 'menu-solpe',
-    loadChildren: () => import('./menu-solpe/menu-solpe.module').then( m => m.MenuSolpePageModule),     canActivate: [AuthGuard]
+    loadChildren: () => import('./menu-solpe/menu-solpe.module').then( m => m.MenuSolpePageModule),canActivate: [AuthGuard]
   },
   {
     path: 'gestorsolpes',
-    loadChildren: () => import('./gestorsolpes/gestorsolpes.module').then( m => m.GestorsolpesPageModule),     canActivate: [AuthGuard]
+    loadChildren: () => import('./gestorsolpes/gestorsolpes.module').then( m => m.GestorsolpesPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'editar-solped',
-    loadChildren: () => import('./editar-solped/editar-solped.module').then( m => m.EditarSolpedPageModule)
+    loadChildren: () => import('./editar-solped/editar-solped.module').then( m => m.EditarSolpedPageModule) ,canActivate: [AuthGuard]
   },
   {
     path: 'editar-solpeds',
-    loadChildren: () => import('./editar-solpeds/editar-solpeds.module').then( m => m.EditarSolpedsPageModule)
+    loadChildren: () => import('./editar-solpeds/editar-solpeds.module').then( m => m.EditarSolpedsPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'generador-oc',
-    loadChildren: () => import('./generador-oc/generador-oc.module').then( m => m.GeneradorOcPageModule)
+    loadChildren: () => import('./generador-oc/generador-oc.module').then( m => m.GeneradorOcPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'menu-oc',
-    loadChildren: () => import('./menu-oc/menu-oc.module').then( m => m.MenuOcPageModule)
+    loadChildren: () => import('./menu-oc/menu-oc.module').then( m => m.MenuOcPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'validar-oc',
-    loadChildren: () => import('./validar-oc/validar-oc.module').then( m => m.ValidarOcPageModule)
+    loadChildren: () => import('./validar-oc/validar-oc.module').then( m => m.ValidarOcPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'gestor-oc',
-    loadChildren: () => import('./gestor-oc/gestor-oc.module').then( m => m.GestorOcPageModule)
+    loadChildren: () => import('./gestor-oc/gestor-oc.module').then( m => m.GestorOcPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'historial-oc',
-    loadChildren: () => import('./historial-oc/historial-oc.module').then( m => m.HistorialOcPageModule)
+    loadChildren: () => import('./historial-oc/historial-oc.module').then( m => m.HistorialOcPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'menu-admin',
-    loadChildren: () => import('./menu-admin/menu-admin.module').then( m => m.MenuAdminPageModule)
+    loadChildren: () => import('./menu-admin/menu-admin.module').then( m => m.MenuAdminPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'administrar-solped',
-    loadChildren: () => import('./administrar-solped/administrar-solped.module').then( m => m.AdministrarSolpedPageModule)
+    loadChildren: () => import('./administrar-solped/administrar-solped.module').then( m => m.AdministrarSolpedPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'administrar-cotizaciones',
-    loadChildren: () => import('./administrar-cotizaciones/administrar-cotizaciones.module').then( m => m.AdministrarCotizacionesPageModule)
+    loadChildren: () => import('./administrar-cotizaciones/administrar-cotizaciones.module').then( m => m.AdministrarCotizacionesPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'menu-ordenes',
-    loadChildren: () => import('./menu-ordenes/menu-ordenes.module').then( m => m.MenuOrdenesPageModule)
+    loadChildren: () => import('./menu-ordenes/menu-ordenes.module').then( m => m.MenuOrdenesPageModule),canActivate: [AuthGuard]
   },
   {
     path: 'generador-ordenes',
-    loadChildren: () => import('./generador-ordenes/generador-ordenes.module').then( m => m.GeneradorOrdenesPageModule)
+    loadChildren: () => import('./generador-ordenes/generador-ordenes.module').then( m => m.GeneradorOrdenesPageModule),canActivate: [AuthGuard]
+  },
+  {
+    path: 'crear-usuarios',
+    loadChildren: () => import('./crear-usuarios/crear-usuarios.module').then( m => m.CrearUsuariosPageModule),canActivate: [AuthGuard]
   },
 
 ];

@@ -4,6 +4,10 @@ import { AlertController, MenuController } from '@ionic/angular';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { firstValueFrom } from 'rxjs';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import 'firebase/compat/storage';
 @Component({
   selector: 'app-administrar-cotizaciones',
   templateUrl: './administrar-cotizaciones.page.html',
@@ -73,61 +77,70 @@ usuariosDisponibles: string[] = [];
     private afAuth: AngularFireAuth
   ) {}
 
-  ngOnInit() {
-    this.contarTotalPaginas();
-    this.cargarPagina();
-    this.cargarUsuarios();
-  }
+ngOnInit() {
+  this.contarTotalPaginas();
+  this.cargarPagina(); // primera carga
+  this.cargarUsuarios();
+}
+
 async editarCamposAdicionales(oc: any) {
   const alert = await this.alertController.create({
-    header: 'Editar campos adicionales',
+    header: 'Editar Campos Adicionales',
     inputs: [
-      {
-        name: 'centroCosto',
-        type: 'text',
-        placeholder: 'Centro de Costo',
-        value: oc.centroCosto || ''
-      },
-      {
-        name: 'centroCostoNombre',
-        type: 'text',
-        placeholder: 'Nombre del Centro de Costo',
-        value: oc.centroCostoNombre || ''
-      },
-      {
-        name: 'destinoCompra',
-        type: 'text',
-        placeholder: 'Destino de Compra',
-        value: oc.destinoCompra || ''
-      },
-      {
-        name: 'comentario',
-        type: 'text',
-        placeholder: 'Comentario',
-        value: oc.comentario || ''
-      }
+      { name: 'centroCosto', type: 'text', placeholder: 'Centro de Costo', value: oc.centroCosto || '' },
+      { name: 'centroCostoNombre', type: 'text', placeholder: 'Nombre del Centro de Costo', value: oc.centroCostoNombre || '' },
+      { name: 'comentario', type: 'text', placeholder: 'Comentario', value: oc.comentario || '' },
+      { name: 'destinoCompra', type: 'text', placeholder: 'Destino de Compra', value: oc.destinoCompra || '' },
+      { name: 'aprobadorSugerido', type: 'text', placeholder: 'Aprobador Sugerido', value: oc.aprobadorSugerido || '' }
     ],
     buttons: [
+      { text: 'Cancelar', role: 'cancel' },
       {
-        text: 'Cancelar',
-        role: 'cancel'
-      },
-      {
-        text: 'Guardar',
+        text: 'Siguiente',
         handler: async (data) => {
-          const actualizaciones: any = {
-            centroCosto: data.centroCosto ?? '',
-            centroCostoNombre: data.centroCostoNombre ?? '',
-            destinoCompra: data.destinoCompra ?? '',
-            comentario: data.comentario ?? ''
-          };
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'application/pdf,image/*';
+          input.click();
 
-          try {
-            await this.firestore.collection('ordenes_oc').doc(oc.docId).update(actualizaciones);
-            this.buscarPorId();
-          } catch (error) {
-            console.error('Error actualizando campos:', error);
-          }
+          input.onchange = async () => {
+            const archivo = input.files?.[0];
+            let nuevoArchivo: any = null;
+
+            if (archivo) {
+              const filePath = `ordenes_oc/${oc.id}/archivo_actualizado_${Date.now()}_${archivo.name}`;
+              const fileRef = firebase.storage().ref().child(filePath);
+              await fileRef.put(archivo);
+              const url = await fileRef.getDownloadURL();
+
+              nuevoArchivo = {
+                nombre: archivo.name,
+                tipo: archivo.type,
+                url: url
+              };
+            }
+
+            const actualizaciones: any = {
+              centroCosto: data.centroCosto ?? '',
+              centroCostoNombre: data.centroCostoNombre ?? '',
+              comentario: data.comentario ?? '',
+              destinoCompra: data.destinoCompra ?? '',
+              aprobadorSugerido: data.aprobadorSugerido ?? ''
+            };
+
+            // Si se subió archivo, lo agregamos al array archivosStorage
+            if (nuevoArchivo) {
+              const archivosExistentes = Array.isArray(oc.archivosStorage) ? oc.archivosStorage : [];
+              actualizaciones.archivosStorage = [...archivosExistentes, nuevoArchivo];
+            }
+
+            try {
+              await this.firestore.collection('ordenes_oc').doc(oc.docId).update(actualizaciones);
+              this.buscarPorId(); // Refrescar si estás en modo búsqueda
+            } catch (error) {
+              console.error('Error actualizando campos:', error);
+            }
+          };
         }
       }
     ]
@@ -137,50 +150,56 @@ async editarCamposAdicionales(oc: any) {
 }
 
 
+
+
+
 async aplicarFiltros() {
   this.cargando = true;
-  const estatus = this.filtroEstatus.toLowerCase().trim();
-  const centro = this.filtroCentroCosto.toLowerCase().trim();
-  const usuario = this.filtroUsuario.toLowerCase().trim();
-  const fechaFiltro = this.filtroFecha.trim();
-
   try {
-    const snapshot = await firstValueFrom(
-      this.firestore.collection('ordenes_oc', ref =>
-        ref.orderBy('fechaSubida', 'desc')
-      ).get()
-    );
+    let query = this.firestore.collection('ordenes_oc', ref => {
+      let q = ref.orderBy('fechaSubida', 'desc');
 
-    const filtrados = snapshot.docs
-      .map(doc => {
-        const data: any = doc.data();
-        return {
-          docId: doc.id,
-          id: data.id,
-          estatus: data.estatus,
-          centroCosto: data.centroCosto,
-          usuario: data.usuario || '',
-          fechaSubida: data.fechaSubida
-        };
-      })
-      .filter(oc => {
-        const coincideEstatus = !estatus || (oc.estatus && oc.estatus.toLowerCase() === estatus);
-        const coincideCentro = !centro || (oc.centroCosto && oc.centroCosto.toLowerCase().includes(centro));
-        const coincideUsuario = !usuario || (oc.usuario && oc.usuario.toLowerCase().includes(usuario));
-        const fechaString = oc.fechaSubida?.toDate?.().toISOString().split('T')[0] || '';
-        const coincideFecha = !fechaFiltro || fechaString === fechaFiltro;
-        return coincideEstatus && coincideCentro && coincideUsuario && coincideFecha;
+      if (this.filtroEstatus) {
+        q = q.where('estatus', '==', this.filtroEstatus);
+      }
+
+      if (this.filtroCentroCosto) {
+        q = q.where('centroCosto', '==', this.filtroCentroCosto);
+      }
+
+      if (this.filtroUsuario) {
+        q = q.where('usuario', '==', this.filtroUsuario);
+      }
+
+      return q;
+    });
+
+    const snapshot = await firstValueFrom(query.get());
+
+    let filtrados = snapshot.docs.map(doc => ({
+      docId: doc.id,
+      ...(doc.data() as any)
+    }));
+
+    // Filtrar por fecha exacta (si se usa)
+    if (this.filtroFecha) {
+      filtrados = filtrados.filter(oc => {
+        const fecha = oc.fechaSubida?.toDate?.().toISOString().split('T')[0];
+        return fecha === this.filtroFecha;
       });
+    }
 
     this.ocsFiltradas = filtrados.slice(0, this.itemsPorPagina);
     this.totalPaginas = Math.ceil(filtrados.length / this.itemsPorPagina);
     this.paginaActual = 1;
+
   } catch (error) {
     console.error('Error al aplicar filtros:', error);
   } finally {
     this.cargando = false;
   }
 }
+
 
 async obtenerNombreUsuario(): Promise<string> {
   const user = await this.afAuth.currentUser;
@@ -212,15 +231,19 @@ limpiarFiltros() {
   this.irAlInicio();
 }
 
-  irAlInicio() {
+irAlInicio() {
   this.paginaActual = 1;
   this.lastVisible = null;
+  this.firstVisible = null;
   this.historialPaginas = [];
-  this.cargarPagina();
+  this.cargarPagina(); // dirección por defecto: 'adelante'
 }
+
 async contarTotalPaginas() {
   try {
-    const snapshot = await firstValueFrom(this.firestore.collection('ordenes_oc').get());
+    const snapshot = await firstValueFrom(
+      this.firestore.collection('ordenes_oc').get()
+    );
     const total = snapshot.size;
     this.totalPaginas = Math.ceil(total / this.itemsPorPagina);
   } catch (error) {
@@ -228,7 +251,10 @@ async contarTotalPaginas() {
   }
 }
 
+
 irAlFinal() {
+  this.cargando = true;
+
   this.firestore.collection('ordenes_oc', ref =>
     ref.orderBy('id', 'desc')
   ).get().subscribe(snapshot => {
@@ -236,38 +262,54 @@ irAlFinal() {
     const totalPaginas = Math.ceil(total / this.itemsPorPagina);
 
     const docs = snapshot.docs;
-    const startDoc = docs[(totalPaginas - 1) * this.itemsPorPagina];
-    this.firestore.collection('ordenes_oc', ref =>
-      ref.orderBy('id', 'desc').startAt(startDoc).limit(this.itemsPorPagina)
-    ).get().subscribe(lastSnap => {
-      this.ocsFiltradas = lastSnap.docs.map(doc => ({
-        docId: doc.id,
-        ...(doc.data() as any)
-      }));
+    const startDocIndex = (totalPaginas - 1) * this.itemsPorPagina;
+    const startDoc = docs[startDocIndex];
 
-      this.firstVisible = lastSnap.docs[0];
-      this.lastVisible = lastSnap.docs[lastSnap.docs.length - 1];
-      this.historialPaginas = [];
-      this.paginaActual = totalPaginas;
-    });
+    if (startDoc) {
+      this.firestore.collection('ordenes_oc', ref =>
+        ref.orderBy('id', 'desc')
+          .startAt(startDoc)
+          .limit(this.itemsPorPagina)
+      ).get().subscribe(finalSnap => {
+        this.ocsFiltradas = finalSnap.docs.map(doc => ({
+          docId: doc.id,
+          ...(doc.data() as any)
+        }));
+
+        this.firstVisible = finalSnap.docs[0];
+        this.lastVisible = finalSnap.docs[finalSnap.docs.length - 1];
+        this.historialPaginas = [this.firstVisible];
+        this.paginaActual = totalPaginas;
+        this.cargando = false;
+      });
+    } else {
+      this.cargando = false;
+    }
   });
 }
 
 
+
 async cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   this.cargando = true;
+
   try {
-    const snapshot = await firstValueFrom(
-      this.firestore.collection('ordenes_oc', ref => {
-        let q = ref.orderBy('id', 'desc').limit(this.itemsPorPagina);
-        if (direccion === 'adelante' && this.lastVisible) q = q.startAfter(this.lastVisible);
-        if (direccion === 'atras' && this.historialPaginas.length >= 2) {
-          const prev = this.historialPaginas[this.historialPaginas.length - 2];
-          q = q.startAt(prev);
-        }
-        return q;
-      }).get()
-    );
+    const ref = this.firestore.collection('ordenes_oc', ref => {
+      let query = ref.orderBy('id', 'desc').limit(this.itemsPorPagina);
+
+      if (direccion === 'adelante' && this.lastVisible) {
+        query = query.startAfter(this.lastVisible);
+      }
+
+      if (direccion === 'atras' && this.historialPaginas.length >= 2) {
+        const anterior = this.historialPaginas[this.historialPaginas.length - 2];
+        query = query.startAt(anterior);
+      }
+
+      return query;
+    });
+
+    const snapshot = await firstValueFrom(ref.get());
 
     if (!snapshot.empty) {
       this.ocsFiltradas = snapshot.docs.map(doc => ({
@@ -279,25 +321,21 @@ async cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
       this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
       if (direccion === 'adelante') {
-        if (this.paginaActual === 1 && this.historialPaginas.length === 0) {
-          this.historialPaginas.push(this.firstVisible);
-        } else {
-          this.historialPaginas.push(this.firstVisible);
-          this.paginaActual++;
-        }
-      } else if (direccion === 'atras' && this.historialPaginas.length > 1) {
-        this.historialPaginas.pop();
+        this.historialPaginas.push(this.firstVisible);
+        this.paginaActual++;
+      } else if (direccion === 'atras') {
+        this.historialPaginas.pop(); // eliminamos el último para retroceder
         this.paginaActual--;
       }
-    } else if (direccion === 'adelante') {
-      this.paginaActual--;
     }
+
   } catch (error) {
     console.error('Error al cargar página:', error);
   } finally {
     this.cargando = false;
   }
 }
+
 
 
 
@@ -326,9 +364,11 @@ async buscarPorId() {
     return;
   }
 
+  this.cargando = true;
+
   try {
     const snapshot = await this.firestore.collection('ordenes_oc', ref =>
-      ref.where('id', '==', idNumerico)
+      ref.where('id', '==', idNumerico).limit(1)
     ).get().toPromise();
 
     if (snapshot && !snapshot.empty) {
@@ -343,34 +383,40 @@ async buscarPorId() {
   } catch (error) {
     console.error('Error en buscarPorId():', error);
     this.resultadoBusqueda = null;
+  } finally {
+    this.cargando = false;
   }
 }
 
 
 
-  async editarEstado(oc: any) {
-    const alert = await this.alertController.create({
-      header: `Cambiar estatus`,
-      inputs: this.estadosDisponibles.map(estado => ({
-        type: 'radio',
-        label: estado,
-        value: estado,
-        checked: oc.estatus === estado
-      })),
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Actualizar',
-          handler: async (nuevoEstado) => {
-            await this.firestore.collection('ordenes_oc').doc(oc.docId).update({ estatus: nuevoEstado });
-            this.cargarPagina('adelante');
-          }
-        }
-      ]
-    });
+async editarEstado(oc: any) {
+  const alert = await this.alertController.create({
+    header: `Cambiar estatus`,
+    inputs: this.estadosDisponibles.map(estado => ({
+      type: 'radio',
+      label: estado,
+      value: estado,
+      checked: oc.estatus === estado
+    })),
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Actualizar',
+        handler: async (nuevoEstado) => {
+          await this.firestore.collection('ordenes_oc').doc(oc.docId).update({ estatus: nuevoEstado });
 
-    await alert.present();
-  }
+          // Actualizar localmente
+          const index = this.ocsFiltradas.findIndex(o => o.docId === oc.docId);
+          if (index > -1) this.ocsFiltradas[index].estatus = nuevoEstado;
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
+
 async editarId(oc: any) {
   const alert = await this.alertController.create({
     header: 'Modificar ID',
@@ -399,24 +445,27 @@ async editarId(oc: any) {
 }
 
 
-  async eliminarOC(oc: any) {
-    const alert = await this.alertController.create({
-      header: 'Eliminar OC',
-      message: `¿Eliminar OC ID: ${oc.id}?`,
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Eliminar',
-          handler: async () => {
-            await this.firestore.collection('ordenes_oc').doc(oc.docId).delete();
-            this.cargarPagina('adelante');
-          }
-        }
-      ]
-    });
+async eliminarOC(oc: any) {
+  const alert = await this.alertController.create({
+    header: 'Eliminar OC',
+    message: `¿Eliminar OC ID: ${oc.id}?`,
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Eliminar',
+        handler: async () => {
+          await this.firestore.collection('ordenes_oc').doc(oc.docId).delete();
 
-    await alert.present();
-  }
+          // Quitar localmente
+          this.ocsFiltradas = this.ocsFiltradas.filter(o => o.docId !== oc.docId);
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
+
 
   getColorByStatus(estatus: string): string {
     switch (estatus) {

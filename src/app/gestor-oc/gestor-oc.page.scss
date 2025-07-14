@@ -8,3 +8,12 @@
   color: #dc3545; /* rojo */
   font-weight: 500;
 }
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 60vh; /* ajusta según tu necesidad */
+  text-align: center;
+  color: var(--ion-color-medium);
+}

@@ -164,15 +164,6 @@
   <ng-template #contenidoCard let-oc="oc">
     <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }} | {{ oc.centroCostoNombre }}</p>
     <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida | date:'medium' }}</p>
-    <p *ngIf="oc.nombrePDF">
-      <strong>Nombre PDF:</strong> {{ oc.nombrePDF }}
-    </p>
-
-    <ng-container *ngIf="!oc.nombrePDF && oc.archivosBase64?.length">
-      <p *ngFor="let archivo of oc.archivosBase64">
-        <strong>Archivo subido:</strong> {{ archivo.nombre }}
-      </p>
-    </ng-container>
     <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
     <p *ngIf="oc.comentario"><strong>Comentario del solicitante:</strong> 📝 {{ oc.comentario }}</p>
     <p>
@@ -184,44 +175,56 @@
 
     <ion-grid>
       <ion-row>
-        <ion-col size="12" size-md="6" *ngIf="oc.cotizacion">
-          <ion-button expand="block" fill="outline" (click)="mostrarArchivo(oc.cotizacion)">
-            {{ oc.cotizacion.mostrar ? 'Ocultar Cotización' : 'Ver Cotización' }}
-          </ion-button>
-          <div *ngIf="oc.cotizacion.mostrar" class="ion-padding">
-            <iframe *ngIf="oc.cotizacion.tipo === 'application/pdf'"
-                    [src]="oc.cotizacion.url"
-                    width="100%" height="700px"
-                    style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+        <ion-col size="12">
+          <!-- 🟢 Archivos en base64 -->
+          <div *ngIf="oc.archivosBase64?.length" class="ion-margin-top">
+            <h4>Archivos</h4>
+            <div *ngFor="let archivo of oc.archivosBase64">
+              <p>
+                <strong>Archivo:</strong> {{ archivo.nombre }}
+                <ion-button fill="outline" expand="block" (click)="mostrarArchivoDesdeArray(archivo)">
+                  {{ archivo.mostrar ? 'Ocultar' : 'Ver archivo' }}
+                </ion-button>
+              </p>
 
-            <img *ngIf="oc.cotizacion.tipo.startsWith('image/')"
-                [src]="oc.cotizacion.url"
-                style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+              <div *ngIf="archivo.mostrar" class="ion-padding">
+                <iframe *ngIf="archivo.tipo === 'application/pdf'"
+                        [src]="archivo.url"
+                        width="100%" height="700px"
+                        style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+
+                <img *ngIf="archivo.tipo.startsWith('image/')"
+                    [src]="archivo.url"
+                    style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+              </div>
+            </div>
           </div>
-        </ion-col>
-        <ion-col size="12" size-md="6" *ngIf="oc.archivosBase64?.length">
-          <div *ngFor="let archivo of oc.archivosBase64">
-            <p>
-              <strong>Archivo:</strong> {{ archivo.nombre }}
-              <ion-button fill="outline" expand="block" (click)="mostrarArchivoDesdeArray(archivo)">
+
+          <div *ngIf="oc.archivosVisuales?.length > 0" class="ion-margin-top">
+            <h4>Archivos</h4>
+
+            <div *ngFor="let archivo of oc.archivosVisuales" class="ion-margin-bottom">
+              <p><strong>{{ archivo.nombre }}</strong></p>
+              <ion-button fill="outline" (click)="archivo.mostrar = !archivo.mostrar">
                 {{ archivo.mostrar ? 'Ocultar' : 'Ver archivo' }}
               </ion-button>
-            </p>
 
-            <div *ngIf="archivo.mostrar" class="ion-padding">
-              <iframe *ngIf="archivo.tipo === 'application/pdf'"
-                      [src]="archivo.url"
-                      width="100%" height="700px"
-                      style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
+              <div *ngIf="archivo.mostrar" class="ion-padding">
+                <iframe *ngIf="archivo.esPDF"
+                        [src]="archivo.url"
+                        width="100%" height="700px"
+                        style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
 
-              <img *ngIf="archivo.tipo.startsWith('image/')"
-                  [src]="archivo.url"
-                  style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+                <img *ngIf="archivo.esImagen"
+                    [src]="archivo.url"
+                    style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+              </div>
             </div>
           </div>
         </ion-col>
       </ion-row>
     </ion-grid>
+
     <ng-container *ngIf="oc.estatus === 'Rechazado'">
       <ion-item class="ion-margin-top">
         <ion-label position="stacked">Comentario antes de subir nueva cotización</ion-label>

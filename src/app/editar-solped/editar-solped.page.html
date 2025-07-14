@@ -95,7 +95,17 @@
               </ion-row>
               <ion-row *ngIf="item.imagen_referencia_base64">
                 <ion-col size="12" style="text-align: center;">
-                  <img [src]="item.imagen_referencia_base64" width="200" />
+                  <div *ngIf="item.imagen_url; else sinImagen" class="image-wrapper">
+                    <img
+                      [src]="item.imagen_url"
+                      alt="Imagen del ítem"
+                      class="item-img"
+                      (click)="abrirImagenModal(item.imagen_url)"
+                      style="cursor: zoom-in; border-radius: 10px; max-height: 150px; width: auto;">
+                  </div>
+                  <ng-template #sinImagen>
+                    <ion-text color="medium">No se adjuntó imagen.</ion-text>
+                  </ng-template>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -178,20 +188,30 @@
               <ion-label position="stacked">Centro de costo</ion-label>
               <ion-select [(ngModel)]="filtroContrato" interface="popover">
                 <ion-select-option value="">Todos</ion-select-option>
-                  <ion-select-option value="10-10-12">ZAMAQ</ion-select-option>
+                  <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
                   <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
                   <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-                  <ion-select-option value="30-10-07">30-10-07</ion-select-option>
+                  <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
                   <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-                  <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
-                  <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
+                  <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
+                  <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
+                  <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
+                  <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
+                  <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
+                  <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
+                  <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
+                  <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
                   <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
                   <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
                   <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
+                  <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
                   <ion-select-option value="30-10-57">CALAMA</ion-select-option>
                   <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-                  <ion-select-option value="30-10-59">30-10-59</ion-select-option>
-                  <ion-select-option value="30-10-60">30-10-60</ion-select-option>
+                  <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
+                  <ion-select-option value="30-10-60">CALAMA</ion-select-option>
                   <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
               </ion-select>
             </ion-item>
@@ -221,183 +241,213 @@
       </ion-grid>
     </ion-card-content>
   </ion-card>
-  <ion-card *ngFor="let solpe of solpesFiltradas"[@fadeIn]>
-    <ion-card-header class="ion-no-padding" (click)="toggleDetalle(solpe.id)" style="cursor: pointer;">
-      <ion-item lines="none">
-        <ion-label>
-          <h2 color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</h2>
-          <p style="font-size: 14px;">Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} | Tipo: {{ solpe.tipo_solped }} | Nombre: {{ solpe.nombre_solped }}| Usuario: {{ solpe.usuario }}</p>
-        </ion-label>
-        <ion-badge [color]="getColorByStatus(solpe.estatus)"[ngStyle]="{
-            'background-color': getColorByStatus(solpe.estatus),
-            'color': 'white',
-            'padding': '4px 10px',
-            'font-weight': 'bold'
-          }" style="height: 25px; font-size: 12px;">{{ solpe.estatus }}</ion-badge>
-          <ion-badge
-            *ngIf="solpe.comentarios?.length > 0 && userUid && solpe.usuario_uid === userUid && !solpe.comentariosVistos?.[userUid]"
-            class="badge-comentarios">
-            💬 {{ solpe.comentarios.length }}
-          </ion-badge>
-      </ion-item>
-    </ion-card-header>
+<ng-container *ngFor="let grupo of solpesAgrupadas | keyvalue: ordenarEmpresaGrupo">
+  <!-- Encabezado por empresa -->
+<ion-card class="ion-padding" style="border: 1px solid var(--ion-color-step-150, #dcdcdc); border-radius: 8px; background: var(--ion-background-color);">
+  <ion-card-header>
+    <ion-card-title style="font-size: 18px; display: flex; align-items: center;">
+      <ion-icon name="business-outline" style="margin-right: 8px; font-size: 20px; color: var(--ion-text-color);"></ion-icon>
+      <span style="color: var(--ion-text-color);">{{ grupo.key }}</span>
+    </ion-card-title>
+  </ion-card-header>
+</ion-card>
+  <!-- Lista de SOLPEDs por empresa -->
+  <ng-container *ngFor="let solpe of grupo.value; trackBy: trackBySolpeId">
+    <ion-card [@fadeIn]>
+      <ion-card-header class="ion-no-padding" (click)="toggleDetalle(solpe.id)" style="cursor: pointer;">
+        <ion-item lines="none">
+          <ion-label>
+            <h2 color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</h2>
+            <p style="font-size: 14px;">
+              Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} |
+              Tipo: {{ solpe.tipo_solped }} | Nombre: {{ solpe.nombre_solped }} | Usuario: {{ solpe.usuario }} | Empresa: {{ solpe.empresa }}
+            </p>
+          </ion-label>
 
-    <ion-card-content *ngIf="solpeExpandidaId === solpe.id"[@fadeIn] >
-      <ion-item lines="none" class="item-usuario-accion">
-        <ion-icon name="person-circle-outline" slot="start"></ion-icon>
-        <ion-label>
-          Usuario: {{ solpe.usuario }}
-        </ion-label>
-        <ion-button color="secondary" size="small"  slot="end" (click)="cambiarEstatus(solpe)">
+          <div style="display: flex; align-items: center;">
+            <ion-badge [ngStyle]="{
+              'background-color': getColorByStatus(solpe.estatus),
+              'color': 'white',
+              'padding': '4px 10px',
+              'font-weight': 'bold'
+            }" style="height: 25px; font-size: 12px;">
+              {{ solpe.estatus }}
+            </ion-badge>
+
+            <ion-badge
+              *ngIf="solpe.comentarios?.length > 0 && solpe.usuario_uid === userUid && !solpe.comentariosVistos?.[userUid]"
+              class="badge-comentarios"
+            >
+              💬 {{ solpe.comentarios.length }}
+            </ion-badge>
+          </div>
+        </ion-item>
+      </ion-card-header>
+
+      <ion-card-content *ngIf="solpeExpandidaId === solpe.id"[@fadeIn] >
+        <ion-item lines="none" class="item-usuario-accion">
+          <ion-icon name="person-circle-outline" slot="start"></ion-icon>
+          <ion-label>
+            Usuario: {{ solpe.usuario }}
+          </ion-label>
+          <ion-button color="secondary" size="small"  slot="end" (click)="cambiarEstatus(solpe)">
             Cambiar estado
         </ion-button>
         <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
           Descargar Excel
         </ion-button>
-      </ion-item>
-      <ion-list-header>
-        <ion-label><strong>🛠 Ítems asociados</strong></ion-label>
-      </ion-list-header>
+        </ion-item>
+        <ion-list-header>
+          <ion-label><strong>🛠 Ítems asociados</strong></ion-label>
+        </ion-list-header>
       <ion-grid class="tabla-items">
         <ion-row class="tabla-header">
           <ion-col>Ítem</ion-col>
           <ion-col>Descripción</ion-col>
-          <ion-col>Codigo</ion-col>
+          <ion-col>Código</ion-col>
           <ion-col>Cantidad</ion-col>
+          <ion-col>Cantidad cotizada</ion-col>
           <ion-col>N° Interno/ Patente</ion-col>
           <ion-col>Imagen</ion-col>
           <ion-col>Estatus</ion-col>
         </ion-row>
+
         <ion-row *ngFor="let item of solpe.items" class="tabla-row">
           <ion-col>{{ item.item }}</ion-col>
           <ion-col>{{ item.descripcion }}</ion-col>
           <ion-col>{{ item.codigo_referencial }}</ion-col>
           <ion-col>{{ item.cantidad }}</ion-col>
+          <ion-col>{{ item.cantidad_cotizada }}</ion-col>
           <ion-col>{{ item.numero_interno }}</ion-col>
+
           <ion-col>
-            <img
-              *ngIf="item.imagen_referencia_base64"
-              [src]="item.imagen_referencia_base64"
-              width="60"
-              style="cursor: pointer; border: 1px solid #ccc; border-radius: 5px;"
-              (click)="abrirImagenModal(item.imagen_referencia_base64)"
-            />
+            <div *ngIf="item.imagen_url || item.imagen_referencia_base64; else sinImagen">
+              <img
+                [src]="item.imagen_url || item.imagen_referencia_base64"
+                alt="Imagen del ítem"
+                style="cursor: zoom-in; border-radius: 10px; max-height: 150px; width: auto;"
+                (click)="abrirImagenModal(item.imagen_url || item.imagen_referencia_base64)">
+            </div>
+            <ng-template #sinImagen>
+              <ion-text color="medium">No se adjuntó imagen.</ion-text>
+            </ng-template>
           </ion-col>
+
           <ion-col>
-          <ion-badge [ngStyle]="{
-            'background-color': getBadgeColor(item.estado || 'Pendiente'),
-            'color': 'white',
-            'padding': '4px 10px',
-            'font-weight': 'bold',
-            'border-radius': '12px'
-          }">
-            {{ item.estado || 'Pendiente' }}
-          </ion-badge>
+            <ion-badge [ngStyle]="{
+              'background-color': getBadgeColor(item.estado || 'Pendiente'),
+              'color': 'white',
+              'padding': '4px 10px',
+              'font-weight': 'bold',
+              'border-radius': '12px'
+            }">
+              {{ item.estado || 'Pendiente' }}
+            </ion-badge>
           </ion-col>
         </ion-row>
       </ion-grid>
-        <ion-list *ngIf="ocsCargadas[solpe.id]?.length">
-          <ion-list-header>
-            <ion-label><strong>📦 Detalles de OC generadas</strong></ion-label>
-          </ion-list-header>
-          <ion-accordion-group>
-          <ion-accordion *ngFor="let oc of ocsCargadas[solpe.id]">
-            <ion-item slot="header" color="light">
-              <ion-label>Cotización #{{ oc.id }} {{ oc.nombrePDF || oc.nombre }}</ion-label>
-              <ion-badge slot="end" [color]="getColorByStatus(oc.estatus || '')" *ngIf="oc.estatus">
-                {{ oc.estatus }}
-              </ion-badge>
-            </ion-item>
+          <ion-list *ngIf="ocsCargadas[solpe.id]?.length">
+            <ion-list-header>
+              <ion-label><strong>📦 Detalles de OC generadas</strong></ion-label>
+            </ion-list-header>
+            <ion-accordion-group>
+            <ion-accordion *ngFor="let oc of ocsCargadas[solpe.id]">
+              <ion-item slot="header" color="light">
+                <ion-label>Cotización #{{ oc.id}}</ion-label>
+                <ion-badge slot="end" [color]="getColorByStatus(oc.estatus || '')" *ngIf="oc.estatus">
+                  {{ oc.estatus }}
+                </ion-badge>
+              </ion-item>
 
-            <div slot="content" class="ion-padding">
-              <ion-grid class="detalle-oc ion-padding-start">
+              <div slot="content" class="ion-padding">
+                <ion-grid class="detalle-oc ion-padding-start">
 
-                <ion-row class="fila-detalle" *ngIf="oc.responsable">
-                  <ion-col size="5" class="label-detalle"><strong>👤 Responsable:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">{{ oc.responsable }}</ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.responsable">
+                    <ion-col size="5" class="label-detalle"><strong>👤 Responsable:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">{{ oc.responsable }}</ion-col>
+                  </ion-row>
 
-                <ion-row class="fila-detalle" *ngIf="oc.nombre_centro_costo">
-                  <ion-col size="5" class="label-detalle"><strong>🏢 Centro de Costo:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">{{ oc.nombre_centro_costo }}</ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.nombre_centro_costo">
+                    <ion-col size="5" class="label-detalle"><strong>🏢 Centro de Costo:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">{{ oc.nombre_centro_costo }}</ion-col>
+                  </ion-row>
 
-                <ion-row class="fila-detalle" *ngIf="oc.numero_contrato">
-                  <ion-col size="5" class="label-detalle"><strong>📄 Contrato:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">{{ oc.numero_contrato }}</ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.numero_contrato">
+                    <ion-col size="5" class="label-detalle"><strong>📄 Contrato:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">{{ oc.numero_contrato }}</ion-col>
+                  </ion-row>
 
-                <ion-row class="fila-detalle" *ngIf="oc.fechaSubida">
-                  <ion-col size="5" class="label-detalle"><strong>📅 Fecha Subida:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">{{ oc.fechaSubida.toDate() | date:'longDate' }}</ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.fechaSubida">
+                    <ion-col size="5" class="label-detalle"><strong>📅 Fecha Subida:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">{{ oc.fechaSubida | date:'longDate' }}</ion-col>
+                  </ion-row>
 
-                <ion-row class="fila-detalle" *ngIf="oc.fechaAprobacion">
-                  <ion-col size="5" class="label-detalle"><strong>✅ Fecha Aprobación:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">{{ oc.fechaAprobacion | date:'longDate' }}</ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.fechaAprobacion">
+                    <ion-col size="5" class="label-detalle"><strong>✅ Fecha Aprobación:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">{{ oc.fechaAprobacion | date:'longDate' }}</ion-col>
+                  </ion-row>
 
-                <ion-row class="fila-detalle" *ngIf="oc.comentario">
-                  <ion-col size="5" class="label-detalle"><strong>💬 Comentario:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">{{ oc.comentario }}</ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.comentario">
+                    <ion-col size="5" class="label-detalle"><strong>💬 Comentario:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">{{ oc.comentario }}</ion-col>
+                  </ion-row>
 
-                <ion-row class="fila-detalle" *ngIf="oc.destinoCompra">
-                  <ion-col size="5" class="label-detalle"><strong>📍 Destino:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">{{ oc.destinoCompra }}</ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.destinoCompra">
+                    <ion-col size="5" class="label-detalle"><strong>📍 Destino:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">{{ oc.destinoCompra }}</ion-col>
+                  </ion-row>
 
 
-                <ion-row class="fila-detalle" *ngIf="oc.items && oc.items.length > 0">
-                  <ion-col size="5" class="label-detalle"><strong>🧾 Ítems Cotizados:</strong></ion-col>
-                  <ion-col size="7" class="valor-detalle">
-                    <ul class="ion-padding-start" style="list-style-type: none; margin: 0; padding-left: 0;">
-                      <li *ngFor="let item of oc.items" style="margin-bottom: 4px;">
-                        {{ item.item }} - {{ item.descripcion }}
-                      </li>
-                    </ul>
-                  </ion-col>
-                </ion-row>
+                  <ion-row class="fila-detalle" *ngIf="oc.items && oc.items.length > 0">
+                    <ion-col size="5" class="label-detalle"><strong>🧾 Ítems Cotizados:</strong></ion-col>
+                    <ion-col size="7" class="valor-detalle">
+                      <ul class="ion-padding-start" style="list-style-type: none; margin: 0; padding-left: 0;">
+                        <li *ngFor="let item of oc.items" style="margin-bottom: 4px;">
+                          {{ item.item }} - {{ item.descripcion }}
+                        </li>
+                      </ul>
+                    </ion-col>
+                  </ion-row>
 
-              </ion-grid>
+                </ion-grid>
 
-              <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'cotizacion')">
-                Ver Cotización
-              </ion-button>
-              <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'oc')">
-                Ver OC
-              </ion-button>
-
-            </div>
-          </ion-accordion>
-        </ion-accordion-group>
-        </ion-list>
-                <ion-item>
-          <ion-label position="stacked">💬 Agregar Comentario</ion-label>
-          <ion-textarea [(ngModel)]="solpe.nuevoComentario" autoGrow="true" placeholder="Escribe un comentario..."></ion-textarea>
-        </ion-item>
-
-        <ion-button expand="block" color="primary" (click)="agregarComentario(solpe)">
-          Enviar
-        </ion-button>
-
-        <!-- Mostrar comentarios anteriores -->
-        <ion-list *ngIf="solpe.comentarios?.length">
-          <ion-list-header>
-            <ion-label><strong>🗂 Comentarios anteriores</strong></ion-label>
-          </ion-list-header>
-          <ion-item *ngFor="let comentario of solpe.comentarios">
-            <ion-label>
-              <p>
-                {{ (comentario.fecha?.toDate ? comentario.fecha.toDate() : comentario.fecha) | date:'dd/MM/yyyy HH:mm' }}
-              </p>
-              <h3>{{ comentario.usuario }}</h3>
-              <p>{{ comentario.texto }}</p>
-            </ion-label>
+                <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'cotizacion')">
+                  Ver Cotización
+                </ion-button>
+                <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'oc')">
+                  Ver OC
+                </ion-button>
+              </div>
+            </ion-accordion>
+          </ion-accordion-group>
+          </ion-list>
+          <ion-item>
+            <ion-label position="stacked">💬 Agregar Comentario</ion-label>
+            <ion-textarea [(ngModel)]="solpe.nuevoComentario" autoGrow="true" placeholder="Escribe un comentario..."></ion-textarea>
           </ion-item>
-        </ion-list>
-    </ion-card-content>
-  </ion-card>
+
+          <ion-button expand="block" color="primary" (click)="agregarComentario(solpe)">
+            Enviar
+          </ion-button>
+          <!-- Mostrar comentarios anteriores -->
+          <ion-list *ngIf="solpe.comentarios?.length > 0">
+            <ion-list-header>
+              <ion-label><strong>🗂 Comentarios anteriores</strong></ion-label>
+            </ion-list-header>
+            <ion-item *ngFor="let comentario of solpe.comentarios">
+              <ion-label>
+                <p>
+                  {{ (comentario.fecha?.toDate ? comentario.fecha.toDate() : comentario.fecha) | date:'dd/MM/yyyy HH:mm' }}
+                </p>
+                <h3>{{ comentario.usuario }}</h3>
+                <p>{{ comentario.texto }}</p>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+</ng-container>
     <ion-text *ngIf="solpesFiltradas.length === 0" color="medium" class="ion-text-center">
       <p><ion-icon name="cloud-offline-outline" style="font-size: 32px;"></ion-icon></p>
       <p>No hay SOLPED disponibles con los filtros aplicados.</p>

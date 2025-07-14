@@ -1,0 +1,113 @@
+<ion-header [translucent]="true">
+  <ion-toolbar style="--background: red">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/" color="light"></ion-back-button>
+    </ion-buttons>
+    <ion-title style="color: white;">Gestión de Usuarios</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  <!-- ➕ Formulario Crear/Editar -->
+  <ion-card class="form-card fade-in-bottom" *ngIf="mostrarFormulario">
+    <ion-card-header class="ion-justify-content-between ion-align-items-center header-flex">
+      <ion-card-title>{{ editando ? 'Editar Usuario' : 'Crear Nuevo Usuario' }}</ion-card-title>
+      <ion-button size="small" fill="clear" (click)="mostrarFormulario = false">
+        <ion-icon name="close-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-card-header>
+    <ion-card-content>
+      <form (ngSubmit)="crearUsuario()" class="form-content">
+        <ion-item lines="inset">
+          <ion-label position="floating">Correo electrónico</ion-label>
+          <ion-input [(ngModel)]="usuario.email" name="email" type="email" required [readonly]="editando"></ion-input>
+        </ion-item>
+
+        <ion-item lines="inset" *ngIf="!editando">
+          <ion-label position="floating">Contraseña</ion-label>
+          <ion-input [(ngModel)]="usuario.password" name="password" type="password" required></ion-input>
+        </ion-item>
+
+        <ion-item lines="inset">
+          <ion-label position="floating">Nombre completo</ion-label>
+          <ion-input [(ngModel)]="usuario.fullName" name="fullName" required></ion-input>
+        </ion-item>
+
+        <ion-item lines="inset">
+          <ion-label position="floating">Teléfono</ion-label>
+          <ion-input [(ngModel)]="usuario.phone" name="phone" type="tel"></ion-input>
+        </ion-item>
+
+        <ion-item lines="inset">
+          <ion-label position="floating">RUT</ion-label>
+          <ion-input [(ngModel)]="usuario.rut" name="rut" required></ion-input>
+        </ion-item>
+
+        <ion-item lines="inset">
+          <ion-label position="floating">Rol</ion-label>
+          <ion-select [(ngModel)]="usuario.role" name="role" required interface="popover">
+            <ion-select-option value="Admin">Admin</ion-select-option>
+            <ion-select-option value="Generador solped">Generador de SOLPED</ion-select-option>
+            <ion-select-option value="Editor">Editor</ion-select-option>
+            <ion-select-option value="Aprobador/Editor">Aprobador/Editor</ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-button expand="block" type="submit" class="ion-margin-top" color="success">
+          {{ editando ? 'Actualizar Usuario' : 'Crear Usuario' }}
+        </ion-button>
+      </form>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- 🧍 Lista de Usuarios -->
+  <ion-card class="fade-in">
+    <ion-card-header class="ion-justify-content-between ion-align-items-center header-flex">
+      <ion-card-title>Usuarios Registrados</ion-card-title>
+      <ion-button size="small" fill="outline" shape="round" color="dark"
+        (click)="mostrarFormulario = true; editando = false; limpiarFormulario()">
+        <ion-icon name="person-add-outline" slot="start"></ion-icon>
+        Agregar Usuario
+      </ion-button>
+    </ion-card-header>
+    <ion-card-content>
+
+      <!-- 🔄 Spinner mientras carga -->
+      <div *ngIf="cargandoUsuarios" class="spinner-wrapper">
+        <ion-spinner name="crescent" color="primary"></ion-spinner>
+      </div>
+
+      <!-- Lista -->
+      <ion-list *ngIf="!cargandoUsuarios && usuarios.length > 0; else sinUsuarios">
+        <ion-item *ngFor="let user of usuarios" lines="inset" class="user-item">
+          <ion-avatar slot="start">
+            <ion-icon name="person-circle" size="large"></ion-icon>
+          </ion-avatar>
+          <ion-label>
+            <h3>{{ user.fullName }}</h3>
+            <p>{{ user.email }}</p>
+            <p><strong>Rol:</strong> {{ user.role }} | <strong>RUT:</strong> {{ user.rut }}</p>
+            <p><strong>Tel:</strong> {{ user.phone }}</p>
+          </ion-label>
+          <ion-buttons slot="end">
+            <ion-button color="medium" fill="clear" (click)="editarUsuario(user)">
+              <ion-icon name="create-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+            <ion-button color="danger" fill="clear" (click)="eliminarUsuario(user)">
+              <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-item>
+      </ion-list>
+
+      <!-- Si no hay usuarios -->
+      <ng-template #sinUsuarios>
+        <ion-text color="medium" *ngIf="!cargandoUsuarios">
+          No hay usuarios registrados.
+        </ion-text>
+      </ng-template>
+    </ion-card-content>
+  </ion-card>
+
+</ion-content>

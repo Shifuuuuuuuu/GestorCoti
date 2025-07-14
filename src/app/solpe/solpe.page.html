@@ -42,6 +42,15 @@
             </ion-input>
           </ion-item>
           <ion-item>
+            <ion-label position="floating">Cotizador</ion-label>
+            <ion-select [(ngModel)]="solpe.dirigidoA" placeholder="Selecciona usuario">
+              <ion-select-option *ngFor="let usuario of usuariosDisponibles" [value]="usuario">
+                {{ usuario }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
             <ion-label position="floating">Tipo de SOLPED</ion-label>
             <ion-select [(ngModel)]="solpe.tipo_solped" placeholder="Seleccionar tipo">
               <ion-select-option value="EPP">EPP</ion-select-option>
@@ -56,24 +65,31 @@
           </ion-item>
           <ion-item>
             <ion-label position="floating">Centro de Costo</ion-label>
-            <ion-select [(ngModel)]="solpe.numero_contrato"  (ionChange)="actualizarCentroCosto($event)" required>
+            <ion-select [(ngModel)]="solpe.numero_contrato" interface="popover" cancelText="Cancelar" okText="Seleccionar" (ionChange)="actualizarCentroCosto($event)" required>
                   <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
                   <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
                   <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-                  <ion-select-option value="30-10-07">30-10-07</ion-select-option>
+                  <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
                   <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-                  <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
-                  <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43">TALLER CANECHE</ion-select-option>
-                  <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43">ESTODCADA 8</ion-select-option>
+                  <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
+                  <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
+                  <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
+                  <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
+                  <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
+                  <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
+                  <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
+                  <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
+                  <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
                   <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
                   <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
                   <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
+                  <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
                   <ion-select-option value="30-10-57">CALAMA</ion-select-option>
                   <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-                  <ion-select-option value="30-10-59">30-10-59</ion-select-option>
-                  <ion-select-option value="30-10-60">30-10-60</ion-select-option>
+                  <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
+                  <ion-select-option value="30-10-60">CALAMA</ion-select-option>
                   <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
             </ion-select>
           </ion-item>
@@ -113,10 +129,13 @@
                 <td><ion-input [(ngModel)]="item.stock" type="number" [readonly]="!item.editando" (ionBlur)="verificarYGuardarItem(i)"></ion-input></td>
                 <td><ion-input [(ngModel)]="item.numero_interno" [readonly]="!item.editando" (ionInput)="item.numero_interno = item.numero_interno.toUpperCase()" (ionBlur)="verificarYGuardarItem(i)"></ion-input></td>
                 <td>
-                  <ion-icon *ngIf="!item.imagen_referencia_base64" name="image-outline" size="large" style="cursor: pointer;" (click)="seleccionarArchivo(i)"></ion-icon>
-                  <input type="file" accept="image/*" #inputImagenRef style="display: none;" (change)="subirImagenReferencia($event, i)">
-                  <div *ngIf="item.imagen_referencia_base64" class="image-container">
-                    <img [src]="item.imagen_referencia_base64" alt="Imagen" width="200" height="200">
+                  <ng-container *ngIf="!item.imagen_url">
+                    <ion-icon name="image-outline" size="large" style="cursor: pointer;" (click)="seleccionarArchivo(i)"></ion-icon>
+                    <input type="file" accept="image/*" #inputImagenRef style="display: none;" (change)="subirImagenReferencia($event, i)">
+                  </ng-container>
+
+                  <div *ngIf="item.imagen_url" class="image-container">
+                    <img [src]="item.imagen_url" alt="Imagen" width="200" height="200">
                     <ion-button fill="clear" color="danger" (click)="eliminarImagen(i)">
                       <ion-icon name="trash-outline"></ion-icon>
                     </ion-button>

@@ -1,5 +1,7 @@
 {
-  "version": "1.4.0",
-  "mensaje": "🆕 Se ha agregado un buscador de comentarios en la sección de filtros del historial de cotizaciones."
+  "version": "1.8.0",
+  "mensaje": "🆕 Ahora se podrá asociar a la persona encargada de cotizar la SOLPED y el historial de SOLPEDs está dividido por empresa."
 }
+
+
 

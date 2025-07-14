@@ -4,6 +4,9 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastController } from '@ionic/angular';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { deleteObject, ref as storageRef, getStorage } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
 @Component({
   selector: 'app-validar-oc',
   templateUrl: './validar-oc.page.html',
@@ -25,12 +28,14 @@ export class ValidarOcPage implements OnInit {
     private firestore: AngularFirestore,
     private auth: AngularFireAuth,
     private sanitizer: DomSanitizer,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private storage: AngularFireStorage,
   ) {}
 
-  ngOnInit() {
-    this.cargarOCs();
-  }
+ngOnInit() {
+  this.cargarOCs();
+  this.cargarArchivosDesdeLocalStorage();
+}
 
 async cargarOCs() {
   this.loading = true;
@@ -47,30 +52,34 @@ async cargarOCs() {
 
     this.ocs = await Promise.all(snapshot.docs.map(async doc => {
       const data = doc.data() as any;
-      const archivosBase64 = data.archivosBase64 || [];
 
-      const archivosVisuales = archivosBase64.map((archivo: any, index: number) => {
+      // ✅ Archivos desde Firebase Storage (no base64)
+      const archivosStorage = data.archivosStorage || [];
+
+      const archivosVisuales = archivosStorage.map((archivo: any, index: number) => {
         const tipo = archivo.tipo || 'application/pdf';
-        const base64 = archivo.base64 || '';
         const esPDF = tipo === 'application/pdf';
         const esImagen = tipo.startsWith('image/');
+        const urlSanitizada = this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url);
+
         return {
           nombre: archivo.nombre || `archivo_${index + 1}`,
-          base64,
           tipo,
           esPDF,
           esImagen,
-          mostrar: false,
-          url: null
+          url: urlSanitizada,
+          mostrar: false
         };
       });
 
+      // Historial ordenado por fecha
       const historialOrdenado = (data.historial || []).sort((a: any, b: any) => {
         const fechaA = a.fecha?.toDate?.() || new Date(a.fecha) || new Date(0);
         const fechaB = b.fecha?.toDate?.() || new Date(b.fecha) || new Date(0);
         return fechaA.getTime() - fechaB.getTime();
       });
 
+      // Ítems aprobados
       let itemsEvaluados: any[] = [];
       if (Array.isArray(data.items)) {
         itemsEvaluados = data.items.filter((item: any) => item.estado === 'aprobado');
@@ -87,12 +96,13 @@ async cargarOCs() {
       };
     }));
   } catch (error) {
-    console.error('Error al cargar OCs:', error);
+    console.error('❌ Error al cargar OCs:', error);
     this.ocs = [];
   } finally {
     this.loading = false;
   }
 }
+
 formatearCLP(valor: number): string {
   return valor?.toLocaleString('es-CL', {
     style: 'currency',
@@ -102,41 +112,106 @@ formatearCLP(valor: number): string {
   }) || '$0';
 }
 
+cargarArchivosDesdeLocalStorage() {
+  const archivosRaw = localStorage.getItem('archivosOC');
+  if (!archivosRaw) return;
 
-  verArchivo(oc: any) {
-    if (!oc.mostrarArchivo && oc.archivoBase64) {
-      const tipo = oc.esPDF ? 'application/pdf' : (oc.esImagen ? 'image/png' : 'application/octet-stream');
-      oc.archivoUrl = this.crearArchivoUrl(oc.archivoBase64, tipo);
-      oc.mostrarArchivo = true;
-    }
+  try {
+    const archivos = JSON.parse(archivosRaw);
+    const archivosVisuales = archivos.map((archivo: any, index: number) => {
+      const tipo = archivo.tipo || 'application/pdf';
+      const esPDF = tipo === 'application/pdf';
+      const esImagen = tipo.startsWith('image/');
+
+      // ✅ Usa directamente la URL si está presente
+      const url = archivo.url
+        ? this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url)
+        : this.crearArchivoUrl(archivo.base64, tipo);
+
+      return {
+        nombre: archivo.nombre || `archivo_${index + 1}`,
+        tipo,
+        esPDF,
+        esImagen,
+        mostrar: true,
+        url,
+        base64: archivo.base64 || null
+      };
+    });
+
+    this.ocs.unshift({
+      id: 'archivos-local',
+      estatus: 'Desde localStorage',
+      centroCosto: 'Local',
+      centroCostoNombre: '',
+      fechaSubida: new Date(),
+      destinoCompra: '',
+      tipo_solped: '',
+      nombre_centro_costo: '',
+      responsable: 'Sistema',
+      precioTotalConIVA: 0,
+      archivosVisuales,
+      itemsEvaluados: [],
+      comentarioTemporal: ''
+    });
+
+  } catch (error) {
+    console.error('Error al leer archivos desde localStorage:', error);
   }
-verArchivoIndividual(archivo: any) {
-  const tipo = archivo.tipo || 'application/pdf';
-  const base64 = archivo.base64;
-
-  const url = this.crearArchivoUrl(base64, tipo);
-  archivo.url = url;
-  archivo.mostrar = true;
 }
+
+verArchivoIndividual(archivo: any) {
+  archivo.mostrar = true;
+
+  if (archivo.tipo?.includes('pdf')) {
+    archivo.esPDF = true;
+    archivo.esImagen = false;
+  } else if (archivo.tipo?.startsWith('image')) {
+    archivo.esImagen = true;
+    archivo.esPDF = false;
+  }
+
+  // Solo sanitizar si es string plano
+  if (typeof archivo.url === 'string') {
+    archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url);
+  } else {
+  }
+}
+
+
+
 async eliminarArchivoDeOC(oc: any, archivoIndex: number) {
-  if (oc.archivosVisuales.length <= 1) {
+  if (oc.archivosStorage.length <= 1) {
     this.mostrarToast('Debe mantener al menos un archivo.', 'warning');
     return;
   }
 
-  oc.archivosVisuales.splice(archivoIndex, 1);
-  const nuevosArchivosBase64 = oc.archivosVisuales.map((archivo: any) => ({
-    nombre: archivo.nombre,
-    base64: archivo.base64,
-    tipo: archivo.tipo
-  }));
+  const archivoAEliminar = oc.archivosStorage[archivoIndex];
 
-  await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
-    archivosBase64: nuevosArchivosBase64
-  });
+  try {
+    // 1. Eliminar de Firebase Storage
+    const storageRef = this.storage.refFromURL(archivoAEliminar.url);
+    await storageRef.delete().toPromise();
 
-  this.mostrarToast('Archivo eliminado correctamente.', 'success');
+    // 2. Eliminar del array
+    const nuevosArchivos = oc.archivosStorage.filter((_: unknown, i: number) => i !== archivoIndex);
+
+
+    // 3. Actualizar en Firestore
+    await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
+      archivosStorage: nuevosArchivos
+    });
+
+    // 4. Actualizar en frontend
+    oc.archivosStorage = nuevosArchivos;
+
+    this.mostrarToast('Archivo eliminado correctamente.', 'success');
+  } catch (error) {
+    console.error('❌ Error al eliminar archivo:', error);
+    this.mostrarToast('Error al eliminar archivo.', 'danger');
+  }
 }
+
 
   crearArchivoUrl(base64: string, tipo: string): SafeResourceUrl {
     const byteCharacters = atob(base64);
@@ -198,18 +273,30 @@ async aprobarOC(oc: any) {
     comentario
   }];
 
-  // 1. Actualiza el estado de la OC principal
-  await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
+  const asociadaASolped = !!oc.solpedId || !!oc.numero_solped;
+
+  // Si está asociada a una SOLPED, validar campos obligatorios
+  if (asociadaASolped && (!oc.numero_solped || !oc.empresa)) {
+    this.mostrarToast('Faltan datos de número SOLPED o empresa en esta OC asociada.', 'warning');
+    return;
+  }
+
+  const datosActualizados: any = {
     estatus: 'Aprobado',
     historial: nuevoHistorial
-  });
+  };
 
+  if (oc.numero_solped) datosActualizados.numero_solped = oc.numero_solped;
+  if (oc.empresa) datosActualizados.empresa = oc.empresa;
 
+  await this.firestore.collection('ordenes_oc').doc(oc.docId).update(datosActualizados);
 
-  // 3. Eliminar del listado visual
+  // Eliminar del listado visual
   this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
-  this.mostrarToast('OC aprobada y guardada en SOLPED.', 'success');
+  this.mostrarToast('OC aprobada correctamente.', 'success');
 }
+
+
 
 
 async rechazarOC(oc: any) {

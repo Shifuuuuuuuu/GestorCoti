@@ -5,6 +5,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastController } from '@ionic/angular';
 import 'firebase/compat/firestore';
 import {trigger,transition,style,animate} from '@angular/animations';
+import { AngularFireStorage } from '@angular/fire/compat/storage'; // Asegúrate de importar
+import { finalize } from 'rxjs/operators';
+import firebase from 'firebase/compat/app';
 
 @Component({
   selector: 'app-gestor-oc',
@@ -30,11 +33,17 @@ export class GestorOcPage implements OnInit {
   archivosSeleccionados: { [key: string]: File } = {};
   nombresArchivos: { [key: string]: string } = {};
   vistasPreviasPdf: { [key: string]: SafeResourceUrl } = {};
+  limite = 100;
+  ultimoDoc: any = null;
+  cargandoMas = false;
+  puedeCargarMas = true;
+  suscripcionOCs: any;
   constructor(
     private firestore: AngularFirestore,
     private auth: AngularFireAuth,
     private sanitizer: DomSanitizer,
-    private toastController: ToastController
+    private toastController: ToastController,
+    private storage: AngularFireStorage,
   ) {}
 
   ngOnInit() {
@@ -55,55 +64,102 @@ buscarPorId() {
 async cargarOCs() {
   const user = await this.auth.currentUser;
   const uid = user?.uid;
-
   if (!uid) return;
 
-  // Obtener nombre del usuario autenticado
   const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
   const dataUser = userDoc?.data() as any;
   const nombreUsuario = dataUser?.fullName || '';
+  const verSoloPropias = ['Luis Orellana', 'Daniela', 'Guillermo Manzor'].includes(nombreUsuario);
 
-  const responsablesFiltrados = ['Luis Orellana', 'Daniela', 'Guillermo Manzor'];
-  const verSoloPropias = responsablesFiltrados.includes(nombreUsuario);
+  const ref = this.firestore.collection('ordenes_oc', ref => {
+    let query = ref.where('estatus', '==', 'Aprobado')
+                   .limit(this.limite);
 
-  this.firestore
-    .collection('ordenes_oc', ref =>
-      ref.where('estatus', '==', 'Aprobado')
-    )
-    .snapshotChanges()
-    .subscribe(snapshot => {
-      let cotizaciones = snapshot.map(doc => {
-        const data = doc.payload.doc.data() as any;
-        const archivoBase64 = data.archivosPDF?.archivoBase64;
-        const urlPDF = archivoBase64 ? this.crearPDFUrl(archivoBase64) : null;
+    if (verSoloPropias) {
+      query = query.where('responsable', '==', nombreUsuario);
+    }
 
-        return {
-          ...data,
-          docId: doc.payload.doc.id,
-          cotizacion: archivoBase64 ? {
-            url: urlPDF,
-            tipo: 'application/pdf'
-          } : null,
-        };
-      });
+    return query;
+  });
 
-      // Filtro por responsable si es necesario
-      if (verSoloPropias) {
-        cotizaciones = cotizaciones.filter(cot => cot.responsable === nombreUsuario);
-      }
+  const snapshot = await ref.get().toPromise();
+  if (!snapshot || snapshot.empty) {
+    this.ocs = [];
+    this.ocsOriginal = [];
+    this.puedeCargarMas = false;
+    return;
+  }
 
-      // Ordenar por fecha de subida
-      cotizaciones.sort((a, b) => {
-        const fechaA = a.fechaSubida?.toDate?.() || new Date(0);
-        const fechaB = b.fechaSubida?.toDate?.() || new Date(0);
-        return fechaB.getTime() - fechaA.getTime();
-      });
+  const cotizaciones = snapshot.docs.map(doc => {
+    const data = doc.data() as any;
+    return {
+      id: data.id,
+      docId: doc.id,
+      estatus: data.estatus,
+      responsable: data.responsable,
+      centroCosto: data.centroCosto,
+      centroCostoNombre: data.centroCostoNombre,
+      destinoCompra: data.destinoCompra,
+      solpedId: data.solpedId || null,
+      fechaFormateada: data.fechaSubida?.toDate?.() ?? null,
+      archivoOC: data.archivoOC || null,
+      nombreArchivoOC: data.archivoOC?.nombre || null, // ✅ Nuevo
+      nombrePDF: data.archivosPDF?.nombre || null
+    };
+  });
 
-      this.ocs = [...cotizaciones];
-      this.ocsOriginal = [...cotizaciones];
-    });
+
+  this.ocs = cotizaciones;
+  this.ocsOriginal = cotizaciones;
+  this.ultimoDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+  this.puedeCargarMas = snapshot.docs.length === this.limite;
 }
 
+
+
+async cargarMasOCs() {
+  if (!this.ultimoDoc || !this.puedeCargarMas) return;
+  this.cargandoMas = true;
+
+  const ref = this.firestore.collection('ordenes_oc', ref => {
+    let query = ref.where('estatus', '==', 'Aprobado')
+                   .startAfter(this.ultimoDoc)
+                   .limit(this.limite);
+
+    return query;
+  });
+
+  const snapshot = await ref.get().toPromise();
+  if (!snapshot || snapshot.empty) {
+    this.puedeCargarMas = false;
+    this.cargandoMas = false;
+    return;
+  }
+
+  const nuevas = snapshot.docs.map(doc => {
+    const data = doc.data() as any;
+    return {
+      id: data.id,
+      docId: doc.id,
+      estatus: data.estatus,
+      responsable: data.responsable,
+      centroCosto: data.centroCosto,
+      centroCostoNombre: data.centroCostoNombre,
+      destinoCompra: data.destinoCompra,
+      solpedId: data.solpedId || null,
+      fechaFormateada: data.fechaSubida?.toDate?.() ?? null,
+      archivoOC: data.archivoOC || null,
+      nombreArchivoOC: data.archivoOC?.nombre || null,
+      nombrePDF: data.archivosPDF?.nombre || null
+    };
+  });
+
+  this.ocs = [...this.ocs, ...nuevas];
+  this.ocsOriginal = [...this.ocsOriginal, ...nuevas];
+  this.ultimoDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+  this.puedeCargarMas = snapshot.docs.length === this.limite;
+  this.cargandoMas = false;
+}
 
 
 
@@ -132,68 +188,95 @@ async cargarOCs() {
     return data?.fullName || 'Desconocido';
   }
 
+
 onFileSelected(event: any, oc: any) {
-  const archivoPDF = event.target.files[0];
-  if (archivoPDF) {
-    const ocId = oc.docId;
+  const file: File = event.target.files[0];
+  if (!file) return;
 
-    this.archivosSeleccionados[ocId] = archivoPDF;
-    this.nombresArchivos[ocId] = archivoPDF.name;
+  this.archivosSeleccionados[oc.docId] = file;
+  this.nombresArchivos[oc.docId] = file.name;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.vistasPreviasPdf[ocId] = this.sanitizer.bypassSecurityTrustResourceUrl(reader.result as string);
-    };
-    reader.readAsDataURL(archivoPDF);
+  const fileReader = new FileReader();
+  fileReader.onload = () => {
+    const url = fileReader.result as string;
+    this.vistasPreviasPdf[oc.docId] = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  };
+  fileReader.readAsDataURL(file);
+}
+
+
+
+
+async eliminarArchivoSeleccionado(oc: any) {
+  // Si está en Storage, eliminarlo
+  if (oc.archivoOC?.url) {
+    try {
+      const fileRef = this.storage.refFromURL(oc.archivoOC.url);
+      await fileRef.delete().toPromise();
+
+      await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
+        archivoOC: firebase.firestore.FieldValue.delete()
+      });
+
+    } catch (error) {
+      console.warn('No se pudo eliminar el archivo en Storage:', error);
+    }
   }
+
+  // ✅ Eliminar archivo local no subido (previamente seleccionado)
+  delete this.archivosSeleccionados[oc.docId];
+  delete this.nombresArchivos[oc.docId];
+  delete this.vistasPreviasPdf[oc.docId];
+
+  this.mostrarToast('Archivo eliminado.', 'warning');
 }
 
 
-
-eliminarArchivoSeleccionado(oc: any) {
-  const ocId = oc.docId;
-  delete this.archivosSeleccionados[ocId];
-  delete this.nombresArchivos[ocId];
-  delete this.vistasPreviasPdf[ocId];
-  this.mostrarToast('Archivo eliminado correctamente.', 'danger');
-}
 
 
 async subirPdf(oc: any) {
   const ocId = oc.docId;
   const archivoPDF = this.archivosSeleccionados[ocId];
+
   if (!archivoPDF) {
     this.mostrarToast('No se ha seleccionado ningún archivo.', 'warning');
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const base64PDF = (reader.result as string).split(',')[1];
-    const fechaSubida = new Date().toISOString();
+  const fechaSubida = new Date().toISOString();
+  const nombreArchivo = archivoPDF.name;
+  const rutaStorage = `ordenes_oc/${ocId}/pdf_subido_${Date.now()}_${nombreArchivo}`;
+  const fileRef = this.storage.ref(rutaStorage);
+  const task = this.storage.upload(rutaStorage, archivoPDF);
 
-    const nuevoHistorial = [...(oc.historial || []), {
-      usuario: await this.obtenerNombreUsuario(),
-      estatus: 'PDF Subido',
-      fecha: fechaSubida
-    }];
+  task.snapshotChanges().pipe(
+    finalize(async () => {
+      const urlDescarga = await fileRef.getDownloadURL().toPromise();
 
-    await this.firestore.collection('ordenes_oc').doc(ocId).update({
-      archivosPDF: {
-        archivoBase64: base64PDF,
-        nombrePDF: archivoPDF.name,
-        fechaSubida: fechaSubida
-      },
-      historial: nuevoHistorial,
-      pdfSubido: true
-    });
+      const nuevoHistorial = [...(oc.historial || []), {
+        usuario: await this.obtenerNombreUsuario(),
+        estatus: 'PDF Subido',
+        fecha: fechaSubida
+      }];
 
-    this.mostrarToast('PDF subido correctamente.', 'success');
-    this.cargarOCs();
-  };
+      // Guardar en Firestore
+      await this.firestore.collection('ordenes_oc').doc(ocId).update({
+        archivosPDF: {
+          url: urlDescarga,
+          nombre: nombreArchivo,
+          tipo: archivoPDF.type,
+          fechaSubida
+        },
+        historial: nuevoHistorial,
+        pdfSubido: true
+      });
 
-  reader.readAsDataURL(archivoPDF);
+      this.mostrarToast('PDF subido correctamente a Storage.', 'success');
+      this.cargarOCs();
+    })
+  ).subscribe();
 }
+
 
   async mostrarToast(mensaje: string, color: 'success' | 'danger' | 'warning') {
     const toast = await this.toastController.create({
@@ -207,70 +290,97 @@ async subirPdf(oc: any) {
 
 async marcarComoEnviada(oc: any) {
   const ocId = oc.docId;
+  const archivoPDF = this.archivosSeleccionados[ocId];
 
-  if (this.archivosSeleccionados[ocId]) {
-    const archivoPDF = this.archivosSeleccionados[ocId];
-    const reader = new FileReader();
+  if (!archivoPDF) {
+    this.mostrarToast('Debes seleccionar un archivo para enviar.', 'warning');
+    return;
+  }
 
-    reader.onload = async () => {
-      const base64PDF = (reader.result as string).split(',')[1];
-      const fechaSubida = new Date().toISOString();
+  const filePath = `ordenes_oc/${ocId}/oc_enviada_${Date.now()}_${archivoPDF.name}`;
+  const fileRef = this.storage.ref(filePath);
+  const uploadTask = this.storage.upload(filePath, archivoPDF);
 
-      const nuevoHistorial = [...(oc.historial || []), {
-        usuario: await this.obtenerNombreUsuario(),
-        estatus: 'Enviada a proveedor',
-        fecha: fechaSubida
-      }];
+  uploadTask.snapshotChanges().pipe(
+    finalize(async () => {
+      try {
+        const downloadURL = await fileRef.getDownloadURL().toPromise();
+        const fechaActual = new Date();
+        const fechaSubida = fechaActual.toISOString();
+        const usuarioNombre = await this.obtenerNombreUsuario();
 
-      const archivosPDF = {
-        archivoBase64: base64PDF,
-        nombrePDF: archivoPDF.name,
-        fechaSubida: fechaSubida
-      };
+        const nuevoHistorial = [...(oc.historial || []), {
+          usuario: usuarioNombre,
+          estatus: 'Enviada a proveedor',
+          fecha: fechaSubida
+        }];
 
-      // Actualizar en la colección principal de OC
-      await this.firestore.collection('ordenes_oc').doc(ocId).update({
-        archivosPDF,
-        historial: nuevoHistorial,
-        estatus: 'Enviada a proveedor'
-      });
-
-      // Verificar si está asociada a una SOLPED
-      if (oc.solpedId) {
-        const ocRef = this.firestore.collection('solpes').doc(oc.solpedId).collection('ocs').doc(ocId);
-        const dataToSave = {
-          ...oc,
-          archivosPDF,
+        // ✅ Actualizar OC principal
+        await this.firestore.collection('ordenes_oc').doc(ocId).update({
+          archivoOC: {
+            url: downloadURL,
+            nombre: archivoPDF.name,
+            tipo: archivoPDF.type,
+            fechaSubida
+          },
           historial: nuevoHistorial,
           estatus: 'Enviada a proveedor',
-          docId: ocId
-        };
+          fechaAprobacion: fechaActual,
+          aprobadoPor: usuarioNombre
+        });
 
-        try {
+        // ✅ Actualizar en subcolección de la SOLPED
+        if (oc.solpedId) {
+          const ocDoc = await this.firestore.collection('ordenes_oc').doc(ocId).get().toPromise();
+          const ocData: any = ocDoc?.data() || {};
+
+          const dataToSave = {
+            archivoOC: {
+              url: downloadURL,
+              nombre: archivoPDF.name,
+              tipo: archivoPDF.type,
+              fechaSubida
+            },
+            archivosStorage: ocData.archivosStorage || [],
+            historial: nuevoHistorial,
+            estatus: 'Enviada a proveedor',
+            docId: ocId,
+            id: ocData.id || null, // <-- número de orden
+            numero_solped: ocData.numero_solped || null,
+            empresa: ocData.empresa || null,
+            responsable: ocData.responsable || '',
+            centroCosto: ocData.centroCosto || '',
+            tipoCompra: ocData.tipoCompra || '',
+            precioTotalConIVA: ocData.precioTotalConIVA || 0,
+            fechaSubida: ocData.fechaSubida || '',
+            fechaAprobacion: fechaActual,
+            aprobadoPor: usuarioNombre
+          };
+
+          const ocRef = this.firestore.collection('solpes').doc(oc.solpedId).collection('ocs').doc(ocId);
           const snapshot = await ocRef.get().toPromise();
-          if (snapshot && snapshot.exists) {
+
+          if (snapshot?.exists) {
             await ocRef.update(dataToSave);
           } else {
             await ocRef.set(dataToSave);
           }
+
           this.mostrarToast('OC enviada y sincronizada con su SOLPED.', 'success');
-        } catch (error) {
-          console.error('Error al guardar en la SOLPED:', error);
-          this.mostrarToast('Error al guardar OC en SOLPED.', 'danger');
+        } else {
+          this.mostrarToast('OC enviada. No está vinculada a una SOLPED.', 'success');
         }
-      } else {
-        // Si no tiene SOLPED asignada
-        this.mostrarToast('OC enviada. No está vinculada a una SOLPED.', 'success');
+
+        this.cargarOCs();
+
+      } catch (error) {
+        console.error('❌ Error al enviar OC:', error);
+        this.mostrarToast('Error al enviar OC.', 'danger');
       }
-
-      this.cargarOCs();
-    };
-
-    reader.readAsDataURL(archivoPDF);
-  } else {
-    this.mostrarToast('Debes seleccionar un archivo para enviar.', 'warning');
-  }
+    })
+  ).subscribe();
 }
+
 
 
 }

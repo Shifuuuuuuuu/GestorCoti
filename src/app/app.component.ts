@@ -12,10 +12,10 @@ import { AlertController } from '@ionic/angular';
 export class AppComponent implements OnInit {
   version = versionData.version;
   public appPages = [
-  { title: 'Panel de Gestión', url: '/home', icon: 'home', roles: ['Aprobador/Editor','Admin'] },
-  { title: 'Administrar Cotizaciones', url: '/menu-oc', icon: 'reader', roles: ['Aprobador/Editor','Editor','Admin'] },
+  { title: 'Aprobaciones Cotizaciones', url: '/home', icon: 'home', roles: ['Aprobador/Editor','Admin'] },
+  { title: 'Administrar Cotizaciones', url: '/menu-oc', icon: 'reader', roles: ['Editor','Admin'] },
   { title: 'Panel Administrativo', url: '/menu-admin', icon: 'settings', roles: ['Admin'] },
-  { title: 'Mi Solped', url: '/menu-solpe', icon: 'document-text', roles: ['Generador solped', 'Aprobador/Editor','Admin'] },
+  { title: 'Mi Solped', url: '/menu-solpe', icon: 'document-text', roles: ['Generador solped','Admin'] },
   { title: 'Mi Perfil', url: '/perfil-usuario', icon: 'person-circle', roles: ['Generador solped', 'Editor', 'Aprobador/Editor','Admin'] },
   ];
 

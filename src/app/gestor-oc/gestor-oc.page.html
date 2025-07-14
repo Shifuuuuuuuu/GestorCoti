@@ -12,7 +12,7 @@
   <ion-searchbar
     [(ngModel)]="busquedaId"
     (ionInput)="buscarPorId()"
-    placeholder="Buscar por ID de cotización"
+    placeholder="Buscar por el numero de cotización"
     debounce="300"
   ></ion-searchbar>
 
@@ -42,16 +42,22 @@
 
       <ion-card-content>
         <p><strong>Centro de Costo:</strong> {{ oc.centroCosto }} | {{ oc.centroCostoNombre }} </p>
-        <p><strong>Fecha de Subida:</strong> {{ oc.fechaSubida.toDate() | date:'medium' }}</p>
+        <p *ngIf="oc.fechaFormateada">
+          <strong>Fecha de Subida:</strong> {{ oc.fechaFormateada | date:'medium' }}
+        </p>
+        <p *ngIf="oc.fechaFormateada">
+          <strong>Cotización:</strong> {{ oc.nombreArchivoOC }}
+        </p>
         <p><strong>Patente o Stock:</strong> {{ oc.destinoCompra }}</p>
         <p *ngIf="oc.nombrePDF">
           <strong>Cotización PDF:</strong> {{ oc.nombrePDF }}
         </p>
 
         <ng-container *ngIf="!oc.nombrePDF && oc.archivosBase64?.length">
-          <p *ngFor="let archivo of oc.archivosBase64">
-            <strong>Archivo subido:</strong> {{ archivo.nombre }}
-          </p>
+        <p *ngIf="nombresArchivos[oc.docId]">
+          <strong>Archivo seleccionado:</strong> {{ nombresArchivos[oc.docId] }}
+          <ion-icon name="close-circle" color="danger" (click)="eliminarArchivoSeleccionado(oc)" style="cursor: pointer;"></ion-icon>
+        </p>
         </ng-container>
         <p><strong>Estado Actual:</strong> {{ oc.estatus }}</p>
         <p>
@@ -61,24 +67,27 @@
         </p>
 
         <p *ngIf="nombresArchivos[oc.docId]">
-          <strong>OC PDF:</strong>
-          <span>{{ nombresArchivos[oc.docId] }}</span>
-          <ion-icon name="close-circle" color="danger" (click)="eliminarArchivoSeleccionado(oc)" style="cursor: pointer;"></ion-icon>
+          <strong>OC PDF:</strong> {{ nombresArchivos[oc.docId] }}
+          <ion-icon
+            name="trash-outline"
+            color="danger"
+            style="margin-left: 8px; cursor: pointer;"
+            (click)="eliminarArchivoSeleccionado(oc)">
+          </ion-icon>
         </p>
-
         <ion-card *ngIf="oc.cotizacion">
           <ion-card-header>
             <ion-card-title>Cotización adjunta</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <iframe *ngIf="oc.cotizacion.tipo === 'application/pdf'" [src]="oc.cotizacion.url" width="100%" height="600px" style="border: none;"></iframe>
+            <iframe [src]="vistasPreviasPdf[oc.docId]" width="100%" height="400px"></iframe>
             <img *ngIf="oc.cotizacion.tipo.startsWith('image/')" [src]="oc.cotizacion.url" width="100%" style="max-height: 600px; object-fit: contain;" />
           </ion-card-content>
         </ion-card>
 
         <ion-card *ngIf="vistasPreviasPdf[oc.docId]">
           <ion-card-header>
-            <ion-card-title>Vista previa del PDF seleccionado</ion-card-title>
+            <ion-card-title>Vista previa del PDF</ion-card-title>
           </ion-card-header>
           <ion-card-content>
             <iframe [src]="vistasPreviasPdf[oc.docId]" width="100%" height="400px" style="border: none;"></iframe>
@@ -95,6 +104,14 @@
         </ion-button>
       </ion-card-content>
     </ion-card>
+    <ion-button expand="block" *ngIf="puedeCargarMas && !cargandoMas" (click)="cargarMasOCs()">
+      Cargar más cotizaciones
+    </ion-button>
+    <div class="spinner-container">
+      <ion-spinner name="crescent" color="danger"></ion-spinner>
+      <p>Cargando cotizaciones aprobadas...</p>
+    </div>
+
   </ng-container>
 
 </ion-content>

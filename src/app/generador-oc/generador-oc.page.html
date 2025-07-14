@@ -33,7 +33,7 @@
           <ion-label position="floating">SOLPED asociada</ion-label>
           <ion-select [(ngModel)]="solpedSeleccionadaId" (ionChange)="onChangeSolped()" required>
             <ion-select-option *ngFor="let solpe of solpedDisponibles" [value]="solpe.id">
-              #{{ solpe.numero_solpe }} - {{ solpe.nombre_solped }} ({{ solpe.tipo_solped }}) - {{ solpe.nombre_centro_costo }} - {{ solpe.usuario || 'Sin usuario' }}
+              #{{ solpe.numero_solpe }} - {{ solpe.nombre_solped }} ({{ solpe.tipo_solped }}) - {{ solpe.nombre_centro_costo }} - {{ solpe.usuario || 'Sin usuario' }} - {{ solpe.empresa || 'Sin empresa' }}
             </ion-select-option>
           </ion-select>
         </ion-item>
@@ -41,11 +41,22 @@
         <!-- Mostrar info de la SOLPED seleccionada -->
         <ion-item *ngIf="solpedSeleccionada">
           <ion-label>
+            <strong>N° Solped:</strong><br />
+            {{ solpedSeleccionada.numero_solpe }}
+          </ion-label>
+        </ion-item>
+        <ion-item *ngIf="solpedSeleccionada">
+          <ion-label>
             <strong>Centro de Costo:</strong><br />
             {{ solpedSeleccionada.numero_contrato }} - {{ solpedSeleccionada.nombre_centro_costo }}
           </ion-label>
         </ion-item>
-
+        <ion-item *ngIf="solpedSeleccionada">
+          <ion-label>
+            <strong>Empresa:</strong><br />
+            {{ solpedSeleccionada.empresa }}
+          </ion-label>
+        </ion-item>
         <ion-item *ngIf="solpedSeleccionada">
           <ion-label>
             <strong>Tipo de SOLPED:</strong><br />
@@ -90,24 +101,32 @@
       <ion-item>
         <ion-label position="floating">Centro de Costo</ion-label>
         <ion-select [(ngModel)]="centroCosto" required>
-          <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
-          <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
-          <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-          <ion-select-option value="30-10-07">PLANTA PREDOSIFICADO - SAN BERNARDO</ion-select-option>
-          <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-          <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
-          <ion-select-option value="30-10-43">DET NUEVO</ion-select-option>
-          <ion-select-option value="30-10-43">TALLER CANECHE</ion-select-option>
-          <ion-select-option value="30-10-43">TALLER ROSS</ion-select-option>
-          <ion-select-option value="30-10-43">ESTOCADA 8</ion-select-option>
-          <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
-          <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
-          <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
-          <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-          <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-          <ion-select-option value="30-10-59">INFRAESTRUCTURA</ion-select-option>
-          <ion-select-option value="30-10-60">PLANTA PREDOSIFICADO - CALAMA</ion-select-option>
-          <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
+                  <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
+                  <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
+                  <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
+                  <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
+                  <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
+                  <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
+                  <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
+                  <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
+                  <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
+                  <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
+                  <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
+                  <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
+                  <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
+                  <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
+                  <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
+                  <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
+                  <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
+                  <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
+                  <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
+                  <ion-select-option value="30-10-57">CALAMA</ion-select-option>
+                  <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
+                  <ion-select-option value="30-10-58">ALVARO VACHER</ion-select-option>
+                  <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
+                  <ion-select-option value="30-10-60">CALAMA</ion-select-option>
+                  <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
         </ion-select>
       </ion-item>
 
@@ -154,16 +173,19 @@
         <input
           id="inputArchivo"
           type="file"
-          accept="application/pdf,image/*"
           multiple
+          accept="application/pdf,image/*"
+          style="display: none"
           (change)="onMultipleFilesSelected($event)"
         />
+        <ion-button expand="block" (click)="abrirSelectorArchivos()">Seleccionar Archivos</ion-button>
+
       </ion-item>
 
       <!-- Vista previa del archivo -->
-      <ion-card *ngFor="let vista of vistasArchivos; let i = index">
+      <ion-card *ngFor="let archivo of archivos; let i = index">
         <ion-card-header class="ion-align-items-center ion-justify-content-between">
-          <ion-card-title>Archivo Subido</ion-card-title>
+          <ion-card-title>{{ archivo.name }}</ion-card-title>
           <ion-button
             fill="clear"
             color="danger"
@@ -174,11 +196,31 @@
             <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
           </ion-button>
         </ion-card-header>
+
         <ion-card-content>
-          <iframe *ngIf="vista.esPDF" [src]="vista.url" width="100%" height="400px" style="border: none;"></iframe>
-          <img *ngIf="!vista.esPDF" [src]="vista.url" style="width: 100%; max-height: 400px; object-fit: contain;" />
+          <ng-container *ngIf="archivo.tipo?.includes('pdf'); else mostrarImagen">
+            <iframe
+              *ngIf="archivo.previewUrl"
+              [src]="archivo.previewUrl"
+              width="100%"
+              height="400px"
+              style="border: none;"
+            ></iframe>
+          </ng-container>
+
+          <ng-template #mostrarImagen>
+            <div style="display: flex; justify-content: center; align-items: center; padding: 10px;">
+              <img
+                *ngIf="archivo.previewUrl"
+                [src]="archivo.previewUrl"
+                alt="Vista previa"
+                style="max-width: 100%; max-height: 700px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); object-fit: contain;"
+              />
+            </div>
+          </ng-template>
         </ion-card-content>
       </ion-card>
+
       <!-- Botón de envío -->
       <ion-button expand="block" style="--background: red; color: white;" (click)="enviarOC()" [disabled]="enviando">
         Enviar Cotización

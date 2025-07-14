@@ -2,12 +2,8 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { ActivatedRoute } from '@angular/router';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
-import { Solpes } from '../Interface/ISolpes';
-import { Item } from '../Interface/IItem';
-import { Comparaciones } from '../Interface/Icompara';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import {trigger,transition,style,animate} from '@angular/animations';
-import * as XLSX from 'xlsx';
 @Component({
   selector: 'app-editar-solpeds',
   templateUrl: './editar-solpeds.page.html',
@@ -41,7 +37,7 @@ export class EditarSolpedsPage implements OnInit {
   dataFacturaPDF: string = '';
   items: any[] = [];
   listaUsuarios: any[] = [];
-  listaEstatus: string[] = ['Aprobado', 'Rechazado', 'Solicitado', 'Tránsito a Faena', 'Pre Aprobado'];
+  listaEstatus: string[] = ['Completado', 'Rechazado', 'Solicitado', 'Tránsito a Faena', 'Pre Aprobado'];
   solpesFiltradas: any[] = [];
   solpesOriginal: any[] = [];
   ordenAscendente: boolean = true;
@@ -49,6 +45,8 @@ export class EditarSolpedsPage implements OnInit {
   ocsCargadas: { [solpeId: string]: any[] } = {};
   comentariosVistos: { [solpeId: string]: boolean } = {};
   userUid: string = '';
+  filtroEmpresa: string = '';
+  solpesAgrupadas: { [empresa: string]: any[] } = {};
 
   constructor(
     private firestore: AngularFirestore,
@@ -78,7 +76,9 @@ export class EditarSolpedsPage implements OnInit {
     this.cargarUsuarios();
   this.cdRef.detectChanges();
   }
-
+trackBySolpeId(index: number, solpe: any): string {
+  return solpe.id;
+}
   ionViewWillEnter() {
     this.menu.enable(true);
   }
@@ -86,97 +86,6 @@ export class EditarSolpedsPage implements OnInit {
     const input = document.getElementById(`ocInput-${solpeId}`) as HTMLInputElement;
     if (input) {
       input.click();
-    }
-  }
-descargarExcel(solpe: any) {
-  const worksheetData: any[][] = [];
-
-  worksheetData.push(['SOLICITUD DE COMPRA']);
-  worksheetData.push(['Solicitante:', solpe.usuario]);
-  worksheetData.push(['Fecha:', solpe.fecha]);
-  worksheetData.push(['N° Contrato:', solpe.numero_contrato]);
-  worksheetData.push([]);
-
-  const empresasSet = new Set<string>();
-  solpe.items.forEach((item: Item) => {
-    item.comparaciones?.forEach((comp: Comparaciones) => {
-      if (comp.empresa) {
-        empresasSet.add(comp.empresa.toUpperCase());
-      }
-    });
-  });
-
-  const empresas = Array.from(empresasSet);
-  worksheetData.push(['ITEM', 'CANTIDAD', 'DESCRIPCIÓN', ...empresas]);
-
-  solpe.items.forEach((item: Item, index: number) => {
-    const filaBase = [
-      item.item || (index + 1),
-      item.cantidad || '',
-      item.descripcion || ''
-    ];
-
-    const preciosPorEmpresa: { [empresa: string]: string | number } = {};
-    item.comparaciones?.forEach((comp: Comparaciones) => {
-      const empresa = comp.empresa?.toUpperCase();
-      if (empresa) {
-        const precioDesc = `${comp.precioBase || comp.precio} (desc. ${comp.descuento || 0}%)`;
-        preciosPorEmpresa[empresa] = precioDesc;
-      }
-    });
-
-    const preciosEnOrden = empresas.map(nombre => preciosPorEmpresa[nombre] || '');
-    worksheetData.push([...filaBase, ...preciosEnOrden]);
-  });
-
-  const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  const workbook: XLSX.WorkBook = XLSX.utils.book_new();
-  const sheetName = `SOLPED_${solpe.numero_solpe}`;
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-
-  const fechaActual = new Date().toISOString().split('T')[0];
-  const nombreArchivo = `SOLPED_${solpe.numero_solpe}_${fechaActual}.xlsx`;
-  XLSX.writeFile(workbook, nombreArchivo);
-}
-
-  subirOC(event: any, solpeId: string) {
-    const archivo: File = event.target.files[0];
-
-    if (archivo) {
-      const reader = new FileReader();
-
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        const nombreArchivo = archivo.name;
-
-        const ocRef = this.firestore.collection('solpes').doc(solpeId).collection('ocs');
-        const docRef = await ocRef.add({ nombre: nombreArchivo, base64 });
-
-        if (!this.ocsCargadas[solpeId]) {
-          this.ocsCargadas[solpeId] = [];
-        }
-
-        this.ocsCargadas[solpeId].push({ id: docRef.id, nombre: nombreArchivo });
-
-        this.mostrarToast(`OC "${nombreArchivo}" subida correctamente`, 'success');
-      };
-
-      reader.onerror = () => {
-        this.mostrarToast(`Error al leer archivo "${archivo.name}"`, 'danger');
-      };
-
-      reader.readAsDataURL(archivo);
-    }
-  }
-
-  async eliminarOC(solpeId: string, ocId: string, nombre: string) {
-    try {
-      await this.firestore.collection('solpes').doc(solpeId).collection('ocs').doc(ocId).delete();
-      this.ocsCargadas[solpeId] = this.ocsCargadas[solpeId].filter(oc => oc.id !== ocId);
-      this.mostrarToast(`OC "${nombre}" eliminada correctamente`, 'success');
-    } catch (error) {
-      console.error('Error al eliminar OC:', error);
-      this.mostrarToast('No se pudo eliminar la OC', 'danger');
     }
   }
 verOC(solpedId: string, archivoBase64: string) {
@@ -189,6 +98,9 @@ verOC(solpedId: string, archivoBase64: string) {
   const url = URL.createObjectURL(blob);
   window.open(url, '_blank');
 }
+ordenarEmpresaGrupo = (a: any, b: any): number => {
+  return a.key.localeCompare(b.key);
+};
 
 formatearCLP(valor: number): string {
   return valor?.toLocaleString('es-CL', {
@@ -199,10 +111,10 @@ formatearCLP(valor: number): string {
   }) || '$0';
 }
 
-async abrirImagenModal(imagenBase64: string) {
+async abrirImagenModal(imagenUrl: string) {
   const alert = await this.alertController.create({
-    header: '',
-    message: '',
+    header: 'Imagen del Ítem',
+    message: ' ', // 👈 espacio para que se renderice alert-message
     buttons: [
       {
         text: 'Cerrar',
@@ -217,15 +129,19 @@ async abrirImagenModal(imagenBase64: string) {
 
   await alert.present();
 
-  const alertEl = document.querySelector('ion-alert .alert-message');
-  if (alertEl) {
-    alertEl.innerHTML = `
-      <div class="contenedor-img-zoom">
-        <img src="${imagenBase64}" class="imagen-zoom" />
-      </div>
-    `;
-  }
+  // Espera que el alert esté en el DOM
+  setTimeout(() => {
+    const alertEl = document.querySelector('ion-alert .alert-message');
+    if (alertEl) {
+      alertEl.innerHTML = `
+        <div class="contenedor-img-zoom">
+          <img src="${imagenUrl}" class="imagen-zoom" />
+        </div>
+      `;
+    }
+  }, 100);
 }
+
 toggleDetalle(solpeId: string) {
   this.solpeExpandidaId = this.solpeExpandidaId === solpeId ? null : solpeId;
 
@@ -236,18 +152,31 @@ toggleDetalle(solpeId: string) {
     solpe.comentariosVistos = { ...(solpe.comentariosVistos || {}), [this.userUid]: true };
   }
 
-  // Si necesitas cargar otra info como OCs:
   this.firestore.collection('solpes').doc(solpeId).collection('ocs').get().subscribe(snapshot => {
-    this.ocsCargadas[solpeId] = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    this.ocsCargadas[solpeId] = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        nombre_centro_costo: data['nombre_centro_costo'] || '',
+        numero_contrato: data['numero_contrato'] || '',
+        fechaSubida: data['fechaSubida']?.toDate ? data['fechaSubida'].toDate() : (data['fechaSubida'] || null),
+
+        fechaAprobacion: data['fechaAprobacion']?.toDate ? data['fechaAprobacion'].toDate() : (data['fechaAprobacion'] || null),
+        destinoCompra: data['destinoCompra'] || '',
+        comentario: data['comentario'] || '',
+        items: Array.isArray(data['items']) ? data['items'] : [],
+        archivoOC: data['archivoOC'] || null,
+        archivosStorage: Array.isArray(data['archivosStorage']) ? data['archivosStorage'] : [],
+        estatus: data['estatus'] || '',
+        responsable: data['responsable'] || '',
+      };
+    });
     this.cdRef.detectChanges();
   }, error => {
     console.error('❌ Error al cargar OCs:', error);
   });
 }
-
 
 
 buscarSolpe(modo: 'buscar' | 'estados' = 'buscar') {
@@ -299,230 +228,29 @@ cargarHistorialEstados(solpeId: string) {
 }
 
 
-  async eliminarComparacionFirestore(solpedId: string, itemId: string, comparacionId: number) {
-    const solpedRef = this.firestore.collection('solpes').doc(solpedId);
-
-    try {
-      const solpedDoc = await solpedRef.get().toPromise();
-
-      if (solpedDoc && solpedDoc.exists) {
-        const solpedData = solpedDoc.data() as Solpes;
-        const items: Item[] = solpedData?.items || [];
-
-        const item = items.find((i: Item) => i.id === itemId);
-        if (item) {
-          const comparacionIndex = item.comparaciones.findIndex(
-            (comp: Comparaciones) => comp.id === comparacionId
-          );
-
-          if (comparacionIndex !== -1) {
-            item.comparaciones = item.comparaciones.filter(
-              (comp: Comparaciones) => comp.id !== comparacionId
-            );
-            await solpedRef.update({ items });
-            this.mostrarToast('Comparación eliminada de Firestore', 'success');
-          } else {
-            console.log('❌ Comparación no encontrada');
-            this.mostrarToast('Comparación no encontrada', 'danger');
-          }
-        } else {
-          console.log('❌ Ítem no encontrado');
-          this.mostrarToast('Ítem no encontrado', 'danger');
-        }
-      } else {
-        console.log('❌ Documento no encontrado o vacío');
-        this.mostrarToast('Documento no encontrado o vacío', 'danger');
-      }
-    } catch (error) {
-      console.error('Error eliminando la comparación:', error);
-      this.mostrarToast('Error al eliminar la comparación en Firestore', 'danger');
-    }
-  }
-  eliminarComparacionLocal(item: any, index: number) {
-    item.comparaciones.splice(index, 1);
-    this.mostrarToast('Comparación eliminada de la UI', 'success');
-  }
-
-  async eliminarComparacionCompleta(solpedId: string, itemId: string, comparacionId: number, item: any, index: number) {
-    await this.eliminarComparacionFirestore(solpedId, itemId, comparacionId);
-    item.comparaciones.splice(index, 1);
-    this.cdRef.detectChanges();
-  }
-
-
-  async destacarComparacion(solpeId: string, item: any, compIdx: number) {
-    if (item.comparaciones && item.comparaciones[compIdx]) {
-      item.comparaciones[compIdx].destacado =
-        !item.comparaciones[compIdx].destacado;
-    }
-
-    try {
-      const solpeRef = this.firestore.collection('solpes').doc(solpeId);
-      const solpeSnap = await solpeRef.get().toPromise();
-      if (!solpeSnap || !solpeSnap.exists) {
-        throw new Error('SOLPE no encontrado');
-      }
-
-      const solpeData = solpeSnap.data() as any;
-      const items = solpeData.items || [];
-      const idx = items.findIndex((i: any) => i.id === item.id);
-      if (idx === -1) {
-        throw new Error('Item no encontrado en SOLPE');
-      }
-
-      items[idx].comparaciones = item.comparaciones;
-
-      await solpeRef.update({ items });
-    } catch (err) {
-      console.error(err);
-      this.mostrarToast('Error al actualizar comparación', 'danger');
-    }
-  }
-  async abrirComparacion(item: any, solpeId: string) {
-    const alert = await this.alertController.create({
-      header: 'Agregar Comparación de Precios',
-      inputs: [
-        { name: 'empresa', type: 'text', placeholder: 'Nombre de la Empresa' },
-        { name: 'precio',  type: 'number', placeholder: 'Precio base' },
-        { name: 'descuento', type: 'number', placeholder: 'Descuento (%) - opcional' }
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Agregar',
-          handler: async (data) => {
-            if (!data.empresa || data.precio == null) {
-              this.mostrarToast('Debes ingresar empresa y precio', 'danger');
-              return false;
-            }
-
-            const precioBase = Number(data.precio);
-            const descuentoPct = Number(data.descuento) || 0;
-            const precioConDescuento = precioBase * (1 - descuentoPct / 100);
-            item.comparaciones = item.comparaciones || [];
-
-            const nuevaComparacion = {
-              id: Date.now(),
-              empresa: data.empresa,
-              precio: precioBase,
-              descuento: descuentoPct,
-              precioConDescuento
-            };
-            item.comparaciones.push(nuevaComparacion);
-
-            try {
-              const solpeRef = this.firestore.collection('solpes').doc(solpeId);
-              const solpeSnap = await solpeRef.get().toPromise();
-              if (!solpeSnap || !solpeSnap.exists) {
-                throw new Error('SOLPE no encontrado');
-              }
-
-              const solpeData = solpeSnap.data() as any;
-              const items = solpeData.items || [];
-              const idx = items.findIndex((i: any) => i.id === item.id);
-              if (idx === -1) {
-                throw new Error('Item no encontrado en SOLPE');
-              }
-
-              items[idx].comparaciones = item.comparaciones;
-              await solpeRef.update({ items });
-              this.mostrarToast('Comparación agregada', 'success');
-            } catch (err) {
-              console.error(err);
-              this.mostrarToast('Error al agregar la comparación', 'danger');
-            }
-
-            return true;
-          }
-        }
-      ]
-    });
-
-    await alert.present();
-  }
-
-
-
-  async subirComparaciones(solpe: any, auto: boolean = false) {
-    if (!auto) {
-      const confirm = await this.alertController.create({
-        header: 'Confirmar',
-        message: '¿Estás seguro de subir las comparaciones a Firestore?',
-        buttons: [
-          { text: 'Cancelar', role: 'cancel' },
-          {
-            text: 'Sí, subir',
-            handler: () => this.guardarComparacionesEnFirestore(solpe)
-          }
-        ]
-      });
-      await confirm.present();
-    } else {
-      this.guardarComparacionesEnFirestore(solpe);
-    }
-  }
-async guardarComparacionesEnFirestore(solpe: any) {
-  try {
-    const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
-    const solpeSnap = await solpeRef.get().toPromise();
-
-    if (!solpeSnap || !solpeSnap.exists) {
-      throw new Error('SOLPE no encontrada');
-    }
-
-    const solpeData = solpeSnap.data() as any;
-    const itemsFirestore = solpeData.items || [];
-
-    const itemsActualizados = itemsFirestore.map((item: any) => {
-      const itemLocal = solpe.items.find((i: any) => i.id === item.id || i.item === item.item);
-      return {
-        ...item,
-        comparaciones: itemLocal?.comparaciones?.length > 0
-          ? itemLocal.comparaciones
-          : [{
-              empresa: 'Sin proveedor válido',
-              precio: 0,
-              observacion: 'Este proveedor no tenía lo que se buscaba'
-            }]
-      };
-    });
-
-    await solpeRef.update({ items: itemsActualizados });
-    this.mostrarToast('Comparaciones subidas correctamente a Firestore', 'success');
-  } catch (err) {
-    console.error('Error al subir comparaciones:', err);
-    this.mostrarToast('Error al subir comparaciones', 'danger');
-  }
-}
-
-  validarComparaciones(solpe: any): boolean {
-    return solpe.items.every((item: any) => item.comparaciones && item.comparaciones.length > 0);
-  }
-  guardarComparacion(item: any, solpeId: string) {
-    const solpeRef = this.firestore.collection('solpes').doc(solpeId);
-    const itemRef = solpeRef.collection('items').doc(item.id);
-
-    itemRef.update({ comparaciones: item.comparaciones });
-  }
 cargarSolpes() {
   this.firestore
-    .collection('solpes', ref =>
-      ref.orderBy('numero_solpe', 'desc')
-    )
+    .collection('solpes', ref => ref.orderBy('numero_solpe', 'desc'))
     .get()
     .subscribe(snapshot => {
       const solpesTemp: any[] = [];
       snapshot.docs.forEach((doc: any) => {
         const solpe = doc.data();
         solpe.id = doc.id;
-        solpe.comentarios = solpe.comentarios || []; // <- ASEGÚRATE DE INCLUIR ESTO
+        solpe.comentarios = solpe.comentarios || [];
         solpesTemp.push(solpe);
       });
+
       this.solpesOriginal = solpesTemp;
       this.solpesFiltradas = [...this.solpesOriginal];
+
+      // ✅ Agrupar por empresa aquí
+      this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
+
       this.loading = false;
     });
 }
+
 
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
@@ -569,11 +297,26 @@ filtrarSolpes() {
       ? solpe.numero_contrato === this.filtroContrato
       : true;
 
-    return coincideFecha && coincideEstatus && coincideUsuario && coincideContrato;
-  });
+    const coincideEmpresa = this.filtroEmpresa
+      ? normalize(solpe.empresa || '') === normalize(this.filtroEmpresa)
+      : true;
 
+    return coincideFecha && coincideEstatus && coincideUsuario && coincideContrato && coincideEmpresa;
+  });
+  this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
   this.solpeExpandidaId = null;
 }
+
+agruparPorEmpresa(solpes: any[]): { [empresa: string]: any[] } {
+  const agrupadas: { [empresa: string]: any[] } = {};
+  for (const solpe of solpes) {
+    const empresa = solpe.empresa || 'Sin Empresa';
+    if (!agrupadas[empresa]) agrupadas[empresa] = [];
+    agrupadas[empresa].push(solpe);
+  }
+  return agrupadas;
+}
+
 
 
   ordenarSolpes() {
@@ -595,7 +338,7 @@ filtrarSolpes() {
 
   getColorByStatus(estatus: string) {
     switch (estatus) {
-      case 'Aprobado':
+      case 'Completado':
         return '#28a745';
       case 'Rechazado':
         return '#dc3545';
@@ -649,35 +392,35 @@ verOCDesdeSolped(solpedId: string, ocId: string, tipoArchivo: 'cotizacion' | 'oc
       return;
     }
 
-    const data = docSnapshot.data() as { [key: string]: any };
-
-    const archivosBase64 = Array.isArray(data['archivosBase64']) ? data['archivosBase64'] : [];
-    const archivoCotizacion = archivosBase64.length > 0 ? archivosBase64[0] : null;
-    const base64Cot = archivoCotizacion?.['base64'];
-    const tipoCot = archivoCotizacion?.['tipo'] || 'application/pdf';
-    const nombreCot = archivoCotizacion?.['nombre'] || 'Cotización';
-
-    const archivoOC = data['archivosPDF'];
-    const base64OC = archivoOC?.['archivoBase64'];
-    const nombreOC = archivoOC?.['nombrePDF'] || 'Orden de Compra';
-    const tipoOC = 'application/pdf';
+    const data = docSnapshot.data() as any;
 
     if (tipoArchivo === 'cotizacion') {
-      if (base64Cot) {
-        const url = this.crearArchivoUrl(base64Cot, tipoCot);
-        this.abrirArchivoEnNuevaVentana(url, nombreCot);
+      const archivoOC = data['archivoOC'];
+      if (archivoOC?.url) {
+        window.open(archivoOC.url, '_blank');
       } else {
-        this.mostrarToast('No se encontró archivo de cotización.', 'danger');
-      }
-    } else if (tipoArchivo === 'oc') {
-      if (base64OC) {
-        const url = this.crearArchivoUrl(base64OC, tipoOC);
-        this.abrirArchivoEnNuevaVentana(url, nombreOC);
-      } else {
-        this.mostrarToast('No se encontró archivo de OC.', 'danger');
+        this.mostrarToast('No se encontró la cotización.', 'danger');
       }
     }
 
+    if (tipoArchivo === 'oc') {
+      const archivosStorage = Array.isArray(data['archivosStorage']) ? data['archivosStorage'] : [];
+
+      if (archivosStorage.length === 0) {
+        this.mostrarToast('No hay archivos OC en Storage.', 'danger');
+        return;
+      }
+
+      // Si hay solo uno, abrirlo directo
+      if (archivosStorage.length === 1) {
+        window.open(archivosStorage[0].url, '_blank');
+      } else {
+        // Si hay varios, abrir todos en nuevas pestañas
+        archivosStorage.forEach((archivo: any) => {
+          if (archivo?.url) window.open(archivo.url, '_blank');
+        });
+      }
+    }
   }, error => {
     console.error('Error al obtener OC:', error);
     this.mostrarToast('Error al cargar archivos de la OC.', 'danger');
