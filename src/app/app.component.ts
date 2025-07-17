@@ -5,6 +5,7 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import versionData from '../assets/version.json';
 import { AlertController } from '@ionic/angular';
 import Swiper from 'swiper';
+
 @Component({
   selector: 'app-root',
   templateUrl: 'app.component.html',
@@ -54,16 +55,22 @@ ngOnInit() {
   if (currentRole) {
     this.cargarMenuPorRol(currentRole);
   }
+
+  setTimeout(() => {
+    const container = document.querySelector('.menu-swiper');
+    if (container) {
+      new Swiper(container as HTMLElement, {
+        loop: true,
+        autoplay: {
+          delay: 1,
+          disableOnInteraction: false,
+        },
+      });
+    }
+  }, 200);
+
 }
-  ngAfterViewInit() {
-    new Swiper('.swiper', {
-      loop: true,
-      autoplay: {
-        delay: 2500,
-        disableOnInteraction: false,
-      },
-    });
-  }
+
 async mostrarMensajeVersion(mensaje: string, version: string) {
   const alert = await this.alertController.create({
     header: `Novedades v${version}`,

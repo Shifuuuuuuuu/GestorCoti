@@ -179,7 +179,6 @@
     <ion-grid>
       <ion-row>
         <ion-col size="12">
-          <!-- 🟢 Archivos en base64 -->
           <div *ngIf="oc.archivosBase64?.length" class="ion-margin-top">
             <h4>Archivos</h4>
             <div *ngFor="let archivo of oc.archivosBase64">
@@ -210,19 +209,16 @@
               <ion-button fill="outline" (click)="mostrarArchivo(archivo)">
                 {{ archivo.mostrar ? 'Ocultar' : 'Ver archivo' }}
               </ion-button>
+              <div *ngIf="archivo.mostrar" class="ion-padding">
+                <iframe *ngIf="archivo.esPDF"
+                        [src]="archivo.url"
+                        width="100%" height="700px"
+                        style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
 
-
-<div *ngIf="archivo.mostrar" class="ion-padding">
-  <iframe *ngIf="archivo.esPDF"
-          [src]="archivo.url"
-          width="100%" height="700px"
-          style="border: 1px solid #ccc; border-radius: 10px;"></iframe>
-
-  <img *ngIf="archivo.esImagen"
-       [src]="archivo.url"
-       style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
-</div>
-
+                <img *ngIf="archivo.esImagen"
+                    [src]="archivo.url"
+                    style="width: 100%; max-height: 700px; object-fit: contain; border: 1px solid #ccc; border-radius: 10px;" />
+              </div>
             </div>
           </div>
         </ion-col>

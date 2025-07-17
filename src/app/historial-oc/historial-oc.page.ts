@@ -310,9 +310,6 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   });
 }
 
-
-
-  // ✅ NUEVO METODO CENTRALIZADO PARA CONVERTIR FECHAS
   convertirFechaFirestore(fecha: any): Date {
     return fecha?.toDate ? fecha.toDate() : fecha;
   }
@@ -622,7 +619,7 @@ async subirNuevaCotizacion(oc: any) {
 
     const nuevoHistorial = {
       fecha: fecha,
-      estatus: 'Preaprobado',
+      estatus: 'Revisión Guillermo',
       usuario: nombreUsuario,
       comentario: comentario
     };

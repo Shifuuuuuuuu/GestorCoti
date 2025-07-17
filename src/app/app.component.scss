@@ -1,10 +1,11 @@
 .menu-carousel-contenedor {
   width: 220px;
-  height: 60px; // más grande que antes
+  height: 60px;
   margin: auto;
   border-radius: 10px;
   overflow: hidden;
   position: relative;
+
   mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
 }
@@ -22,8 +23,9 @@
 }
 
 .menu-swiper .swiper-slide img {
-  height: 50px; // todas las imágenes uniformes
+  height: 50px;
   object-fit: contain;
 }
+
 
 
