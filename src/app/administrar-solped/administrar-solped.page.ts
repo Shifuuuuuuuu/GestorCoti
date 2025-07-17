@@ -131,7 +131,7 @@ formatearCLP(valor: number): string {
   }
 
   irAlInicio() {
-    this.paginaActual = 0;
+    this.paginaActual = 1;
     this.lastVisible = null;
     this.historialPaginas = [];
     this.cargarPagina();

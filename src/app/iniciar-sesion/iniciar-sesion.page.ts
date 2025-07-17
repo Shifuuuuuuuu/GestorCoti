@@ -4,7 +4,7 @@ import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Router } from '@angular/router';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
-
+import Swiper from 'swiper';
 @Component({
   selector: 'app-iniciar-sesion',
   templateUrl: './iniciar-sesion.page.html',
@@ -24,7 +24,15 @@ export class IniciarSesionPage implements OnInit {
   ngOnInit() {
     this.verificarSesion();
   }
-
+  ngAfterViewInit() {
+    new Swiper('.swiper', {
+      loop: true,
+      autoplay: {
+        delay: 2500,
+        disableOnInteraction: false,
+      },
+    });
+  }
   async verificarSesion() {
     const userId = localStorage.getItem('userId');
     if (userId) {

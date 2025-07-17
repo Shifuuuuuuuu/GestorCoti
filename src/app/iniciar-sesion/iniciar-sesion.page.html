@@ -1,9 +1,21 @@
 <ion-content>
   <form class="form-control" (submit)="preventFormSubmit($event)">
 
-    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 10px;">
-      <img src="assets/img/Logo XT Servicios.png" alt="Logo XT" style="height: 80px; border-radius: 10px;">
+  <div class="logo-carousel">
+    <div class="swiper">
+      <div class="swiper-wrapper">
+        <div class="swiper-slide">
+          <img src="assets/img/Logo XT Servicios.png" alt="Logo XT">
+        </div>
+        <div class="swiper-slide">
+          <img src="assets/img/Xtreme Hormigoenes y mortero.png" alt="Logo 2">
+        </div>
+        <div class="swiper-slide">
+          <img src="assets/img/xtreme mining con fondo.jpg" alt="Logo 3">
+        </div>
+      </div>
     </div>
+  </div>
 
     <h1 class="title">Bienvenido</h1>
     <h5 class="title">Inicia sesión</h5>
@@ -27,11 +39,6 @@
 
     <a href="#" (click)="resetPassword($event)">¿Olvidaste tu contraseña?</a>
     <button type="button" class="submit-btn" (click)="login()">Iniciar sesión</button>
-
-    <div class="redirect-register">
-      <p style="color: var(--ion-color-primary);">¿No tienes una cuenta?</p>
-      <a href="#" (click)="goToRegister($event)">Regístrate aquí</a>
-    </div>
 
   </form>
 </ion-content>

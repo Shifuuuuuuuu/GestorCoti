@@ -40,7 +40,6 @@ export class HistorialOcPage implements OnInit {
   filtroFecha: string = '';
   mostrarFiltros: boolean = false;
   filtroComentario: string = '';
-
   listaContratos: string[] = [
     '10-10-12',
     '20-10-01',
@@ -73,8 +72,18 @@ export class HistorialOcPage implements OnInit {
       this.obtenerResponsablesYContratos();
     }
   }
-  obtenerResponsablesYContratos() {
-  this.firestore.collection('ordenes_oc').get().subscribe(snapshot => {
+obtenerResponsablesYContratos() {
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const finMes = new Date(inicioMes);
+  finMes.setMonth(inicioMes.getMonth() + 1);
+
+  this.firestore.collection('ordenes_oc', ref =>
+    ref.where('fechaSubida', '>=', inicioMes)
+       .where('fechaSubida', '<', finMes)
+  ).get().subscribe(snapshot => {
     const responsablesSet = new Set<string>();
     const contratosSet = new Set<string>();
 
@@ -89,33 +98,83 @@ export class HistorialOcPage implements OnInit {
   });
 }
 
+
 aplicarFiltros() {
   this.loadingInicial = true;
 
-  this.firestore.collection('ordenes_oc').get().subscribe(snapshot => {
-    let docs = snapshot.docs.map(doc => {
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const finMes = new Date(inicioMes);
+  finMes.setMonth(inicioMes.getMonth() + 1);
+
+  this.firestore.collection('ordenes_oc', ref => {
+    let q = ref
+      .where('fechaSubida', '>=', inicioMes)
+      .where('fechaSubida', '<', finMes);
+
+    if (this.filtroEstado) q = q.where('estatus', '==', this.filtroEstado);
+    if (this.filtroCentro) q = q.where('centroCosto', '==', this.filtroCentro);
+    if (this.filtroResponsable) q = q.where('responsable', '==', this.filtroResponsable);
+
+    return q;
+  }).get().subscribe(snapshot => {
+    let docs = snapshot.docs.map((doc, index) => {
       const data = doc.data() as any;
+
+      const fechaSubida = this.convertirFechaFirestore(data.fechaSubida);
+      const historial = (data.historial || []).map((h: any) => ({
+        ...h,
+        fecha: this.convertirFechaFirestore(h.fecha)
+      }));
+
+      const archivosBase64 = Array.isArray(data.archivosBase64)
+        ? data.archivosBase64.map((archivo: any) => {
+            const esPDF = archivo.base64?.startsWith('JVBERi');
+            const tipo = esPDF ? 'application/pdf' : 'image/jpeg';
+
+            const byteCharacters = atob(archivo.base64);
+            const byteNumbers = Array.from(byteCharacters, c => c.charCodeAt(0));
+            const blob = new Blob([new Uint8Array(byteNumbers)], { type: tipo });
+            const url = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob));
+
+            return {
+              ...archivo,
+              tipo,
+              url,
+              esPDF,
+              esImagen: tipo.startsWith('image/'),
+              mostrar: false
+            };
+          })
+        : [];
+
+      const archivosVisuales = Array.isArray(data.archivosStorage)
+        ? data.archivosStorage.map((archivo: any, i: number) => {
+            const tipo = archivo.tipo || 'application/pdf';
+            return {
+              nombre: archivo.nombre || `archivo_${i + 1}`,
+              tipo,
+              esPDF: tipo === 'application/pdf',
+              esImagen: tipo.startsWith('image/'),
+              url: this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url),
+              mostrar: false
+            };
+          })
+        : [];
+
       return {
         ...data,
         docId: doc.id,
-        fechaSubida: this.convertirFecha(data.fechaSubida)
+        fechaSubida,
+        historial,
+        archivosBase64,
+        archivosVisuales
       };
     });
 
-    // 🔍 Aplicar filtros
-
-    if (this.filtroEstado) {
-      docs = docs.filter(d => d.estatus === this.filtroEstado);
-    }
-
-    if (this.filtroCentro) {
-      docs = docs.filter(d => d.centroCosto === this.filtroCentro);
-    }
-
-    if (this.filtroResponsable) {
-      docs = docs.filter(d => d.responsable === this.filtroResponsable);
-    }
-
+    // Filtros adicionales por fecha y comentario
     if (this.filtroFecha) {
       const f = new Date(this.filtroFecha);
       docs = docs.filter(d => {
@@ -132,7 +191,6 @@ aplicarFiltros() {
       );
     }
 
-    // 👉 Ordenar de más reciente a más antiguo
     docs.sort((a, b) => b.fechaSubida.getTime() - a.fechaSubida.getTime());
 
     this.ocs = docs;
@@ -153,8 +211,16 @@ limpiarFiltros() {
 }
 
 contarTotalPaginas() {
-  const ref = this.firestore.firestore.collection('ordenes_oc'); // Acceso nativo a Firestore
-  let query: firebase.firestore.Query = ref;
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const finMes = new Date(inicioMes);
+  finMes.setMonth(inicioMes.getMonth() + 1);
+
+  let query: firebase.firestore.Query = this.firestore.firestore.collection('ordenes_oc')
+    .where('fechaSubida', '>=', inicioMes)
+    .where('fechaSubida', '<', finMes);
 
   if (this.filtroEstado) {
     query = query.where('estatus', '==', this.filtroEstado);
@@ -174,11 +240,24 @@ contarTotalPaginas() {
   });
 }
 
+
 cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   this.loadingInicial = true;
 
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
+
+  const finMes = new Date(inicioMes);
+  finMes.setMonth(inicioMes.getMonth() + 1);
+
   const query = this.firestore.collection('ordenes_oc', ref => {
-    let q = ref.orderBy('fechaSubida', 'desc').limit(this.itemsPorPagina);
+    let q = ref
+      .where('fechaSubida', '>=', inicioMes)
+      .where('fechaSubida', '<', finMes)
+      .orderBy('fechaSubida', 'desc')
+      .limit(this.itemsPorPagina);
+
     if (this.filtroEstado) q = q.where('estatus', '==', this.filtroEstado);
     if (this.filtroCentro) q = q.where('centroCosto', '==', this.filtroCentro);
     if (this.filtroResponsable) q = q.where('responsable', '==', this.filtroResponsable);
@@ -187,6 +266,7 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
       const prev = this.historialPaginas[this.historialPaginas.length - 2];
       q = q.startAt(prev);
     }
+
     return q;
   });
 
@@ -194,50 +274,19 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     this.ocs = snapshot.docs.map(doc => {
       const data = doc.data() as any;
 
-      const fechaSubida = this.convertirFechaFirestore(data.fechaSubida);
-      const historial = (data.historial || []).map((h: any) => ({
-        ...h,
-        fecha: this.convertirFechaFirestore(h.fecha)
-      }));
-
-      // ⚡️ Solo se procesan si existen
-      const archivosBase64 = Array.isArray(data.archivosBase64)
-        ? data.archivosBase64.map((archivo: any) => {
-            const esPDF = archivo.base64?.startsWith('JVBERi');
-            return {
-              ...archivo,
-              tipo: esPDF ? 'application/pdf' : 'image/jpeg',
-              url: null,
-              mostrar: false
-            };
-          })
-        : [];
-
-      const archivosVisuales = Array.isArray(data.archivosStorage)
-        ? data.archivosStorage.map((archivo: any, index: number) => {
-            const tipo = archivo.tipo || 'application/pdf';
-            return {
-              nombre: archivo.nombre || `archivo_${index + 1}`,
-              tipo,
-              esPDF: tipo === 'application/pdf',
-              esImagen: tipo.startsWith('image/'),
-              url: this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url),
-              mostrar: false
-            };
-          })
-        : [];
-
       return {
         ...data,
         docId: doc.id,
-        fechaSubida,
-        historial,
-        archivosBase64,
-        archivosVisuales
+        fechaSubida: this.convertirFechaFirestore(data.fechaSubida),
+        historial: (data.historial || []).map((h: any) => ({
+          ...h,
+          fecha: this.convertirFechaFirestore(h.fecha)
+        })),
+        archivosBase64: data.archivosBase64 || [],
+        archivosVisuales: data.archivosStorage || []
       };
     });
 
-    // Manejo de navegación
     if (!snapshot.empty) {
       this.firstVisible = snapshot.docs[0];
       this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
@@ -260,6 +309,8 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     this.loadingInicial = false;
   });
 }
+
+
 
   // ✅ NUEVO METODO CENTRALIZADO PARA CONVERTIR FECHAS
   convertirFechaFirestore(fecha: any): Date {
@@ -284,33 +335,51 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     this.cargarPagina();
   }
 
-  irAlFinal() {
-    this.firestore.collection('ordenes_oc', ref => ref.orderBy('fechaSubida', 'desc')).get().subscribe(snapshot => {
-      const total = snapshot.size;
-      const totalPaginas = Math.ceil(total / this.itemsPorPagina);
-      const docs = snapshot.docs;
-      const startDoc = docs[(totalPaginas - 1) * this.itemsPorPagina];
+irAlFinal() {
+  const inicioMes = new Date();
+  inicioMes.setDate(1);
+  inicioMes.setHours(0, 0, 0, 0);
 
-      this.firestore.collection('ordenes_oc', ref =>
-        ref.orderBy('fechaSubida', 'desc').startAt(startDoc).limit(this.itemsPorPagina)
-      ).get().subscribe(lastSnap => {
-        this.ocs = lastSnap.docs.map(doc => {
-          const data = doc.data() as any;
-          const fechaSubida = data.fechaSubida?.toDate?.() || null;
-          return {
-            ...data,
-            docId: doc.id,
-            fechaSubida
-          };
-        });
+  const finMes = new Date(inicioMes);
+  finMes.setMonth(inicioMes.getMonth() + 1);
 
-        this.firstVisible = lastSnap.docs[0];
-        this.lastVisible = lastSnap.docs[lastSnap.docs.length - 1];
-        this.historialPaginas = [];
-        this.paginaActual = totalPaginas;
+  const ref = this.firestore.firestore.collection('ordenes_oc')
+    .where('fechaSubida', '>=', inicioMes)
+    .where('fechaSubida', '<', finMes)
+    .orderBy('fechaSubida', 'desc');
+
+  ref.get().then(snapshot => {
+    const total = snapshot.size;
+    const totalPaginas = Math.ceil(total / this.itemsPorPagina);
+    const docs = snapshot.docs;
+    const startDoc = docs[(totalPaginas - 1) * this.itemsPorPagina];
+
+    this.firestore.collection('ordenes_oc', subRef =>
+      subRef
+        .where('fechaSubida', '>=', inicioMes)
+        .where('fechaSubida', '<', finMes)
+        .orderBy('fechaSubida', 'desc')
+        .startAt(startDoc)
+        .limit(this.itemsPorPagina)
+    ).get().subscribe(lastSnap => {
+      this.ocs = lastSnap.docs.map(doc => {
+        const data = doc.data() as any;
+        const fechaSubida = this.convertirFechaFirestore(data.fechaSubida);
+        return {
+          ...data,
+          docId: doc.id,
+          fechaSubida
+        };
       });
+
+      this.firstVisible = lastSnap.docs[0];
+      this.lastVisible = lastSnap.docs[lastSnap.docs.length - 1];
+      this.historialPaginas = [];
+      this.paginaActual = totalPaginas;
     });
-  }
+  });
+}
+
 
 buscarPorId() {
   const idBuscado = this.busquedaId.trim();
@@ -396,24 +465,114 @@ async obtenerNombreUsuario(): Promise<string> {
 
 
   // ✅ HTML LAZY LOAD
-  mostrarArchivoDesdeArray(archivo: any) {
-    if (!archivo.url && archivo.base64 && archivo.tipo) {
-      const byteCharacters = atob(archivo.base64);
-      const byteNumbers = Array.from(byteCharacters, c => c.charCodeAt(0));
-      const blob = new Blob([new Uint8Array(byteNumbers)], { type: archivo.tipo });
-      const url = URL.createObjectURL(blob);
-      archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    }
-    archivo.mostrar = !archivo.mostrar;
+mostrarArchivoDesdeArray(archivo: any) {
+  // Si no tiene tipo definido, lo calculamos (esto es lo que está faltando)
+  if (!archivo.tipo && archivo.base64) {
+    const esPDF = archivo.base64.startsWith('JVBERi');
+    archivo.tipo = esPDF ? 'application/pdf' : 'image/jpeg';
   }
 
-  // ✅ CONVERTIR URL SEGURA LAZY CARGA
-  mostrarArchivo(archivo: any) {
-    if (!archivo.url && archivo.downloadUrl && archivo.tipo) {
-      archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(archivo.downloadUrl);
-    }
-    archivo.mostrar = !archivo.mostrar;
+  // Si no tiene URL, la generamos
+  if (!archivo.url && archivo.base64 && archivo.tipo) {
+    const byteCharacters = atob(archivo.base64);
+    const byteNumbers = Array.from(byteCharacters, c => c.charCodeAt(0));
+    const blob = new Blob([new Uint8Array(byteNumbers)], { type: archivo.tipo });
+    const url = URL.createObjectURL(blob);
+    archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
+
+  // Mostrar u ocultar
+  archivo.mostrar = !archivo.mostrar;
+}
+
+cargarTodasLasCotizaciones() {
+  this.loadingInicial = true;
+
+  this.firestore.collection('ordenes_oc', ref =>
+    ref.orderBy('fechaSubida', 'desc')
+  ).get().subscribe(snapshot => {
+    this.ocs = snapshot.docs.map((doc, index) => {
+      const data = doc.data() as any;
+
+      const fechaSubida = this.convertirFechaFirestore(data.fechaSubida);
+      const historial = (data.historial || []).map((h: any) => ({
+        ...h,
+        fecha: this.convertirFechaFirestore(h.fecha)
+      }));
+
+      // ✅ Procesar archivosBase64 con tipo, url segura y control
+      const archivosBase64 = Array.isArray(data.archivosBase64)
+        ? data.archivosBase64.map((archivo: any) => {
+            const esPDF = archivo.base64?.startsWith('JVBERi');
+            const tipo = esPDF ? 'application/pdf' : 'image/jpeg';
+
+            const byteCharacters = atob(archivo.base64);
+            const byteNumbers = Array.from(byteCharacters, c => c.charCodeAt(0));
+            const blob = new Blob([new Uint8Array(byteNumbers)], { type: tipo });
+            const url = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob));
+
+            return {
+              ...archivo,
+              tipo,
+              url,
+              esPDF,
+              esImagen: tipo.startsWith('image/'),
+              mostrar: false
+            };
+          })
+        : [];
+
+      // ✅ Procesar archivos de Storage con visual seguro
+      const archivosVisuales = Array.isArray(data.archivosStorage)
+        ? data.archivosStorage.map((archivo: any, i: number) => {
+            const tipo = archivo.tipo || 'application/pdf';
+            return {
+              nombre: archivo.nombre || `archivo_${i + 1}`,
+              tipo,
+              esPDF: tipo === 'application/pdf',
+              esImagen: tipo.startsWith('image/'),
+              url: this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url),
+              mostrar: false
+            };
+          })
+        : [];
+
+      return {
+        ...data,
+        docId: doc.id,
+        fechaSubida,
+        historial,
+        archivosBase64,
+        archivosVisuales
+      };
+    });
+
+    this.totalPaginas = 1;
+    this.paginaActual = 1;
+    this.loadingInicial = false;
+  });
+}
+
+
+
+  // ✅ CONVERTIR URL SEGURA LAZY CARGA
+mostrarArchivo(archivo: any) {
+  // Tipo automático si no viene
+  if (!archivo.tipo) {
+    archivo.tipo = archivo.url?.includes('.pdf') ? 'application/pdf' : 'image/jpeg';
+  }
+
+  // Flags
+  archivo.esPDF = archivo.tipo === 'application/pdf';
+  archivo.esImagen = archivo.tipo.startsWith('image/');
+
+  // ✅ SANITIZAR si no tiene url ya segura
+  if (typeof archivo.url === 'string') {
+    archivo.url = this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url);
+  }
+
+  archivo.mostrar = !archivo.mostrar;
+}
 
 
 convertirURLSegura(url: string): SafeResourceUrl {

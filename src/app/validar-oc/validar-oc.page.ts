@@ -45,18 +45,9 @@ async cargarOCs() {
 
   try {
     const nombreUsuario = await this.obtenerNombreUsuario();
+    const estatusFiltro = 'Revisión Guillermo'; // 🔁 Todos pasan por aquí
 
-    // Determinar el estado según el usuario
-    let estatusFiltro: string | null = null;
-    if (nombreUsuario === 'Juan Cubillos') {
-      estatusFiltro = 'Preaprobado';
-    } else if (nombreUsuario === 'Alejandro Candia') {
-      estatusFiltro = 'Casi Aprobado';
-    } else {
-      this.ocs = [];
-      this.loading = false;
-      return;
-    }
+    console.log('👤 Usuario:', nombreUsuario, '| Filtro aplicado:', estatusFiltro);
 
     const snapshot = await this.firestore
       .collection('ordenes_oc', ref => ref.where('estatus', '==', estatusFiltro))
@@ -106,7 +97,9 @@ async cargarOCs() {
         archivosVisuales,
         mostrarArchivo: false,
         comentarioTemporal: '',
-        itemsEvaluados
+        itemsEvaluados,
+        resumenSolpedVisible: false,
+        resumenSolped: null
       };
     }));
   } catch (error) {
@@ -116,6 +109,41 @@ async cargarOCs() {
     this.loading = false;
   }
 }
+
+
+async verResumenSolped(oc: any) {
+  if (!oc.solpedId) {
+    this.mostrarToast('Esta OC no tiene una SOLPED asociada.', 'warning');
+    return;
+  }
+
+  oc.detalleSolpedVisible = !oc.detalleSolpedVisible;
+
+  if (!oc.detalleSolpedVisible) return;
+
+  try {
+    const solpedSnap = await this.firestore.collection('solpes').doc(oc.solpedId).get().toPromise();
+    const solpedData = solpedSnap?.data() as any;
+
+    if (solpedData) {
+      oc.detalleSolped = {
+        numero_solpe: solpedData.numero_solpe || 'N/A',
+        empresa: solpedData.empresa || 'N/A',
+        tipo_solped: solpedData.tipo_solped || 'N/A',
+        fecha: solpedData.fecha_creacion?.toDate?.()?.toLocaleDateString() || 'N/A',
+        cantidadItems: solpedData.items?.length || 0,
+        items: solpedData.items || [],
+        imagenAdjunta: solpedData.imagen_url || null
+      };
+    } else {
+      this.mostrarToast('No se encontró la SOLPED asociada.', 'warning');
+    }
+  } catch (error) {
+    console.error('❌ Error al cargar la SOLPED:', error);
+    this.mostrarToast('Error al cargar la SOLPED.', 'danger');
+  }
+}
+
 
 
 formatearCLP(valor: number): string {
@@ -281,11 +309,19 @@ async aprobarOC(oc: any) {
   const usuario = await this.obtenerNombreUsuario();
   const fecha = new Date().toISOString();
 
-  // Verificar si se debe cambiar el estatus a "Casi Aprobado"
+  // ✅ Lógica para determinar el estatus según monto y usuario
   let estatusFinal = 'Aprobado';
-  if (oc.responsable === 'Alejandro Candia' && oc.precioTotalConIVA > 2500000) {
+
+  if (usuario === 'Juan Cubillos') {
+    estatusFinal = 'Aprobado'; // Juan aprueba directamente
+  } else if (oc.precioTotalConIVA > 250000) {
+    estatusFinal = 'Preaprobado';
+  } else if (usuario === 'Alejandro Candia') {
     estatusFinal = 'Casi Aprobado';
+  } else if (usuario === 'Guillermo Contreras') {
+    estatusFinal = 'Revisión Guillermo';
   }
+
 
   const nuevoHistorial = [...(oc.historial || []), {
     usuario,
@@ -296,7 +332,6 @@ async aprobarOC(oc: any) {
 
   const asociadaASolped = !!oc.solpedId || !!oc.numero_solped;
 
-  // Validar si faltan datos si está asociada a una SOLPED
   if (asociadaASolped && (!oc.numero_solped || !oc.empresa)) {
     this.mostrarToast('Faltan datos de número SOLPED o empresa en esta OC asociada.', 'warning');
     return;
@@ -315,12 +350,17 @@ async aprobarOC(oc: any) {
   // Eliminar del listado visual
   this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
 
-  const mensajeFinal = estatusFinal === 'Casi Aprobado'
-    ? 'OC marcada como "Casi Aprobado" por límite de aprobación de Alejandro Candia.'
-    : 'OC aprobada correctamente.';
+  const mensajeFinal =
+    {
+      'Casi Aprobado': 'OC marcada como "Casi Aprobado" por Alejandro Candia.',
+      'Preaprobado': 'OC enviada a revisión de Juan Cubillos por superar los $250.000 CLP.',
+      'Revisión Guillermo': 'OC marcada como "Revisión Guillermo".',
+      'Aprobado': 'OC aprobada correctamente.'
+    }[estatusFinal] || 'OC aprobada.';
 
   this.mostrarToast(mensajeFinal, 'success');
 }
+
 
 
 

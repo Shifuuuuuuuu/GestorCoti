@@ -63,7 +63,8 @@ async register(event?: Event) {
     'dholz@xtrememining.cl',
     'brubio@xtrememining.cl',
     'Ebastidas@xtrememining.cl',
-    'gmatus@xtrememining.cl'
+    'gmatus@xtrememining.cl',
+    'acp@xtrememining.cl'
   ].map(c => c.trim().toLowerCase());
 
   const emailLimpio = email.trim().toLowerCase();

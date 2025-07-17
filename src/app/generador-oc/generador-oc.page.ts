@@ -274,9 +274,15 @@ async enviarOC() {
   const fecha = new Date().toISOString();
   const id = await this.obtenerNuevoId();
   const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
-  const historialEntry = { usuario, estatus: 'Preaprobado', fecha };
 
-  this.calcularAprobador();
+  // ✅ Siempre va a revisión Guillermo
+  const estatusInicial = 'Revisión Guillermo';
+
+  const historialEntry = {
+    usuario,
+    estatus: estatusInicial,
+    fecha
+  };
 
   const dataToSave: any = {
     id,
@@ -284,7 +290,7 @@ async enviarOC() {
     centroCostoNombre: centroNombre,
     tipoCompra: this.tipoCompra,
     destinoCompra: this.tipoCompra === 'patente' ? this.destinoCompra : '',
-    estatus: 'Preaprobado',
+    estatus: estatusInicial,
     fechaSubida: firebase.firestore.Timestamp.fromDate(new Date()),
     historial: [historialEntry],
     responsable: usuario,
@@ -297,7 +303,7 @@ async enviarOC() {
     archivosStorage: []
   };
 
-  // ✅ Subida a Firebase Storage
+  // ✅ Subir archivos a Firebase Storage
   const archivosSubidos: any[] = [];
   const storage = getStorage();
 
@@ -313,13 +319,9 @@ async enviarOC() {
     const path = `ordenes_oc/${id}/${nombre}`;
     const storageRef = ref(storage, path);
 
-    console.log(`🚀 SUBIENDO: ${nombre} - ${archivo.size} bytes`);
-
     try {
-      const snapshot = await uploadBytes(storageRef, archivo); // archivo ya es File
+      const snapshot = await uploadBytes(storageRef, archivo);
       const downloadURL = await getDownloadURL(snapshot.ref);
-
-      console.log(`✅ SUBIDO: ${nombre} - ${archivo.size} bytes`);
 
       archivosSubidos.push({
         nombre,
@@ -334,14 +336,11 @@ async enviarOC() {
     }
   }
 
-
   dataToSave.archivosStorage = archivosSubidos;
 
   // ✅ Si hay SOLPED asociada
   if (this.usarSolped && this.solpedSeleccionadaId) {
     dataToSave.solpedId = this.solpedSeleccionadaId;
-
-    // 🔥 Agrega esto para incluir los campos que faltaban:
     dataToSave.numero_solped = this.solpedSeleccionada?.numero_solpe || 0;
     dataToSave.empresa = this.solpedSeleccionada?.empresa || 'No definida';
     dataToSave.tipo_solped = this.solpedSeleccionada?.tipo_solped || 'No definido';
@@ -428,7 +427,7 @@ async enviarOC() {
 
     this.mostrarToast('Cotización enviada exitosamente.', 'success');
 
-    // ✅ Reset formulario
+    // ✅ Reset
     this.centroCosto = '';
     this.tipoCompra = 'stock';
     this.destinoCompra = '';
@@ -454,6 +453,7 @@ async enviarOC() {
     this.enviando = false;
   }
 }
+
 
 toggleSeleccion(id: string) {
   if (this.itemsSeleccionados.has(id)) {

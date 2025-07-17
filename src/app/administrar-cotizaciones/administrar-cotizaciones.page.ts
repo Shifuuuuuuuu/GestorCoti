@@ -78,10 +78,14 @@ usuariosDisponibles: string[] = [];
   ) {}
 
 ngOnInit() {
-  this.contarTotalPaginas();
-  this.cargarPagina(); // primera carga
+  if (this.modo === 'listado') {
+    this.contarTotalPaginas();
+    this.cargarPagina();
+  }
+
   this.cargarUsuarios();
 }
+
 
 async editarCamposAdicionales(oc: any) {
   const alert = await this.alertController.create({
@@ -176,10 +180,17 @@ async aplicarFiltros() {
 
     const snapshot = await firstValueFrom(query.get());
 
-    let filtrados = snapshot.docs.map(doc => ({
-      docId: doc.id,
-      ...(doc.data() as any)
-    }));
+    let filtrados = snapshot.docs.map(doc => {
+      const data = doc.data() as any;
+      // ⚠️ Eliminar campos pesados
+      delete data.archivosBase64;
+      delete data.archivosStorage;
+
+      return {
+        docId: doc.id,
+        ...data
+      };
+    });
 
     // Filtrar por fecha exacta (si se usa)
     if (this.filtroFecha) {
@@ -199,6 +210,7 @@ async aplicarFiltros() {
     this.cargando = false;
   }
 }
+
 
 
 async obtenerNombreUsuario(): Promise<string> {
@@ -312,19 +324,28 @@ async cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     const snapshot = await firstValueFrom(ref.get());
 
     if (!snapshot.empty) {
-      this.ocsFiltradas = snapshot.docs.map(doc => ({
-        docId: doc.id,
-        ...(doc.data() as any)
-      }));
+      this.ocsFiltradas = snapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        delete data.archivosBase64;
+        delete data.archivosStorage;
+
+        return {
+          docId: doc.id,
+          ...data
+        };
+      });
 
       this.firstVisible = snapshot.docs[0];
       this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
       if (direccion === 'adelante') {
+        // Solo aumenta si no es la primera carga
+        if (this.paginaActual > 1 || this.historialPaginas.length > 0) {
+          this.paginaActual++;
+        }
         this.historialPaginas.push(this.firstVisible);
-        this.paginaActual++;
       } else if (direccion === 'atras') {
-        this.historialPaginas.pop(); // eliminamos el último para retroceder
+        this.historialPaginas.pop();
         this.paginaActual--;
       }
     }
@@ -335,6 +356,8 @@ async cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     this.cargando = false;
   }
 }
+
+
 
 
 
