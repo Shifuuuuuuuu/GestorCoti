@@ -1,6 +1,6 @@
 {
-  "version": "1.8.0",
-  "mensaje": "🆕 Ahora se podrá asociar a la persona encargada de cotizar la SOLPED y el historial de SOLPEDs está dividido por empresa."
+  "version": "1.9.0",
+  "mensaje": "🆕 Se agregaron los nombres reales de los contratos para diferenciarlos correctamente. En el nombre de la SOLPED se debe especificar a cuál DO va dirigida, utilizando el apodo correspondiente. Además, se incorporó la sección de autorización por parte del gerente, en caso de que el contrato lo requiera. También se habilitó la opción de seleccionar a múltiples personas responsables de cotizar una misma SOLPED."
 }
 
 

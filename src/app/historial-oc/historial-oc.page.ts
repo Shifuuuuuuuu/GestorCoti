@@ -72,7 +72,8 @@ export class HistorialOcPage implements OnInit {
       this.cargarPagina();
       this.obtenerResponsablesYContratos();
     }
-  }obtenerResponsablesYContratos() {
+  }
+  obtenerResponsablesYContratos() {
   this.firestore.collection('ordenes_oc').get().subscribe(snapshot => {
     const responsablesSet = new Set<string>();
     const contratosSet = new Set<string>();

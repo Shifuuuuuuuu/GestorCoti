@@ -47,6 +47,7 @@ export class EditarSolpedsPage implements OnInit {
   userUid: string = '';
   filtroEmpresa: string = '';
   solpesAgrupadas: { [empresa: string]: any[] } = {};
+  busquedaGeneral: string = '';
 
   constructor(
     private firestore: AngularFirestore,
@@ -101,6 +102,29 @@ verOC(solpedId: string, archivoBase64: string) {
 ordenarEmpresaGrupo = (a: any, b: any): number => {
   return a.key.localeCompare(b.key);
 };
+buscarPorReferencia() {
+  const texto = this.busquedaGeneral?.toLowerCase().trim();
+
+  if (!texto) {
+    this.solpesFiltradas = [...this.solpesOriginal];
+    this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
+    return;
+  }
+
+  this.solpesFiltradas = this.solpesOriginal.filter(solpe => {
+    const enNombre = solpe.nombre_solped?.toLowerCase().includes(texto);
+    const enUsuario = solpe.usuario?.toLowerCase().includes(texto);
+    const enItems = solpe.items?.some((item: any) =>
+      item.descripcion?.toLowerCase().includes(texto) ||
+      item.codigo_referencial?.toLowerCase().includes(texto) ||
+      item.item?.toString().includes(texto)
+    );
+
+    return enNombre || enUsuario || enItems;
+  });
+
+  this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
+}
 
 formatearCLP(valor: number): string {
   return valor?.toLocaleString('es-CL', {

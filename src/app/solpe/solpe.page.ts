@@ -1,23 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import {  MenuController, ToastController } from '@ionic/angular';
-import { SolpeService } from '../services/solpe.service';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
-import { ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { ViewChildren, QueryList, ElementRef, ViewChild } from '@angular/core';
 import imageCompression from 'browser-image-compression';
 import { Item } from '../Interface/IItem';
 import { AngularFireStorage } from '@angular/fire/compat/storage';
 import { finalize } from 'rxjs/operators';
 import firebase from 'firebase/compat/app';
+import { LoadingController } from '@ionic/angular';
+
 @Component({
   selector: 'app-solpe',
   templateUrl: './solpe.page.html',
   styleUrls: ['./solpe.page.scss'],
 })
 export class SolpePage implements OnInit  {
+  @ViewChildren('inputAutorizacion') inputAutorizacion!: QueryList<ElementRef>;
   @ViewChildren('inputImagenRef') inputsImagenes!: QueryList<ElementRef>;
+  @ViewChild('inputAutorizacionRef') inputAutorizacionRef!: ElementRef;
+
   modoSeleccionado: string = 'formulario';
   solpe: any = {
+    autorizacion_url: null,
+    autorizacion_nombre: null,
     numero_solpe: null,
     fecha: '',
     numero_contrato: '',
@@ -27,53 +33,44 @@ export class SolpePage implements OnInit  {
     empresa: '',
     items: [] as Item[],
     estatus: 'Solicitado',
-    dirigidoA: '', // 🆕 Campo nuevo
+    dirigidoA: [] as string[],
   };
+  requiereAutorizacion: boolean = false;
   enviandoSolpe = false;
   usuariosDisponibles: string[] = [
   'Daniela Lizama',
   'Luis Orellana',
   'Guillermo Manzor',
   'María José Ballesteros'
-];
+  ];
+  loadingEmpresa: boolean = false;
 
 
 centrosCosto: { [key: string]: string } = {
-  '10-10-12': 'ZEMAQ',
-  '20-10-01': 'BENÍTEZ',
-  '30-10-01': 'CASA MATRIZ',
-  '30-10-07': 'PREDOSIFICADO - SAN BERNARDO',
-  '30-10-08': 'ÁRIDOS SAN JOAQUÍN',
-  '30-10-42': 'RAUL ALFARO',
-  '30-10-43-A': 'DET NUEVO',
-  '30-10-43-B': 'TALLER CANECHE',
-  '30-10-43-C': 'DET NUEVO',
-  '30-10-43-D': 'ESTODCADA 8',
-  '30-10-44': 'DET PLANTA COLON',
-  '30-10-45': 'DET PLANTA CALETONES',
-  '30-10-46': 'DET AGUA DULCE',
-  '30-10-48': 'DET ESMERALDA',
-  '30-10-49': 'DET NP NNM',
-  '30-10-50': 'DET ACH NNM',
-  '30-10-52': 'LUIS CABRERA',
-  '30-10-53': 'URBANO SAN BERNARDO',
-  '30-10-54': 'URBANO OLIVAR',
-  '30-10-55': 'DET TENIENTE',
-  '30-10-57': 'CALAMA',
-  '30-10-58': 'GASTÓN CASTILLO',
-  '30-10-59': 'INFRAESTRUCTURA MINERA',
-  '30-10-60': 'CALAMA',
-  '30-10-61': 'ALTO MAIPO',
+  '22368': 'CONTRATO SUMINISTRO DE HORMIGONES DET',
+  '20915': 'CONTRATO SUMINISTRO DE HORMIGONES DAND',
+  '23302': 'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND',
+  '28662': 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
+  'SANJOAQUIN': 'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
+  'URBANOS': 'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
+  'CS': 'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
+  'BENITEZ': 'CONTRATO PREDOSIFICADO BENÍTEZ',
+  'CANECHE': 'CONTRATO TALLER CANECHE',
+  'CASAMATRIZ': 'CONTRATO CASA MATRIZ',
+  'ALTOMAIPO': 'CONTRATO ALTO MAIPO',
+  'INFRAESTRUCTURA': 'CONTRATO INFRAESTRUCTURA DET',
+  'CHUQUICAMATA': 'CONTRATO CHUQUICAMATA'
 };
 
 
+
   constructor(
-    private solpeService: SolpeService,
     private toastController: ToastController,
     private afAuth: AngularFireAuth,
     private firestore: AngularFirestore,
     private menu: MenuController,
     private storage: AngularFireStorage,
+    private loadingCtrl: LoadingController
   ) {}
 
 async ngOnInit() {
@@ -107,7 +104,60 @@ actualizarCentroCosto(event: any) {
   this.solpe.numero_contrato = codigoSeleccionado;
   this.solpe.nombre_centro_costo = this.centrosCosto[codigoSeleccionado] || '';
 }
+seleccionarArchivoAutorizacion() {
+  if (this.inputAutorizacionRef && this.inputAutorizacionRef.nativeElement) {
+    this.inputAutorizacionRef.nativeElement.click();
+  } else {
+    console.warn('inputAutorizacionRef no está listo aún.');
+  }
+}
 
+
+async subirArchivoAutorizacion(event: any) {
+  const archivo: File = event.target.files[0];
+  if (!archivo) return;
+
+  const nombreArchivo = `autorizacion_${this.solpe.numero_solpe || 'temp'}_${Date.now()}_${archivo.name}`;
+  const ruta = `solped_autorizaciones/${nombreArchivo}`;
+  const ref = this.storage.ref(ruta);
+  const task = this.storage.upload(ruta, archivo);
+
+  const loading = await this.loadingCtrl.create({
+    message: 'Subiendo autorización...',
+    spinner: 'bubbles',
+    backdropDismiss: false
+  });
+  await loading.present();
+
+  task.snapshotChanges().pipe(
+    finalize(async () => {
+      const url = await ref.getDownloadURL().toPromise();
+      this.solpe.autorizacion_url = url;
+      this.solpe.autorizacion_nombre = archivo.name;
+      await loading.dismiss();
+      this.mostrarToast('Archivo subido correctamente', 'success');
+    })
+  ).subscribe();
+}
+async eliminarArchivoAutorizacion() {
+  if (!this.solpe.autorizacion_url) return;
+
+  const confirmar = confirm('¿Estás seguro que deseas eliminar el archivo de autorización?');
+  if (!confirmar) return;
+
+  try {
+    const storageRef = firebase.storage().refFromURL(this.solpe.autorizacion_url);
+    await storageRef.delete();
+
+    this.solpe.autorizacion_url = null;
+    this.solpe.autorizacion_nombre = null;
+
+    this.mostrarToast('Archivo de autorización eliminado', 'success');
+  } catch (error) {
+    console.error('Error al eliminar archivo de Storage:', error);
+    this.mostrarToast('Error al eliminar el archivo', 'danger');
+  }
+}
 
 cargarDatosDeLocalStorage() {
   const solpeGuardado = localStorage.getItem('solpe');
@@ -197,9 +247,29 @@ async actualizarEmpresa(event: any) {
   const empresaSeleccionada = event.detail.value;
   this.solpe.empresa = empresaSeleccionada;
 
-  const numero = await this.obtenerUltimoNumeroSolpePorEmpresa(empresaSeleccionada);
-  this.solpe.numero_solpe = numero;
+  // Mostrar el loader
+  const loading = await this.loadingCtrl.create({
+    message: 'Cargando número de SOLPED...',
+    spinner: 'crescent',
+    backdropDismiss: false,
+  });
+  await loading.present();
+
+  try {
+    // Espera artificial para mostrar el loading (opcional)
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const numero = await this.obtenerUltimoNumeroSolpePorEmpresa(empresaSeleccionada);
+    this.solpe.numero_solpe = numero;
+  } catch (error) {
+    this.mostrarToast('Error al obtener número de SOLPED', 'danger');
+  } finally {
+    // Ocultar el loader
+    await loading.dismiss();
+  }
 }
+
+
 
 
 
@@ -348,35 +418,34 @@ async guardarSolpe() {
   }
 
   if (this.solpe.items.length === 0) {
-    this.mostrarToast('Debes agregar al menos un item', 'warning');
+    this.mostrarToast('Debes agregar al menos un ítem', 'warning');
     return;
   }
+
   if (!this.solpe.nombre_solped || this.solpe.nombre_solped.trim() === '') {
-  this.mostrarToast('Debes ingresar el nombre de la SOLPED', 'warning');
-  return;
+    this.mostrarToast('Debes ingresar el nombre de la SOLPED', 'warning');
+    return;
   }
 
-  if (!this.solpe.dirigidoA || this.solpe.dirigidoA.trim() === '') {
-    this.mostrarToast('Debes seleccionar a quién va dirigida la SOLPED', 'warning');
+  if (!this.solpe.dirigidoA || this.solpe.dirigidoA.length === 0) {
+    this.mostrarToast('Debes seleccionar al menos un cotizador para la SOLPED', 'warning');
     return;
   }
 
   for (let item of this.solpe.items) {
-    if (!item.descripcion || !item.numero_interno || !this.solpe.empresa || item.numero_interno.trim() === '' ) {
+    if (!item.descripcion || !item.numero_interno || !this.solpe.empresa || item.numero_interno.trim() === '') {
       this.mostrarToast('Todos los campos excepto Código Referencial son obligatorios', 'warning');
       return;
     }
+
     item.codigo_referencial = item.codigo_referencial?.trim() || 'SIN CÓDIGO';
     item.cantidad = item.cantidad || 0;
     item.stock = item.stock || 0;
   }
 
   try {
-    // ✅ Obtener número SOLPED único y actualizado
     const numeroSolpeAsignado = await this.obtenerUltimoNumeroSolpePorEmpresa(this.solpe.empresa);
     this.solpe.numero_solpe = numeroSolpeAsignado;
-
-    // Actualizar fecha y nombre
     this.solpe.fecha = this.formatDate(new Date());
     this.solpe.nombre_solped = this.solpe.nombre_solped?.toUpperCase() || '';
 
@@ -386,11 +455,13 @@ async guardarSolpe() {
       numero_contrato: this.solpe.numero_contrato,
       nombre_centro_costo: this.solpe.nombre_centro_costo || this.centrosCosto[this.solpe.numero_contrato] || '',
       usuario: this.solpe.usuario,
-      dirigidoA: this.solpe.dirigidoA,
+      dirigidoA: this.solpe.dirigidoA, // ✅ array de cotizadores
       nombre_solped: this.solpe.nombre_solped,
       tipo_solped: this.solpe.tipo_solped,
       empresa: this.solpe.empresa,
       estatus: this.solpe.estatus,
+      autorizacion_url: this.solpe.autorizacion_url || null,
+      autorizacion_nombre: this.solpe.autorizacion_nombre || null,
       items: this.solpe.items.map((item: any, index: number) => ({
         item: index + 1,
         descripcion: item.descripcion,
@@ -420,6 +491,7 @@ async guardarSolpe() {
     this.mostrarToast('Error al guardar la SOLPED', 'danger');
   }
 }
+
 
 async obtenerYAsignarNumeroSolpe(empresa: string): Promise<number> {
   const counterRef = this.firestore.collection('counters').doc(`solpe_${empresa}`);
@@ -488,11 +560,33 @@ resetearFormulario() {
     });
     toast.present();
   }
-eliminarImagen(index: number) {
-  this.solpe.items[index].imagen_url = '';
-  this.mostrarToast('Imagen eliminada', 'success');
-  this.guardarDatosEnLocalStorage();
+async eliminarImagen(index: number) {
+  const imagenUrl = this.solpe.items[index].imagen_url;
+
+  if (!imagenUrl) {
+    this.mostrarToast('No hay imagen para eliminar', 'warning');
+    return;
+  }
+
+  const confirmar = confirm('¿Estás seguro de que deseas eliminar esta imagen?');
+  if (!confirmar) return;
+
+  try {
+    // Obtener referencia desde la URL y eliminarla del Cloud Storage
+    const storageRef = firebase.storage().refFromURL(imagenUrl);
+    await storageRef.delete();
+
+    // Eliminar la URL localmente
+    this.solpe.items[index].imagen_url = '';
+    this.guardarDatosEnLocalStorage();
+
+    this.mostrarToast('Imagen eliminada correctamente', 'success');
+  } catch (error) {
+    console.error('Error al eliminar la imagen del Storage:', error);
+    this.mostrarToast('Error al eliminar la imagen del Storage', 'danger');
+  }
 }
+
 
 
 }

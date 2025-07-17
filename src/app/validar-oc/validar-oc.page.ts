@@ -23,6 +23,7 @@ import { AngularFireStorage } from '@angular/fire/compat/storage';
 export class ValidarOcPage implements OnInit {
   ocs: any[] = [];
   loading = true;
+  nombreUsuario: string = '';
 
   constructor(
     private firestore: AngularFirestore,
@@ -32,16 +33,33 @@ export class ValidarOcPage implements OnInit {
     private storage: AngularFireStorage,
   ) {}
 
-ngOnInit() {
-  this.cargarOCs();
+async ngOnInit() {
+  this.nombreUsuario = await this.obtenerNombreUsuario();
+  await this.cargarOCs();
   this.cargarArchivosDesdeLocalStorage();
 }
 
+
 async cargarOCs() {
   this.loading = true;
+
   try {
+    const nombreUsuario = await this.obtenerNombreUsuario();
+
+    // Determinar el estado según el usuario
+    let estatusFiltro: string | null = null;
+    if (nombreUsuario === 'Juan Cubillos') {
+      estatusFiltro = 'Preaprobado';
+    } else if (nombreUsuario === 'Alejandro Candia') {
+      estatusFiltro = 'Casi Aprobado';
+    } else {
+      this.ocs = [];
+      this.loading = false;
+      return;
+    }
+
     const snapshot = await this.firestore
-      .collection('ordenes_oc', ref => ref.where('estatus', '==', 'Preaprobado'))
+      .collection('ordenes_oc', ref => ref.where('estatus', '==', estatusFiltro))
       .get()
       .toPromise();
 
@@ -53,9 +71,7 @@ async cargarOCs() {
     this.ocs = await Promise.all(snapshot.docs.map(async doc => {
       const data = doc.data() as any;
 
-      // ✅ Archivos desde Firebase Storage (no base64)
       const archivosStorage = data.archivosStorage || [];
-
       const archivosVisuales = archivosStorage.map((archivo: any, index: number) => {
         const tipo = archivo.tipo || 'application/pdf';
         const esPDF = tipo === 'application/pdf';
@@ -72,14 +88,12 @@ async cargarOCs() {
         };
       });
 
-      // Historial ordenado por fecha
       const historialOrdenado = (data.historial || []).sort((a: any, b: any) => {
         const fechaA = a.fecha?.toDate?.() || new Date(a.fecha) || new Date(0);
         const fechaB = b.fecha?.toDate?.() || new Date(b.fecha) || new Date(0);
         return fechaA.getTime() - fechaB.getTime();
       });
 
-      // Ítems aprobados
       let itemsEvaluados: any[] = [];
       if (Array.isArray(data.items)) {
         itemsEvaluados = data.items.filter((item: any) => item.estado === 'aprobado');
@@ -102,6 +116,7 @@ async cargarOCs() {
     this.loading = false;
   }
 }
+
 
 formatearCLP(valor: number): string {
   return valor?.toLocaleString('es-CL', {
@@ -266,23 +281,29 @@ async aprobarOC(oc: any) {
   const usuario = await this.obtenerNombreUsuario();
   const fecha = new Date().toISOString();
 
+  // Verificar si se debe cambiar el estatus a "Casi Aprobado"
+  let estatusFinal = 'Aprobado';
+  if (oc.responsable === 'Alejandro Candia' && oc.precioTotalConIVA > 2500000) {
+    estatusFinal = 'Casi Aprobado';
+  }
+
   const nuevoHistorial = [...(oc.historial || []), {
     usuario,
-    estatus: 'Aprobado',
+    estatus: estatusFinal,
     fecha,
     comentario
   }];
 
   const asociadaASolped = !!oc.solpedId || !!oc.numero_solped;
 
-  // Si está asociada a una SOLPED, validar campos obligatorios
+  // Validar si faltan datos si está asociada a una SOLPED
   if (asociadaASolped && (!oc.numero_solped || !oc.empresa)) {
     this.mostrarToast('Faltan datos de número SOLPED o empresa en esta OC asociada.', 'warning');
     return;
   }
 
   const datosActualizados: any = {
-    estatus: 'Aprobado',
+    estatus: estatusFinal,
     historial: nuevoHistorial
   };
 
@@ -293,8 +314,14 @@ async aprobarOC(oc: any) {
 
   // Eliminar del listado visual
   this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
-  this.mostrarToast('OC aprobada correctamente.', 'success');
+
+  const mensajeFinal = estatusFinal === 'Casi Aprobado'
+    ? 'OC marcada como "Casi Aprobado" por límite de aprobación de Alejandro Candia.'
+    : 'OC aprobada correctamente.';
+
+  this.mostrarToast(mensajeFinal, 'success');
 }
+
 
 
 

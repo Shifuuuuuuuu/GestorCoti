@@ -12,10 +12,11 @@ import { AngularFireAuthModule } from '@angular/fire/compat/auth';
 import { ChatModalComponent } from './chat-modal/chat-modal.component';
 import { FormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [AppComponent, ChatModalComponent],
-  imports: [AngularFireAuthModule,AngularFirestoreModule,AngularFireModule.initializeApp(environment.firebaseConfig),BrowserModule, IonicModule.forRoot(), AppRoutingModule, FormsModule,BrowserAnimationsModule,],
+  imports: [AngularFireAuthModule,AngularFirestoreModule,AngularFireModule.initializeApp(environment.firebaseConfig),BrowserModule, IonicModule.forRoot(), AppRoutingModule, FormsModule,BrowserAnimationsModule,HttpClientModule],
   providers: [{ provide: RouteReuseStrategy, useClass: IonicRouteStrategy }],
   bootstrap: [AppComponent],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],

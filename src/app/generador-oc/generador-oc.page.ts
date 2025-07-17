@@ -5,6 +5,7 @@ import firebase from 'firebase/compat/app';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ToastController } from '@ionic/angular';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 interface ArchivoConVista extends File {
   previewUrl?: SafeResourceUrl;
   tipo?: string;
@@ -38,8 +39,23 @@ export class GeneradorOcPage implements OnInit {
   precioFormateado: string = '';
   moneda: string = 'CLP';
   usuarioActual: string = '';
-
-centrosCosto: { [key: string]: string } = {
+  monedaSeleccionada: string = 'CLP';
+  tipoCambioUSD: number = 950;
+  tipoCambioEUR: number = 1050;
+  centrosCosto: { [key: string]: string } = {
+  '22368': 'CONTRATO SUMINISTRO DE HORMIGONES DET',
+  '20915': 'CONTRATO SUMINISTRO DE HORMIGONES DAND',
+  '23302': 'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND',
+  '28662': 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
+  'SANJOAQUIN': 'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
+  'URBANOS': 'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
+  'CS': 'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
+  'BENITEZ': 'CONTRATO PREDOSIFICADO BENÍTEZ',
+  'CANECHE': 'CONTRATO TALLER CANECHE',
+  'CASAMATRIZ': 'CONTRATO CASA MATRIZ',
+  'ALTOMAIPO': 'CONTRATO ALTO MAIPO',
+  'INFRAESTRUCTURA': 'CONTRATO INFRAESTRUCTURA DET',
+  'CHUQUICAMATA': 'CONTRATO CHUQUICAMATA',
   '10-10-12': 'ZEMAQ',
   '20-10-01': 'BENÍTEZ',
   '30-10-01': 'CASA MATRIZ',
@@ -82,14 +98,16 @@ centrosCosto: { [key: string]: string } = {
   }
 cargarSolpedSolicitadas() {
   this.firestore.collection('solpes', ref =>
-    ref.where('estatus', 'in', ['Solicitado', 'Cotizando'])
+    ref
+      .where('estatus', 'in', ['Solicitado', 'Cotizando'])
+      .where('dirigidoA', 'array-contains', this.usuarioActual) // ✅ soporta múltiples cotizadores
   ).get().subscribe(snapshot => {
     this.solpedDisponibles = snapshot.docs
       .map(doc => ({ id: doc.id, ...(doc.data() as any) }))
-      .filter(solpe => solpe.dirigidoA === this.usuarioActual) // 🔍 filtro por destinatario
       .sort((a, b) => (a.numero_solpe || 0) - (b.numero_solpe || 0));
   });
 }
+
 
 async obtenerNombreUsuarioYFiltrarSolped() {
   const user = await this.auth.currentUser;
@@ -130,7 +148,7 @@ formatearPrecio(event: any) {
 
   this.precioFormateado = numero.toLocaleString('es-CL', {
     style: 'currency',
-    currency: 'CLP',
+    currency: this.moneda || 'CLP', // ✅ usar moneda seleccionada
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   });
@@ -139,17 +157,41 @@ formatearPrecio(event: any) {
 }
 
 
-calcularAprobador() {
-  const total = this.precioTotalConIVA;
 
-  if (total <= 250000) {
-    this.aprobadorSugerido = 'Guillermo Manzor';
-  } else if (total <= 2500000) {
-    this.aprobadorSugerido = 'Juan Cubillos';
+calcularAprobador() {
+  let total = this.precioTotalConIVA;
+
+  // Convertir a CLP si la moneda es distinta
+  if (this.monedaSeleccionada === 'USD') {
+    total = total * this.tipoCambioUSD;
+  } else if (this.monedaSeleccionada === 'EUR') {
+    total = total * this.tipoCambioEUR;
+  }
+
+  const empresa = this.solpedSeleccionada?.empresa?.toLowerCase() || '';
+
+  if (empresa.includes('Xtreme mining')) {
+    if (total <= 1000000) {
+      this.aprobadorSugerido = 'Felipe / Ricardo';
+    } else {
+      this.aprobadorSugerido = 'César Palma';
+    }
   } else {
-    this.aprobadorSugerido = 'Alejandro Candia';
+    // Aplica para Xtreme Servicio y cualquier otro
+    if (total <= 250000) {
+      this.aprobadorSugerido = 'Guillermo Manzor';
+    } else if (total <= 1000000) {
+      this.aprobadorSugerido = 'Juan Cubillos';
+    } else {
+      this.aprobadorSugerido = 'Alejandro Candia';
+    }
   }
 }
+
+
+
+
+
 eliminarArchivo(index: number) {
   this.archivos.splice(index, 1);
   this.mostrarToast('Archivo eliminado correctamente.', 'success');
@@ -302,6 +344,7 @@ async enviarOC() {
     // 🔥 Agrega esto para incluir los campos que faltaban:
     dataToSave.numero_solped = this.solpedSeleccionada?.numero_solpe || 0;
     dataToSave.empresa = this.solpedSeleccionada?.empresa || 'No definida';
+    dataToSave.tipo_solped = this.solpedSeleccionada?.tipo_solped || 'No definido';
 
     // Mapear ítems seleccionados
     const itemsFinal = this.itemsSolped.map((item) => {

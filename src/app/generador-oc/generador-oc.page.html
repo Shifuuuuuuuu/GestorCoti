@@ -101,6 +101,19 @@
       <ion-item>
         <ion-label position="floating">Centro de Costo</ion-label>
         <ion-select [(ngModel)]="centroCosto" required>
+                  <ion-select-option value="22368">CONTRATO SUMINISTRO DE HORMIGONES DET</ion-select-option>
+                  <ion-select-option value="20915">CONTRATO SUMINISTRO DE HORMIGONES DAND</ion-select-option>
+                  <ion-select-option value="23302">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
+                  <ion-select-option value="28662">CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET</ion-select-option>
+                  <ion-select-option value="SANJOAQUIN">SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN</ion-select-option>
+                  <ion-select-option value="URBANOS">SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR</ion-select-option>
+                  <ion-select-option value="CS">CONTRATO DE SUMINISTRO DE HORMIGONES CS</ion-select-option>
+                  <ion-select-option value="BENITEZ">CONTRATO PREDOSIFICADO BENÍTEZ</ion-select-option>
+                  <ion-select-option value="CANECHE">CONTRATO TALLER CANECHE</ion-select-option>
+                  <ion-select-option value="CASAMATRIZ">CONTRATO CASA MATRIZ</ion-select-option>
+                  <ion-select-option value="ALTOMAIPO">CONTRATO ALTO MAIPO</ion-select-option>
+                  <ion-select-option value="INFRAESTRUCTURA">CONTRATO INFRAESTRUCTURA DET</ion-select-option>
+                  <ion-select-option value="CHUQUICAMATA">CONTRATO CHUQUICAMATA</ion-select-option>
                   <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
                   <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
                   <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
@@ -129,7 +142,6 @@
                   <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
         </ion-select>
       </ion-item>
-
       <ion-item>
         <ion-label position="floating">N° Patente/ Stock</ion-label>
         <ion-select [(ngModel)]="tipoCompra" interface="popover" required>
@@ -142,11 +154,12 @@
       </ion-item>
       <ion-item>
       <ion-label position="floating">Moneda</ion-label>
-      <ion-select [(ngModel)]="moneda" interface="popover">
-        <ion-select-option value="CLP">CLP - Peso Chileno</ion-select-option>
-        <ion-select-option value="USD">USD - Dólar</ion-select-option>
-        <ion-select-option value="UF">UF - Unidad de Fomento</ion-select-option>
-      </ion-select>
+        <ion-select [(ngModel)]="monedaSeleccionada">
+          <ion-select-option value="CLP">CLP</ion-select-option>
+          <ion-select-option value="USD">USD</ion-select-option>
+          <ion-select-option value="EUR">EUR</ion-select-option>
+          <ion-select-option value="UF">UF</ion-select-option>
+        </ion-select>
     </ion-item>
       <ion-item>
         <ion-label position="floating">Precio Total con IVA</ion-label>

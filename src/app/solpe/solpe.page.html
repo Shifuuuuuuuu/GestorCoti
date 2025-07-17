@@ -42,14 +42,13 @@
             </ion-input>
           </ion-item>
           <ion-item>
-            <ion-label position="floating">Cotizador</ion-label>
-            <ion-select [(ngModel)]="solpe.dirigidoA" placeholder="Selecciona usuario">
+            <ion-label position="floating">Cotizadores</ion-label>
+            <ion-select [(ngModel)]="solpe.dirigidoA" multiple="true" placeholder="Selecciona cotizadores">
               <ion-select-option *ngFor="let usuario of usuariosDisponibles" [value]="usuario">
                 {{ usuario }}
               </ion-select-option>
             </ion-select>
           </ion-item>
-
           <ion-item>
             <ion-label position="floating">Tipo de SOLPED</ion-label>
             <ion-select [(ngModel)]="solpe.tipo_solped" placeholder="Seleccionar tipo">
@@ -61,43 +60,58 @@
               <ion-select-option value="HERRAMIENTAS">HERRAMIENTAS</ion-select-option>
               <ion-select-option value="LUBRICANTES">LUBRICANTES</ion-select-option>
               <ion-select-option value="NEUMÁTICOS">NEUMÁTICOS</ion-select-option>
+              <ion-select-option value="EDP">EDP</ion-select-option>
+              <ion-select-option value="MATERIAS PRIMA">MATERIAS PRIMA</ion-select-option>
+              <ion-select-option value="INSUMOS DE MINERÍA">INSUMOS DE MINERÍA</ion-select-option>
             </ion-select>
           </ion-item>
           <ion-item>
             <ion-label position="floating">Centro de Costo</ion-label>
-            <ion-select [(ngModel)]="solpe.numero_contrato" interface="popover" cancelText="Cancelar" okText="Seleccionar" (ionChange)="actualizarCentroCosto($event)" required>
-                  <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
-                  <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
-                  <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-                  <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
-                  <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-                  <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
-                  <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
-                  <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
-                  <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
-                  <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
-                  <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
-                  <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
-                  <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
-                  <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
-                  <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
-                  <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
-                  <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
-                  <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
-                  <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-                  <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-                  <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
-                  <ion-select-option value="30-10-60">CALAMA</ion-select-option>
-                  <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
+            <ion-select [(ngModel)]="solpe.numero_contrato" cancelText="Cancelar" okText="Seleccionar" (ionChange)="actualizarCentroCosto($event)" required>
+              <ion-select-option value="22368">CONTRATO SUMINISTRO DE HORMIGONES DET</ion-select-option>
+              <ion-select-option value="20915">CONTRATO SUMINISTRO DE HORMIGONES DAND</ion-select-option>
+              <ion-select-option value="23302">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
+              <ion-select-option value="28662">CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET</ion-select-option>
+              <ion-select-option value="SANJOAQUIN">SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN</ion-select-option>
+              <ion-select-option value="URBANOS">SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR</ion-select-option>
+              <ion-select-option value="CS">CONTRATO DE SUMINISTRO DE HORMIGONES CS</ion-select-option>
+              <ion-select-option value="BENITEZ">CONTRATO PREDOSIFICADO BENÍTEZ</ion-select-option>
+              <ion-select-option value="CANECHE">CONTRATO TALLER CANECHE</ion-select-option>
+              <ion-select-option value="CASAMATRIZ">CONTRATO CASA MATRIZ</ion-select-option>
+              <ion-select-option value="ALTOMAIPO">CONTRATO ALTO MAIPO</ion-select-option>
+              <ion-select-option value="INFRAESTRUCTURA">CONTRATO INFRAESTRUCTURA DET</ion-select-option>
+              <ion-select-option value="CHUQUICAMATA">CONTRATO CHUQUICAMATA</ion-select-option>
             </ion-select>
           </ion-item>
-
-          <ion-item>
-            <ion-label position="floating">Usuario</ion-label>
-            <ion-input [(ngModel)]="solpe.usuario" readonly></ion-input>
+          <ion-item lines="none">
+            <ion-label>¿REQUIERE AUTORIZACIÓN DEL GERENTE?</ion-label>
+            <ion-checkbox slot="end" [(ngModel)]="requiereAutorizacion"></ion-checkbox>
           </ion-item>
+
+          <ng-container *ngIf="requiereAutorizacion">
+            <ion-item>
+              <ion-button expand="block" (click)="seleccionarArchivoAutorizacion()">
+                Seleccionar Archivo
+              </ion-button>
+              <input
+                type="file"
+                #inputAutorizacionRef
+                id="inputAutorizacion"
+                style="display: none;"
+                accept=".jpg,.jpeg,.png,.pdf,.xls,.xlsx,.csv"
+                (change)="subirArchivoAutorizacion($event)"
+              />
+            </ion-item>
+
+            <ion-item *ngIf="solpe.autorizacion_nombre">
+              <ion-label>Archivo seleccionado:</ion-label>
+              <ion-text color="primary"><strong>{{ solpe.autorizacion_nombre }}</strong></ion-text>
+
+              <ion-button color="danger" fill="clear" slot="end" (click)="eliminarArchivoAutorizacion()">
+                <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </ng-container>
         </ion-card-content>
       </ion-card>
 
@@ -129,16 +143,16 @@
                 <td><ion-input [(ngModel)]="item.stock" type="number" [readonly]="!item.editando" (ionBlur)="verificarYGuardarItem(i)"></ion-input></td>
                 <td><ion-input [(ngModel)]="item.numero_interno" [readonly]="!item.editando" (ionInput)="item.numero_interno = item.numero_interno.toUpperCase()" (ionBlur)="verificarYGuardarItem(i)"></ion-input></td>
                 <td>
+                  <input type="file" accept="image/*" #inputImagenRef style="display: none;" (change)="subirImagenReferencia($event, i)">
                   <ng-container *ngIf="!item.imagen_url">
                     <ion-icon name="image-outline" size="large" style="cursor: pointer;" (click)="seleccionarArchivo(i)"></ion-icon>
-                    <input type="file" accept="image/*" #inputImagenRef style="display: none;" (change)="subirImagenReferencia($event, i)">
                   </ng-container>
 
                   <div *ngIf="item.imagen_url" class="image-container">
                     <img [src]="item.imagen_url" alt="Imagen" width="200" height="200">
-                    <ion-button fill="clear" color="danger" (click)="eliminarImagen(i)">
-                      <ion-icon name="trash-outline"></ion-icon>
-                    </ion-button>
+                      <ion-button fill="clear" color="danger" (click)="eliminarImagen(i)">
+                        <ion-icon name="trash-outline"></ion-icon>
+                      </ion-button>
                   </div>
                 </td>
                 <td>
