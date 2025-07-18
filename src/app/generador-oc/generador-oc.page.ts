@@ -244,7 +244,6 @@ async onMultipleFilesSelected(event: any) {
   }
 }
 
-
 async enviarOC() {
   if (this.enviando) return;
 
@@ -275,7 +274,6 @@ async enviarOC() {
   const id = await this.obtenerNuevoId();
   const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
 
-  // ✅ Siempre va a revisión Guillermo
   const estatusInicial = 'Revisión Guillermo';
 
   const historialEntry = {
@@ -303,7 +301,7 @@ async enviarOC() {
     archivosStorage: []
   };
 
-  // ✅ Subir archivos a Firebase Storage
+  // 🔄 Subir archivos
   const archivosSubidos: any[] = [];
   const storage = getStorage();
 
@@ -338,14 +336,13 @@ async enviarOC() {
 
   dataToSave.archivosStorage = archivosSubidos;
 
-  // ✅ Si hay SOLPED asociada
+  // 🔄 Si hay SOLPED asociada
   if (this.usarSolped && this.solpedSeleccionadaId) {
     dataToSave.solpedId = this.solpedSeleccionadaId;
     dataToSave.numero_solped = this.solpedSeleccionada?.numero_solpe || 0;
     dataToSave.empresa = this.solpedSeleccionada?.empresa || 'No definida';
     dataToSave.tipo_solped = this.solpedSeleccionada?.tipo_solped || 'No definido';
 
-    // Mapear ítems seleccionados
     const itemsFinal = this.itemsSolped.map((item) => {
       const cantidadTotal = item.cantidad;
       const cantidadAnterior = item.cantidad_cotizada || 0;
@@ -354,7 +351,7 @@ async enviarOC() {
 
       let nuevoEstado = 'pendiente';
       if (cantidadActualizada >= cantidadTotal) {
-        nuevoEstado = 'completado';
+        nuevoEstado = 'revision'; // ✅ lógica actualizada
       } else if (cantidadActualizada > 0) {
         nuevoEstado = 'parcial';
       }
@@ -373,7 +370,7 @@ async enviarOC() {
   try {
     await this.firestore.collection('ordenes_oc').add(dataToSave);
 
-    // ✅ Actualizar ítems y estado de la SOLPED
+    // 🔄 Actualizar estado de la SOLPED
     if (this.usarSolped && this.solpedSeleccionadaId) {
       const docSnapshot = await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).get().toPromise();
       if (docSnapshot?.exists) {
@@ -392,7 +389,7 @@ async enviarOC() {
 
             let nuevoEstado = 'pendiente';
             if (cantidadFinal >= cantidadTotal) {
-              nuevoEstado = 'completado';
+              nuevoEstado = 'revision'; // ✅ lógica actualizada
             } else if (cantidadFinal > 0) {
               nuevoEstado = 'parcial';
             }
@@ -407,27 +404,17 @@ async enviarOC() {
           return item;
         });
 
-        const todosCompletados = itemsActualizados.every(i => i.estado === 'completado');
-        const todosPendientes = itemsActualizados.every(i => i.estado === 'pendiente');
-        const hayParciales = itemsActualizados.some(i => i.estado === 'parcial');
-
-        let nuevoEstatusSolped = 'Solicitado';
-        if (todosCompletados) {
-          nuevoEstatusSolped = 'Completado';
-        } else if (hayParciales || !todosPendientes) {
-          nuevoEstatusSolped = 'Cotizando';
-        }
-
+        // Siempre dejar estatus de SOLPED en "Cotizando" (no se marca Completado aquí)
         await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).update({
           items: itemsActualizados,
-          estatus: nuevoEstatusSolped
+          estatus: 'Cotizando'
         });
       }
     }
 
     this.mostrarToast('Cotización enviada exitosamente.', 'success');
 
-    // ✅ Reset
+    // 🔄 Reset formulario
     this.centroCosto = '';
     this.tipoCompra = 'stock';
     this.destinoCompra = '';
@@ -453,6 +440,7 @@ async enviarOC() {
     this.enviando = false;
   }
 }
+
 
 
 toggleSeleccion(id: string) {

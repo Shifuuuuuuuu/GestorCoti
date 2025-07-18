@@ -45,7 +45,27 @@ async cargarOCs() {
 
   try {
     const nombreUsuario = await this.obtenerNombreUsuario();
-    const estatusFiltro = 'Revisión Guillermo'; // 🔁 Todos pasan por aquí
+    this.nombreUsuario = nombreUsuario;
+
+    let estatusFiltro: string;
+
+    // 🎯 Asignar estatus según el usuario
+    switch (nombreUsuario) {
+      case 'Juan Cubillos':
+        estatusFiltro = 'Preaprobado';
+        break;
+      case 'Guillermo Manzor':
+        estatusFiltro = 'Revisión Guillermo';
+        break;
+      case 'Alejandro Candia':
+        estatusFiltro = 'Casi Aprobado';
+        break;
+      default:
+        this.mostrarToast('Usuario no autorizado para validar OCs.', 'warning');
+        this.ocs = [];
+        this.loading = false;
+        return;
+    }
 
     console.log('👤 Usuario:', nombreUsuario, '| Filtro aplicado:', estatusFiltro);
 
@@ -109,6 +129,7 @@ async cargarOCs() {
     this.loading = false;
   }
 }
+
 
 
 async verResumenSolped(oc: any) {
@@ -308,20 +329,28 @@ async aprobarOC(oc: any) {
 
   const usuario = await this.obtenerNombreUsuario();
   const fecha = new Date().toISOString();
+  const monto = oc.precioTotalConIVA || 0;
 
-  // ✅ Lógica para determinar el estatus según monto y usuario
-  let estatusFinal = 'Aprobado';
+  let estatusFinal = 'Aprobado'; // por defecto
 
-  if (usuario === 'Juan Cubillos') {
-    estatusFinal = 'Aprobado'; // Juan aprueba directamente
-  } else if (oc.precioTotalConIVA > 250000) {
-    estatusFinal = 'Preaprobado';
+  // 🧠 Aplicar la lógica completa
+  if (usuario === 'Guillermo Manzor') {
+    if (monto <= 250000) {
+      estatusFinal = 'Aprobado'; // aprueba directamente
+    } else {
+      estatusFinal = 'Preaprobado'; // pasa a Juan
+    }
+
+  } else if (usuario === 'Juan Cubillos') {
+    if (monto <= 2500000) {
+      estatusFinal = 'Aprobado'; // aprueba directamente
+    } else {
+      estatusFinal = 'Casi Aprobado'; // pasa a Alejandro
+    }
+
   } else if (usuario === 'Alejandro Candia') {
-    estatusFinal = 'Casi Aprobado';
-  } else if (usuario === 'Guillermo Contreras') {
-    estatusFinal = 'Revisión Guillermo';
+    estatusFinal = 'Aprobado'; // aprueba cualquier monto
   }
-
 
   const nuevoHistorial = [...(oc.historial || []), {
     usuario,
@@ -329,13 +358,6 @@ async aprobarOC(oc: any) {
     fecha,
     comentario
   }];
-
-  const asociadaASolped = !!oc.solpedId || !!oc.numero_solped;
-
-  if (asociadaASolped && (!oc.numero_solped || !oc.empresa)) {
-    this.mostrarToast('Faltan datos de número SOLPED o empresa en esta OC asociada.', 'warning');
-    return;
-  }
 
   const datosActualizados: any = {
     estatus: estatusFinal,
@@ -347,22 +369,47 @@ async aprobarOC(oc: any) {
 
   await this.firestore.collection('ordenes_oc').doc(oc.docId).update(datosActualizados);
 
-  // Eliminar del listado visual
+  // 🔄 Si está asociada a SOLPED, actualizar ítems
+  if (oc.solpedId) {
+    const solpedRef = this.firestore.collection('solpes').doc(oc.solpedId);
+    const solpedSnap = await solpedRef.get().toPromise();
+    const solpedData = solpedSnap?.data() as any;
+
+    if (solpedData?.items?.length > 0) {
+      const itemsActualizados = solpedData.items.map((item: any) => {
+        const cotizado = item.cantidad_cotizada || 0;
+        const total = item.cantidad || 0;
+
+        let nuevoEstado = 'pendiente';
+        if (cotizado >= total) {
+          nuevoEstado = 'completado';
+        } else if (cotizado > 0) {
+          nuevoEstado = 'parcial';
+        }
+
+        return { ...item, estado: nuevoEstado };
+      });
+
+      const todosCompletados = itemsActualizados.every((item: any) => item.estado === 'completado');
+
+      await solpedRef.update({
+        items: itemsActualizados,
+        estatus: todosCompletados ? 'Completado' : solpedData.estatus
+      });
+    }
+  }
+
+  // 🧹 Eliminar de la lista actual
   this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
 
-  const mensajeFinal =
-    {
-      'Casi Aprobado': 'OC marcada como "Casi Aprobado" por Alejandro Candia.',
-      'Preaprobado': 'OC enviada a revisión de Juan Cubillos por superar los $250.000 CLP.',
-      'Revisión Guillermo': 'OC marcada como "Revisión Guillermo".',
-      'Aprobado': 'OC aprobada correctamente.'
-    }[estatusFinal] || 'OC aprobada.';
+  const mensajeFinal = {
+    'Aprobado': 'OC aprobada correctamente.',
+    'Preaprobado': 'OC enviada a revisión de Juan Cubillos.',
+    'Casi Aprobado': 'OC enviada a revisión de Alejandro Candia.'
+  }[estatusFinal] || 'OC aprobada.';
 
   this.mostrarToast(mensajeFinal, 'success');
 }
-
-
-
 
 
 
