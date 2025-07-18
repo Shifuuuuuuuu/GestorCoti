@@ -3,8 +3,10 @@ import { AuthService } from './services/auth.service';
 import { Router } from '@angular/router';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import versionData from '../assets/version.json';
-import { AlertController } from '@ionic/angular';
+import { AlertController, ModalController } from '@ionic/angular';
 import Swiper from 'swiper';
+import { NotificacionesService } from './services/notificaciones.service';
+import { NotificacionesComponent } from './notificaciones/notificaciones.component';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +15,8 @@ import Swiper from 'swiper';
 })
 export class AppComponent implements OnInit {
   version = versionData.version;
+  tieneNotificaciones: boolean = false;
+
   public appPages = [
   { title: 'Aprobaciones Cotizaciones', url: '/home', icon: 'home', roles: ['Aprobador/Editor','Admin'] },
   { title: 'Administrar Cotizaciones', url: '/menu-oc', icon: 'reader', roles: ['Editor','Admin'] },
@@ -24,10 +28,14 @@ export class AppComponent implements OnInit {
   filteredPages: any[] = [];
   isDarkMode = false;
   public photoURL: string = 'assets/img/default-avatar.jpg';
-  constructor(private authService: AuthService, private router: Router, private afs: AngularFirestore,private alertController: AlertController) {}
+  constructor(private modalController: ModalController,private authService: AuthService, private router: Router, private afs: AngularFirestore,private alertController: AlertController,private notificaciones: NotificacionesService) {}
 
 ngOnInit() {
   this.loadUserProfile();
+  this.notificaciones.verificarOCNuevasAprobadasTiempoReal((tiene: boolean) => {
+    this.tieneNotificaciones = tiene;
+  });
+
 
   // Mostrar mensaje de versión si hay cambios
   const ultimaVersion = localStorage.getItem('ultimaVersionVista');
@@ -68,7 +76,14 @@ ngOnInit() {
       });
     }
   }, 200);
-
+}
+async abrirNotificaciones() {
+  const modal = await this.modalController.create({
+    component: NotificacionesComponent,
+    cssClass: 'modal-notificaciones', // puedes personalizar este estilo
+    showBackdrop: true
+  });
+  await modal.present(); // ✅ esta línea está perfecta
 }
 
 async mostrarMensajeVersion(mensaje: string, version: string) {

@@ -1,26 +1,34 @@
 <ion-app>
   <ion-split-pane contentId="main-content">
     <ion-menu contentId="main-content" type="overlay">
-      <ion-header>
-        <ion-toolbar style="--background: red;">
-          <div class="menu-carousel-contenedor">
-            <div class="swiper menu-swiper">
-              <div class="swiper-wrapper">
-                <div class="swiper-slide">
-                  <img src="assets/img/Logo XT Servicios.png" alt="Logo 1" />
-                </div>
-                <div class="swiper-slide">
-                  <img src="assets/img/Xtreme Hormigoenes y mortero.png" alt="Logo 2" />
-                </div>
-                <div class="swiper-slide">
-                  <img src="assets/img/xtreme mining con fondo.jpg" alt="Logo 3" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </ion-toolbar>
-      </ion-header>
+<ion-header>
+  <ion-toolbar style="--background: red;">
 
+    <div class="menu-carousel-contenedor">
+      <div class="swiper menu-swiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide">
+            <img src="assets/img/Logo XT Servicios.png" alt="Logo 1" />
+          </div>
+          <div class="swiper-slide">
+            <img src="assets/img/Xtreme Hormigoenes y mortero.png" alt="Logo 2" />
+          </div>
+          <div class="swiper-slide">
+            <img src="assets/img/xtreme mining con fondo.jpg" alt="Logo 3" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔔 Botón de notificación al extremo derecho -->
+    <ion-buttons slot="end">
+      <ion-button (click)="abrirNotificaciones()">
+        <ion-icon color="ligth" name="notifications-outline"></ion-icon>
+        <ion-badge *ngIf="tieneNotificaciones" color="danger" class="badge-alert">!</ion-badge>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
       <ion-content>
         <ion-list id="inbox-list">
           <ion-list-header>
@@ -65,8 +73,6 @@
         v{{ version }}
       </ion-footer>
     </ion-menu>
-
     <ion-router-outlet id="main-content"></ion-router-outlet>
   </ion-split-pane>
-
 </ion-app>

@@ -50,12 +50,13 @@ export class GeneradorOcPage implements OnInit {
   'SANJOAQUIN': 'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
   'URBANOS': 'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
   'CS': 'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
-  'BENITEZ': 'CONTRATO PREDOSIFICADO BENÍTEZ',
+  'PREDOSIFICADO': 'CONTRATO HORMIGONES Y PREDOSIFICADO',
   'CANECHE': 'CONTRATO TALLER CANECHE',
   'CASAMATRIZ': 'CONTRATO CASA MATRIZ',
   'ALTOMAIPO': 'CONTRATO ALTO MAIPO',
   'INFRAESTRUCTURA': 'CONTRATO INFRAESTRUCTURA DET',
   'CHUQUICAMATA': 'CONTRATO CHUQUICAMATA',
+  'CARPETASDET':'CONTRATO CARPETAS DET',
   '10-10-12': 'ZEMAQ',
   '20-10-01': 'BENÍTEZ',
   '30-10-01': 'CASA MATRIZ',
@@ -170,23 +171,23 @@ calcularAprobador() {
 
   const empresa = this.solpedSeleccionada?.empresa?.toLowerCase() || '';
 
-  if (empresa.includes('Xtreme mining')) {
+  if (empresa.includes('xtreme mining')) {
     if (total <= 1000000) {
       this.aprobadorSugerido = 'Felipe / Ricardo';
     } else {
       this.aprobadorSugerido = 'César Palma';
     }
   } else {
-    // Aplica para Xtreme Servicio y cualquier otro
     if (total <= 250000) {
       this.aprobadorSugerido = 'Guillermo Manzor';
-    } else if (total <= 1000000) {
+    } else if (total <= 2500000) {
       this.aprobadorSugerido = 'Juan Cubillos';
     } else {
       this.aprobadorSugerido = 'Alejandro Candia';
     }
   }
 }
+
 
 
 

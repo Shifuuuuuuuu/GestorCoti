@@ -27,9 +27,9 @@ export class EditarSolpedsPage implements OnInit {
   filtroContrato: string = '';
   solpeExpandidaId: string | null = null;
   filtroFecha: string = '';
-  filtroEstatus: string = '';
-  filtroResponsable: string = '';
-  filtroUsuario: string = '';
+  filtroEstatus: string[] = [];
+  filtroUsuario: string[] = [];
+  filtroEmpresa: string[] = [];
   mostrarFiltros: boolean = false;
   solpe: any;
   solpes: any[] = [];
@@ -45,7 +45,6 @@ export class EditarSolpedsPage implements OnInit {
   ocsCargadas: { [solpeId: string]: any[] } = {};
   comentariosVistos: { [solpeId: string]: boolean } = {};
   userUid: string = '';
-  filtroEmpresa: string = '';
   solpesAgrupadas: { [empresa: string]: any[] } = {};
   busquedaGeneral: string = '';
 
@@ -313,23 +312,18 @@ filtrarSolpes() {
     }
 
     const coincideFecha = this.filtroFecha ? fechaSolpe === this.filtroFecha : true;
-    const coincideEstatus = this.filtroEstatus ? normalize(solpe.estatus) === normalize(this.filtroEstatus) : true;
-    const coincideUsuario = this.filtroUsuario
-      ? normalize(solpe.usuario || '') === normalize(this.filtroUsuario)
-      : true;
-    const coincideContrato = this.filtroContrato
-      ? solpe.numero_contrato === this.filtroContrato
-      : true;
-
-    const coincideEmpresa = this.filtroEmpresa
-      ? normalize(solpe.empresa || '') === normalize(this.filtroEmpresa)
-      : true;
+    const coincideEstatus = this.filtroEstatus.length ? this.filtroEstatus.includes(solpe.estatus) : true;
+    const coincideUsuario = this.filtroUsuario.length ? this.filtroUsuario.includes(solpe.usuario) : true;
+    const coincideContrato = this.filtroContrato.length ? this.filtroContrato.includes(solpe.numero_contrato) : true;
+    const coincideEmpresa = this.filtroEmpresa.length ? this.filtroEmpresa.includes(solpe.empresa) : true;
 
     return coincideFecha && coincideEstatus && coincideUsuario && coincideContrato && coincideEmpresa;
   });
+
   this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
   this.solpeExpandidaId = null;
 }
+
 
 agruparPorEmpresa(solpes: any[]): { [empresa: string]: any[] } {
   const agrupadas: { [empresa: string]: any[] } = {};
@@ -354,10 +348,11 @@ agruparPorEmpresa(solpes: any[]): { [empresa: string]: any[] } {
 
   limpiarFiltros() {
     this.filtroFecha = '';
-    this.filtroEstatus = '';
-    this.filtroResponsable = '';
-    this.filtroUsuario = '';
+    this.filtroEstatus = [];
+    this.filtroUsuario = [];
+    this.filtroEmpresa = [];
     this.solpesFiltradas = [...this.solpesOriginal];
+    this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
   }
 
   getColorByStatus(estatus: string) {

@@ -162,85 +162,88 @@
   <!-- HISTORIAL DE SOLPEDS -->
   <div *ngIf="segmentoSeleccionado === 'historial'">
    <ion-card *ngIf="mostrarFiltros" class="filtro-card">
-    <ion-card-header>
-      <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <ion-grid>
-        <ion-row>
-          <ion-col size="12" size-md="6">
-            <ion-item>
-              <ion-label position="floating">Fecha</ion-label>
-              <ion-input type="date" [(ngModel)]="filtroFecha"></ion-input>
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-md="6">
-            <ion-item>
-              <ion-label position="stacked">Estado</ion-label>
-              <ion-select [(ngModel)]="filtroEstatus" interface="popover">
-                <ion-select-option value="">Todos</ion-select-option>
-                <ion-select-option *ngFor="let estatus of listaEstatus" [value]="estatus">{{ estatus }}</ion-select-option>
-              </ion-select>
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-md="6">
-            <ion-item>
-              <ion-label position="stacked">Centro de costo</ion-label>
-              <ion-select [(ngModel)]="filtroContrato" interface="popover">
-                <ion-select-option value="">Todos</ion-select-option>
-                  <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
-                  <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
-                  <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-                  <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
-                  <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-                  <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
-                  <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
-                  <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
-                  <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
-                  <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
-                  <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
-                  <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
-                  <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
-                  <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
-                  <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
-                  <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
-                  <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
-                  <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
-                  <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-                  <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-                  <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
-                  <ion-select-option value="30-10-60">CALAMA</ion-select-option>
-                  <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
-              </ion-select>
-            </ion-item>
-          </ion-col>
-          <ion-col size="12" size-md="6">
-            <ion-item>
-              <ion-label position="stacked">Usuario</ion-label>
-              <ion-select [(ngModel)]="filtroUsuario" interface="popover">
-                <ion-select-option value="">Todos</ion-select-option>
-                <ion-select-option *ngFor="let usuario of listaUsuarios" [value]="usuario.fullName">{{ usuario.fullName }}</ion-select-option>
-              </ion-select>
-            </ion-item>
-          </ion-col>
-        </ion-row>
-        <ion-row>
-          <ion-col>
-            <ion-button expand="block" color="success"  (click)="filtrarSolpes()">
-              Aplicar filtros
-            </ion-button>
-          </ion-col>
-          <ion-col>
-            <ion-button expand="block" color="danger"  (click)="limpiarFiltros()">
-              Limpiar
-            </ion-button>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </ion-card-content>
-  </ion-card>
+  <ion-card-header>
+    <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
+  </ion-card-header>
+  <ion-card-content>
+    <ion-grid>
+      <ion-row>
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="floating">Fecha</ion-label>
+            <ion-input type="date" [(ngModel)]="filtroFecha"></ion-input>
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Estado</ion-label>
+            <ion-select [(ngModel)]="filtroEstatus" interface="popover" multiple="true">
+              <ion-select-option *ngFor="let estatus of listaEstatus" [value]="estatus">{{ estatus }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Centro de costo</ion-label>
+            <ion-select [(ngModel)]="filtroContrato" interface="popover" multiple="true">
+              <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
+              <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
+              <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
+              <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
+              <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
+              <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
+              <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
+              <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
+              <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
+              <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
+              <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
+              <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
+              <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
+              <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
+              <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
+              <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
+              <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
+              <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
+              <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
+              <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
+              <ion-select-option value="30-10-57">CALAMA</ion-select-option>
+              <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
+              <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
+              <ion-select-option value="30-10-60">CALAMA</ion-select-option>
+              <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="12" size-md="6">
+          <ion-item>
+            <ion-label position="stacked">Usuario</ion-label>
+            <ion-select [(ngModel)]="filtroUsuario" interface="popover" multiple="true">
+              <ion-select-option *ngFor="let usuario of listaUsuarios" [value]="usuario.fullName">
+                {{ usuario.fullName }}
+              </ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col>
+          <ion-button expand="block" color="success" (click)="filtrarSolpes()">
+            Aplicar filtros
+          </ion-button>
+        </ion-col>
+        <ion-col>
+          <ion-button expand="block" color="danger" (click)="limpiarFiltros()">
+            Limpiar
+          </ion-button>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+  </ion-card-content>
+</ion-card>
 <ng-container *ngFor="let grupo of solpesAgrupadas | keyvalue: ordenarEmpresaGrupo">
   <!-- Encabezado por empresa -->
 <ion-card class="ion-padding" style="border: 1px solid var(--ion-color-step-150, #dcdcdc); border-radius: 8px; background: var(--ion-background-color);">

@@ -1,0 +1,33 @@
+<ion-card *ngIf="mostrarCard" class="card-notificaciones">
+  <ion-card-header class="header-notificaciones">
+    <ion-card-title>🔔 Nuevas OC Aprobadas</ion-card-title>
+    <ion-button fill="clear" size="small" slot="end" (click)="cerrar()" class="btn-cerrar">
+      <ion-icon name="close-outline"></ion-icon>
+    </ion-button>
+  </ion-card-header>
+
+  <ion-card-content class="contenido-scroll">
+    <ion-list>
+      <ion-item *ngFor="let oc of ocsPendientes; let i = index" class="item-notificacion">
+        <ion-icon name="document-outline" slot="start" color="primary"></ion-icon>
+        <ion-label>
+          <h3>OC #{{ oc.id }}</h3>
+          <p>Aprobada el {{ formatearFecha(oc.fechaSubida) }}</p>
+        </ion-label>
+        <ion-button fill="outline" size="small" (click)="verPDF(oc)">
+          Ver PDF
+        </ion-button>
+        <ion-button color="danger" fill="clear" size="small" (click)="eliminarNotificacion(i)">
+          <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+        </ion-button>
+      </ion-item>
+    </ion-list>
+  </ion-card-content>
+
+  <!-- ✅ Botón al pie del card -->
+  <ion-card-content class="footer-cerrar">
+    <ion-button expand="block" color="medium" (click)="cerrar()">
+      Cerrar Notificaciones
+    </ion-button>
+  </ion-card-content>
+</ion-card>
