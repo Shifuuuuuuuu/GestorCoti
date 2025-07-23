@@ -1,21 +1,87 @@
 <ion-header [translucent]="true">
   <ion-toolbar style="--background: red; color: white;">
-    <ion-buttons slot="start" style="color: white;">
+    <ion-buttons slot="start">
       <ion-back-button color="light" defaultHref="/"></ion-back-button>
     </ion-buttons>
+
     <ion-title>Cotizaciones Aprobadas</ion-title>
+
+    <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="mostrarFiltros = !mostrarFiltros">
+        <ion-icon name="funnel-outline" color="light" slot="start"></ion-icon>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
+<ion-searchbar
+  [(ngModel)]="busquedaGeneral"
+  (ionInput)="filtrarOCs()"
+  placeholder="Buscar por cualquier campo"
+  debounce="300">
+</ion-searchbar>
+
 </ion-header>
 
+
 <ion-content class="ion-padding">
-
-  <ion-searchbar
-    [(ngModel)]="busquedaId"
-    (ionInput)="buscarPorId()"
-    placeholder="Buscar por el numero de cotización"
-    debounce="300"
-  ></ion-searchbar>
-
+  <ion-card *ngIf="mostrarFiltros && ocsOriginal.length > 0" class="filtro-card">
+    <ion-card-header>
+      <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <ion-grid>
+        <ion-row>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="floating">Fecha</ion-label>
+              <ion-input type="date" [(ngModel)]="filtroFecha"></ion-input>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">Estado</ion-label>
+              <ion-select [(ngModel)]="filtroEstatus" multiple interface="popover">
+                <ion-select-option *ngFor="let estatus of listaEstatus" [value]="estatus">{{ estatus }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">Centro de Costo</ion-label>
+              <ion-select [(ngModel)]="filtroContrato" multiple interface="popover">
+                <ion-select-option *ngFor="let oc of ocsOriginal" [value]="oc.centroCosto">{{ oc.centroCostoNombre }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <ion-item>
+              <ion-label position="stacked">Usuario</ion-label>
+                <ion-select [(ngModel)]="filtroUsuario" multiple interface="popover">
+                  <ion-select-option *ngFor="let u of listaUsuarios" [value]="u.fullName">{{ u.fullName }}</ion-select-option>
+                </ion-select>
+            </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="12">
+            <ion-item>
+              <ion-label position="floating">Empresa</ion-label>
+              <ion-select [(ngModel)]="filtroEmpresa" multiple interface="popover">
+                <ion-select-option value="Xtreme Mining">Xtreme Mining</ion-select-option>
+                <ion-select-option value="Xtreme Servicio">Xtreme Servicio</ion-select-option>
+                <ion-select-option value="Xtreme Hormigones">Xtreme Hormigones</ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-col>
+        </ion-row>
+        <ion-row>
+          <ion-col>
+            <ion-button expand="block" color="success" (click)="filtrarOCs()">Aplicar filtros</ion-button>
+          </ion-col>
+          <ion-col>
+            <ion-button expand="block" color="danger" (click)="limpiarFiltros()">Limpiar</ion-button>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </ion-card-content>
+  </ion-card>
   <div *ngIf="ocsOriginal.length === 0 && ocs.length === 0" class="spinner-container">
     <ion-spinner name="crescent" color="danger"></ion-spinner>
     <p>Cargando cotizaciones aprobadas...</p>
@@ -31,8 +97,21 @@
     </ion-card>
   </ng-container>
 
-
   <ng-container *ngIf="ocs.length > 0">
+      <!-- Botón flotante: ir arriba -->
+      <ion-fab vertical="bottom" horizontal="start" slot="fixed" class="fab-custom fab-up">
+        <ion-fab-button color="light" (click)="scrollToTop()">
+          <ion-icon name="arrow-up-circle-outline" color="primary"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+
+      <!-- Botón flotante: ir abajo -->
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed" class="fab-custom fab-down">
+        <ion-fab-button color="light" (click)="scrollToBottom()">
+          <ion-icon name="arrow-down-circle-outline" color="tertiary"></ion-icon>
+        </ion-fab-button>
+      </ion-fab>
+
     <ion-card *ngFor="let oc of ocs" [@fadeIn]>
       <ion-card-header>
         <ion-card-title color="primary">Cotización #{{ oc.id }}</ion-card-title>
@@ -111,7 +190,6 @@
       <ion-spinner name="crescent" color="danger"></ion-spinner>
       <p>Cargando cotizaciones aprobadas...</p>
     </div>
-
   </ng-container>
 
 </ion-content>

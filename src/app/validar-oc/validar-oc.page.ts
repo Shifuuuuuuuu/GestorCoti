@@ -139,7 +139,6 @@ async verResumenSolped(oc: any) {
   }
 
   oc.detalleSolpedVisible = !oc.detalleSolpedVisible;
-
   if (!oc.detalleSolpedVisible) return;
 
   try {
@@ -147,15 +146,44 @@ async verResumenSolped(oc: any) {
     const solpedData = solpedSnap?.data() as any;
 
     if (solpedData) {
+      // 🔍 Traer todas las OCs que están asociadas a esta SOLPED
+      const ocsSnap = await this.firestore
+        .collection('ordenes_oc', ref => ref.where('solpedId', '==', oc.solpedId))
+        .get()
+        .toPromise();
+
+      const ocsRelacionadas = ocsSnap?.docs.map(doc => doc.data()) || [];
+
+      // 🔎 Extraer todos los items aprobados de esas OCs
+      const todosItemsCotizados = ocsRelacionadas
+        .reduce((acumulador: any[], oc: any) => {
+          return acumulador.concat(oc.items || []);
+        }, [])
+        .filter((item: any) => item.estado === 'aprobado')
+        .map((item: any) => item.item);
+
+
+      // ✅ Mapear los ítems de la SOLPED y marcar si están cotizados
+      const items = solpedData.items?.map((item: any) => {
+        const estaCotizado = todosItemsCotizados.includes(item.item);
+        console.log(`ITEM ${item.item}:`, estaCotizado ? '✔ Cotizado' : '✖ No cotizado');
+        return {
+          ...item,
+          estaCotizado
+        };
+      }) || [];
+
+      // 📦 Guardar el resumen para mostrar
       oc.detalleSolped = {
         numero_solpe: solpedData.numero_solpe || 'N/A',
         empresa: solpedData.empresa || 'N/A',
         tipo_solped: solpedData.tipo_solped || 'N/A',
         fecha: solpedData.fecha_creacion?.toDate?.()?.toLocaleDateString() || 'N/A',
-        cantidadItems: solpedData.items?.length || 0,
-        items: solpedData.items || [],
+        cantidadItems: items.length,
+        items,
         imagenAdjunta: solpedData.imagen_url || null
       };
+
     } else {
       this.mostrarToast('No se encontró la SOLPED asociada.', 'warning');
     }
@@ -164,6 +192,7 @@ async verResumenSolped(oc: any) {
     this.mostrarToast('Error al cargar la SOLPED.', 'danger');
   }
 }
+
 
 
 

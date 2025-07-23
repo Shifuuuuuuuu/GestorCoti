@@ -26,9 +26,8 @@
         <ion-col size="12" size-md="6">
           <ion-item>
             <ion-label position="stacked">Estado</ion-label>
-            <ion-select [(ngModel)]="filtroEstado" placeholder="Todos" interface="popover">
-              <ion-select-option value="">Todos</ion-select-option>
-              <ion-select-option *ngFor="let estado of estadosDisponibles" [value]="estado">{{ estado }}</ion-select-option>
+            <ion-select [(ngModel)]="filtroEstado" interface="popover" multiple="true">
+              <ion-select-option *ngFor="let estatus of estadosDisponibles" [value]="estatus">{{ estatus }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-col>
@@ -37,9 +36,8 @@
         <ion-col size="12" size-md="6">
           <ion-item>
             <ion-label position="stacked">Centro de Costo</ion-label>
-            <ion-select [(ngModel)]="filtroCentro" placeholder="Todos" interface="popover">
-              <ion-select-option value="">Todos</ion-select-option>
-              <ion-select-option *ngFor="let contrato of listaContratos" [value]="contrato">{{ contrato }}</ion-select-option>
+            <ion-select [(ngModel)]="filtroCentro" interface="popover" multiple="true">
+              <ion-select-option *ngFor="let c of listaContratos" [value]="c">{{ c }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-col>
@@ -48,9 +46,8 @@
         <ion-col size="12" size-md="6">
           <ion-item>
             <ion-label position="stacked">Responsable</ion-label>
-            <ion-select [(ngModel)]="filtroResponsable" placeholder="Todos" interface="popover">
-              <ion-select-option value="">Todos</ion-select-option>
-              <ion-select-option *ngFor="let usuario of responsables" [value]="usuario">{{ usuario }}</ion-select-option>
+            <ion-select [(ngModel)]="filtroResponsable" interface="popover" multiple="true">
+              <ion-select-option *ngFor="let r of responsables" [value]="r">{{ r }}</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-col>

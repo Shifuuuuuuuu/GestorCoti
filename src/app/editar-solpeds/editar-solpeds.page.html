@@ -188,31 +188,20 @@
           <ion-item>
             <ion-label position="stacked">Centro de costo</ion-label>
             <ion-select [(ngModel)]="filtroContrato" interface="popover" multiple="true">
-              <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
-              <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
-              <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-              <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
-              <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-              <ion-select-option value="30-10-42">RAUL ALFARO</ion-select-option>
-              <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
-              <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
-              <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
-              <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
-              <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
-              <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
-              <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
-              <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
-              <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
-              <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
-              <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
-              <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
-              <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
-              <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
-              <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-              <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-              <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
-              <ion-select-option value="30-10-60">CALAMA</ion-select-option>
-              <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
+              <ion-select-option value="22368">CONTRATO SUMINISTRO DE HORMIGONES DET</ion-select-option>
+              <ion-select-option value="20915">CONTRATO SUMINISTRO DE HORMIGONES DAND</ion-select-option>
+              <ion-select-option value="23302">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
+              <ion-select-option value="28662">CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET</ion-select-option>
+              <ion-select-option value="SANJOAQUIN">SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN</ion-select-option>
+              <ion-select-option value="URBANOS">SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR</ion-select-option>
+              <ion-select-option value="CS">CONTRATO DE SUMINISTRO DE HORMIGONES CS</ion-select-option>
+              <ion-select-option value="PREDOSIFICADO">CONTRATO HORMIGONES Y PREDOSIFICADO</ion-select-option>
+              <ion-select-option value="CANECHE">CONTRATO TALLER CANECHE</ion-select-option>
+              <ion-select-option value="CASAMATRIZ">CONTRATO CASA MATRIZ</ion-select-option>
+              <ion-select-option value="ALTOMAIPO">CONTRATO ALTO MAIPO</ion-select-option>
+              <ion-select-option value="INFRAESTRUCTURA">CONTRATO INFRAESTRUCTURA DET</ion-select-option>
+              <ion-select-option value="CHUQUICAMATA">CONTRATO CHUQUICAMATA</ion-select-option>
+              <ion-select-option value="CARPETASDET">CONTRATO CARPETAS DET</ion-select-option>
             </ion-select>
           </ion-item>
         </ion-col>
@@ -311,6 +300,9 @@
           <ion-label>
             Usuario: {{ solpe.usuario }}
           </ion-label>
+        <ion-button fill="solid" color="secondary" size="small" (click)="descargarExcel(solpe)">
+          Descargar Excel
+        </ion-button>
         </ion-item>
         <ion-list-header>
           <ion-label><strong>🛠 Ítems asociados</strong></ion-label>
@@ -451,10 +443,10 @@
                 </ion-grid>
 
                 <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'cotizacion')">
-                  Ver Cotización
+                  Ver OC
                 </ion-button>
                 <ion-button (click)="verOCDesdeSolped(solpe.id, oc.docId, 'oc')">
-                  Ver OC
+                   Ver Cotización
                 </ion-button>
               </div>
             </ion-accordion>

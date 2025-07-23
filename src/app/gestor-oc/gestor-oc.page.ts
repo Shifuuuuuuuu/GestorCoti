@@ -8,7 +8,8 @@ import {trigger,transition,style,animate} from '@angular/animations';
 import { AngularFireStorage } from '@angular/fire/compat/storage'; // Asegúrate de importar
 import { finalize } from 'rxjs/operators';
 import firebase from 'firebase/compat/app';
-
+import { ViewChild } from '@angular/core';
+import { IonContent } from '@ionic/angular';
 @Component({
   selector: 'app-gestor-oc',
   templateUrl: './gestor-oc.page.html',
@@ -23,7 +24,22 @@ import firebase from 'firebase/compat/app';
   ]
 
 })
+
 export class GestorOcPage implements OnInit {
+  @ViewChild(IonContent, { static: false }) content!: IonContent;
+  filtroFecha: string = '';
+  filtroEstatus: string[] = [];
+  filtroContrato: string[] = [];
+  filtroUsuario: string[] = [];
+  filtroEmpresa: string[] = [];
+  listaEstatus: string[] = ['Aprobado', 'Enviada a proveedor'];
+  listaUsuarios = [
+  { fullName: 'Daniela Lizama' },
+  { fullName: 'María José Ballesteros' },
+  { fullName: 'Luis Orellana' },
+  { fullName: 'Guillermo Manzor' }
+];
+  busquedaGeneral: string = '';
   ocs: any[] = [];
   busquedaId: string = '';
   ocsOriginal: any[] = [];
@@ -38,6 +54,7 @@ export class GestorOcPage implements OnInit {
   cargandoMas = false;
   puedeCargarMas = true;
   suscripcionOCs: any;
+  mostrarFiltros: boolean = false;
   constructor(
     private firestore: AngularFirestore,
     private auth: AngularFireAuth,
@@ -72,12 +89,14 @@ async cargarOCs() {
   const verSoloPropias = ['Luis Orellana', 'Daniela', 'Guillermo Manzor'].includes(nombreUsuario);
 
   const ref = this.firestore.collection('ordenes_oc', ref => {
-    let query = ref.where('estatus', '==', 'Aprobado')
-                   .limit(this.limite);
+    let query = ref.where('estatus', '==', 'Aprobado');
 
     if (verSoloPropias) {
       query = query.where('responsable', '==', nombreUsuario);
     }
+
+    query = query.orderBy('id', 'desc')  // <-- siempre al final
+                 .limit(this.limite);
 
     return query;
   });
@@ -103,11 +122,10 @@ async cargarOCs() {
       solpedId: data.solpedId || null,
       fechaFormateada: data.fechaSubida?.toDate?.() ?? null,
       archivoOC: data.archivoOC || null,
-      nombreArchivoOC: data.archivoOC?.nombre || null, // ✅ Nuevo
+      nombreArchivoOC: data.archivoOC?.nombre || null,
       nombrePDF: data.archivosPDF?.nombre || null
     };
   });
-
 
   this.ocs = cotizaciones;
   this.ocsOriginal = cotizaciones;
@@ -115,6 +133,57 @@ async cargarOCs() {
   this.puedeCargarMas = snapshot.docs.length === this.limite;
 }
 
+
+filtrarOCs() {
+  const normalizar = (str: string) => str?.toString().toLowerCase().trim();
+
+  this.ocs = this.ocsOriginal.filter(oc => {
+    const fechaOC = oc.fechaFormateada ? new Date(oc.fechaFormateada).toISOString().slice(0, 10) : '';
+
+    const coincideFecha = this.filtroFecha ? fechaOC === this.filtroFecha : true;
+    const coincideEstatus = this.filtroEstatus.length ? this.filtroEstatus.includes(oc.estatus) : true;
+    const coincideUsuario = this.filtroUsuario.length ? this.filtroUsuario.includes(oc.responsable) : true;
+    const coincideContrato = this.filtroContrato.length ? this.filtroContrato.includes(oc.centroCosto) : true;
+    const coincideEmpresa = this.filtroEmpresa.length ? this.filtroEmpresa.includes(oc.empresa) : true;
+
+    // 🔍 Campos incluidos en la búsqueda general
+    const campos = [
+      oc.id,
+      oc.estatus,
+      oc.responsable,
+      oc.centroCosto,
+      oc.centroCostoNombre,
+      oc.destinoCompra,
+      oc.nombreArchivoOC,
+      oc.nombrePDF,
+      oc.solpedId,
+      fechaOC
+    ];
+
+    const texto = campos.map(c => normalizar(c)).join(' ');
+    const coincideBusqueda = this.busquedaGeneral ? texto.includes(normalizar(this.busquedaGeneral)) : true;
+
+    return coincideFecha && coincideEstatus && coincideUsuario && coincideContrato && coincideEmpresa && coincideBusqueda;
+  });
+}
+scrollToTop() {
+  this.content.scrollToTop(500); // 500 ms de animación
+}
+
+scrollToBottom() {
+  this.content.scrollToBottom(500);
+}
+
+
+limpiarFiltros() {
+  this.filtroFecha = '';
+  this.filtroEstatus = [];
+  this.filtroContrato = [];
+  this.filtroUsuario = [];
+  this.filtroEmpresa = [];
+  this.busquedaGeneral = '';
+  this.ocs = [...this.ocsOriginal];
+}
 
 
 async cargarMasOCs() {

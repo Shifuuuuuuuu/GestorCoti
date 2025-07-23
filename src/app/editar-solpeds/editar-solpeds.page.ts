@@ -4,6 +4,9 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertController, MenuController, ToastController } from '@ionic/angular';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import {trigger,transition,style,animate} from '@angular/animations';
+import { Item } from '../Interface/IItem';
+import { Comparaciones } from '../Interface/Icompara';
+import * as XLSX from 'xlsx';
 @Component({
   selector: 'app-editar-solpeds',
   templateUrl: './editar-solpeds.page.html',
@@ -274,7 +277,59 @@ cargarSolpes() {
     });
 }
 
+descargarExcel(solpe: any) {
+  const worksheetData: any[][] = [];
 
+  worksheetData.push(['SOLICITUD DE COMPRA']);
+  worksheetData.push(['Solicitante:', solpe.usuario]);
+  worksheetData.push(['Fecha:', solpe.fecha]);
+  worksheetData.push(['N° Contrato:', solpe.numero_contrato]);
+  worksheetData.push([]);
+
+  const empresasSet = new Set<string>();
+  solpe.items.forEach((item: Item) => {
+    item.comparaciones?.forEach((comp: Comparaciones) => {
+      if (comp.empresa) {
+        empresasSet.add(comp.empresa.toUpperCase());
+      }
+    });
+  });
+
+  const empresas = Array.from(empresasSet);
+  worksheetData.push(['ITEM', 'CANTIDAD','CANTIDAD COTIZADA', 'DESCRIPCIÓN','CODIGO_REFERENCIAL','ESTATUS', ...empresas]);
+
+  solpe.items.forEach((item: Item, index: number) => {
+    const filaBase = [
+      item.item || (index + 1),
+      item.cantidad || '',
+      item.cantidad_cotizada || '',
+      item.descripcion || '',
+      item.codigo_referencial || '',
+      item.estado ||''
+    ];
+
+    const preciosPorEmpresa: { [empresa: string]: string | number } = {};
+    item.comparaciones?.forEach((comp: Comparaciones) => {
+      const empresa = comp.empresa?.toUpperCase();
+      if (empresa) {
+        const precioDesc = `${comp.precioBase || comp.precio} (desc. ${comp.descuento || 0}%)`;
+        preciosPorEmpresa[empresa] = precioDesc;
+      }
+    });
+
+    const preciosEnOrden = empresas.map(nombre => preciosPorEmpresa[nombre] || '');
+    worksheetData.push([...filaBase, ...preciosEnOrden]);
+  });
+
+  const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(worksheetData);
+  const workbook: XLSX.WorkBook = XLSX.utils.book_new();
+  const sheetName = `SOLPED_${solpe.numero_solpe}`;
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+  const fechaActual = new Date().toISOString().split('T')[0];
+  const nombreArchivo = `SOLPED_${solpe.numero_solpe}_${fechaActual}.xlsx`;
+  XLSX.writeFile(workbook, nombreArchivo);
+}
   cargarUsuarios() {
     this.firestore.collection('Usuarios').get().subscribe(snapshot => {
       this.listaUsuarios = snapshot.docs.map(doc => {

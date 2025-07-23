@@ -173,9 +173,11 @@ calcularAprobador() {
 
   if (empresa.includes('xtreme mining')) {
     if (total <= 1000000) {
-      this.aprobadorSugerido = 'Felipe / Ricardo';
+      this.aprobadorSugerido = 'Felipe / Ricardo/ Guillermo Manzor';
+          } else if (total <= 2500000) {
+      this.aprobadorSugerido = 'Juan Cubillos';
     } else {
-      this.aprobadorSugerido = 'César Palma';
+      this.aprobadorSugerido = 'Alejandro Candia';
     }
   } else {
     if (total <= 250000) {

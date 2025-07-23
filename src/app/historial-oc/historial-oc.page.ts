@@ -31,12 +31,12 @@ export class HistorialOcPage implements OnInit {
   totalPaginas: number = 1;
   loadingInicial: boolean = true;
   modo: 'listado' | 'busqueda' = 'listado';
-  filtroCentro: string = '';
-  filtroResponsable: string = '';
   filtroContrato: string = '';
   filtroDesde: string = '';
   filtroHasta: string = '';
-  filtroEstado: string = '';
+  filtroCentro: string[] = [];
+  filtroResponsable: string[] = [];
+  filtroEstado: string[] = [];
   filtroFecha: string = '';
   mostrarFiltros: boolean = false;
   filtroComentario: string = '';
@@ -57,7 +57,7 @@ export class HistorialOcPage implements OnInit {
     '30-10-60',
     '30-10-61'
   ];
-  estadosDisponibles: string[] = ['Preaprobado', 'Rechazado', 'Aprobado', 'Enviada a proveedor'];
+  estadosDisponibles: string[] = ['Preaprobado', 'Rechazado', 'Aprobado', 'Enviada a proveedor','Revisión Guillermo','Casi Aprobado'];
   responsables: string[] = [];
   constructor(
     private firestore: AngularFirestore,
@@ -100,89 +100,60 @@ obtenerResponsablesYContratos() {
 
 
 aplicarFiltros() {
+  const hayFiltrosActivos = (
+    this.filtroEstado.length > 0 ||
+    this.filtroCentro.length > 0 ||
+    this.filtroResponsable.length > 0 ||
+    this.filtroFecha ||
+    this.filtroComentario
+  );
+
+  if (!hayFiltrosActivos) {
+    this.irAlInicio(); // usa la carga paginada normal
+    return;
+  }
+
   this.loadingInicial = true;
 
   const inicioMes = new Date();
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
-
   const finMes = new Date(inicioMes);
   finMes.setMonth(inicioMes.getMonth() + 1);
 
-  this.firestore.collection('ordenes_oc', ref => {
-    let q = ref
-      .where('fechaSubida', '>=', inicioMes)
-      .where('fechaSubida', '<', finMes);
-
-    if (this.filtroEstado) q = q.where('estatus', '==', this.filtroEstado);
-    if (this.filtroCentro) q = q.where('centroCosto', '==', this.filtroCentro);
-    if (this.filtroResponsable) q = q.where('responsable', '==', this.filtroResponsable);
-
-    return q;
-  }).get().subscribe(snapshot => {
-    let docs = snapshot.docs.map((doc, index) => {
+  this.firestore.collection('ordenes_oc', ref =>
+    ref.where('fechaSubida', '>=', inicioMes).where('fechaSubida', '<', finMes)
+  ).get().subscribe(snapshot => {
+    let docs = snapshot.docs.map(doc => {
       const data = doc.data() as any;
-
       const fechaSubida = this.convertirFechaFirestore(data.fechaSubida);
-      const historial = (data.historial || []).map((h: any) => ({
-        ...h,
-        fecha: this.convertirFechaFirestore(h.fecha)
-      }));
-
-      const archivosBase64 = Array.isArray(data.archivosBase64)
-        ? data.archivosBase64.map((archivo: any) => {
-            const esPDF = archivo.base64?.startsWith('JVBERi');
-            const tipo = esPDF ? 'application/pdf' : 'image/jpeg';
-
-            const byteCharacters = atob(archivo.base64);
-            const byteNumbers = Array.from(byteCharacters, c => c.charCodeAt(0));
-            const blob = new Blob([new Uint8Array(byteNumbers)], { type: tipo });
-            const url = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob));
-
-            return {
-              ...archivo,
-              tipo,
-              url,
-              esPDF,
-              esImagen: tipo.startsWith('image/'),
-              mostrar: false
-            };
-          })
-        : [];
-
-      const archivosVisuales = Array.isArray(data.archivosStorage)
-        ? data.archivosStorage.map((archivo: any, i: number) => {
-            const tipo = archivo.tipo || 'application/pdf';
-            return {
-              nombre: archivo.nombre || `archivo_${i + 1}`,
-              tipo,
-              esPDF: tipo === 'application/pdf',
-              esImagen: tipo.startsWith('image/'),
-              url: this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url),
-              mostrar: false
-            };
-          })
-        : [];
-
       return {
         ...data,
         docId: doc.id,
         fechaSubida,
-        historial,
-        archivosBase64,
-        archivosVisuales
+        historial: (data.historial || []).map((h: any) => ({
+          ...h,
+          fecha: this.convertirFechaFirestore(h.fecha)
+        })),
+        archivosBase64: data.archivosBase64 || [],
+        archivosVisuales: data.archivosStorage || []
       };
     });
 
-    // Filtros adicionales por fecha y comentario
+    // 🔍 Aplicar filtros en memoria
+    if (this.filtroEstado.length > 0) {
+      docs = docs.filter(d => this.filtroEstado.includes(d.estatus));
+    }
+    if (this.filtroResponsable.length > 0) {
+      docs = docs.filter(d => this.filtroResponsable.includes(d.responsable));
+    }
+    if (this.filtroCentro.length > 0) {
+      docs = docs.filter(d => this.filtroCentro.includes(d.centroCosto));
+    }
     if (this.filtroFecha) {
       const f = new Date(this.filtroFecha);
-      docs = docs.filter(d => {
-        const fecha = new Date(d.fechaSubida);
-        return fecha.toDateString() === f.toDateString();
-      });
+      docs = docs.filter(d => new Date(d.fechaSubida).toDateString() === f.toDateString());
     }
-
     if (this.filtroComentario) {
       const texto = this.filtroComentario.toLowerCase().trim();
       docs = docs.filter(d =>
@@ -194,7 +165,7 @@ aplicarFiltros() {
     docs.sort((a, b) => b.fechaSubida.getTime() - a.fechaSubida.getTime());
 
     this.ocs = docs;
-    this.totalPaginas = Math.ceil(this.ocs.length / this.itemsPorPagina);
+    this.totalPaginas = 1; // cuando filtras, todo se carga de golpe
     this.paginaActual = 1;
     this.loadingInicial = false;
   });
@@ -202,13 +173,16 @@ aplicarFiltros() {
 
 
 
+
 limpiarFiltros() {
-  this.filtroEstado = '';
-  this.filtroCentro = '';
-  this.filtroResponsable = '';
+  this.filtroEstado = [];
+  this.filtroCentro = [];
+  this.filtroResponsable = [];
   this.filtroFecha = '';
+  this.filtroComentario = '';
   this.irAlInicio();
 }
+
 
 contarTotalPaginas() {
   const inicioMes = new Date();
@@ -222,23 +196,26 @@ contarTotalPaginas() {
     .where('fechaSubida', '>=', inicioMes)
     .where('fechaSubida', '<', finMes);
 
-  if (this.filtroEstado) {
-    query = query.where('estatus', '==', this.filtroEstado);
+  // ✅ Aplicar solo si hay un filtro por campo
+  if (this.filtroEstado.length === 1) {
+    query = query.where('estatus', '==', this.filtroEstado[0]);
   }
-  if (this.filtroCentro) {
-    query = query.where('centroCosto', '==', this.filtroCentro);
+  if (this.filtroCentro.length === 1) {
+    query = query.where('centroCosto', '==', this.filtroCentro[0]);
   }
-  if (this.filtroResponsable) {
-    query = query.where('responsable', '==', this.filtroResponsable);
+  if (this.filtroResponsable.length === 1) {
+    query = query.where('responsable', '==', this.filtroResponsable[0]);
   }
 
   query.get().then(snapshot => {
     const total = snapshot.size;
-    this.totalPaginas = Math.ceil(total / this.itemsPorPagina);
+    this.totalPaginas = Math.max(1, Math.ceil(total / this.itemsPorPagina));
   }).catch(error => {
     console.error('❌ Error al contar total de páginas:', error);
+    this.totalPaginas = 1;
   });
 }
+
 
 
 cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
@@ -258,10 +235,21 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
       .orderBy('fechaSubida', 'desc')
       .limit(this.itemsPorPagina);
 
-    if (this.filtroEstado) q = q.where('estatus', '==', this.filtroEstado);
-    if (this.filtroCentro) q = q.where('centroCosto', '==', this.filtroCentro);
-    if (this.filtroResponsable) q = q.where('responsable', '==', this.filtroResponsable);
-    if (direccion === 'adelante' && this.lastVisible) q = q.startAfter(this.lastVisible);
+    // ✅ Aplicar filtros solo si hay uno por campo (los múltiples deben ir en memoria)
+    if (this.filtroEstado.length === 1) {
+      q = q.where('estatus', '==', this.filtroEstado[0]);
+    }
+    if (this.filtroCentro.length === 1) {
+      q = q.where('centroCosto', '==', this.filtroCentro[0]);
+    }
+    if (this.filtroResponsable.length === 1) {
+      q = q.where('responsable', '==', this.filtroResponsable[0]);
+    }
+
+    // ✅ Paginación
+    if (direccion === 'adelante' && this.lastVisible) {
+      q = q.startAfter(this.lastVisible);
+    }
     if (direccion === 'atras' && this.historialPaginas.length >= 2) {
       const prev = this.historialPaginas[this.historialPaginas.length - 2];
       q = q.startAt(prev);
@@ -273,7 +261,6 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   query.get().subscribe(snapshot => {
     this.ocs = snapshot.docs.map(doc => {
       const data = doc.data() as any;
-
       return {
         ...data,
         docId: doc.id,
@@ -309,6 +296,7 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
     this.loadingInicial = false;
   });
 }
+
 
   convertirFechaFirestore(fecha: any): Date {
     return fecha?.toDate ? fecha.toDate() : fecha;
