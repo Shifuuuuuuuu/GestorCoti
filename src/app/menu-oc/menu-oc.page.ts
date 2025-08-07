@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AngularFirestore } from '@angular/fire/compat/firestore';
 import { Router } from '@angular/router';
+import { MenuController } from '@ionic/angular';
 
 @Component({
   selector: 'app-menu-oc',
@@ -14,7 +15,8 @@ export class MenuOcPage implements OnInit {
   constructor(
     private router: Router,
     private auth: AngularFireAuth,
-    private firestore: AngularFirestore
+    private firestore: AngularFirestore,
+    private menu: MenuController
   ) {}
 
   async ngOnInit() {
@@ -29,7 +31,9 @@ export class MenuOcPage implements OnInit {
       }
     }
   }
-
+  ionViewWillEnter() {
+    this.menu.enable(true);
+  }
   navigateTo(page: string) {
     this.router.navigate([`/${page}`]);
   }

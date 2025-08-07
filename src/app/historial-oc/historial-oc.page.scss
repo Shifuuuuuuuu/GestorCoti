@@ -13,3 +13,27 @@ ion-segment-button.ios {
   --color-checked: #fff;
   --border-radius: 20px;
 }
+ion-card .ion-gap {
+  gap: 8px;
+}
+
+ion-segment {
+  --indicator-color: var(--ion-color-primary);
+}
+
+ion-chip ion-icon {
+  margin-right: 6px;
+}
+.filtros-flotantes {
+  position: fixed;
+  top: 56px; // Ajusta según la altura de tu toolbar (puede variar si usas iOS o Android)
+  left: 0;
+  right: 0;
+  z-index: 999;
+  padding: 10px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border-bottom: 1px solid #ccc;
+  max-height: 90vh;
+  overflow-y: auto;
+}

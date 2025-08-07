@@ -1,20 +1,25 @@
 <ion-header [translucent]="true">
-  <ion-toolbar style="--background: red; color: white;">
+  <ion-toolbar style="--background: red;">
+    <ion-title style="color: white;">Historial de Cotizaciones</ion-title>
     <ion-buttons slot="start">
-      <ion-back-button color="light" defaultHref="/"></ion-back-button>
+      <ion-back-button defaultHref="/" color="light"></ion-back-button>
     </ion-buttons>
-    <ion-title>Historial de Cotizaciones</ion-title>
     <ion-buttons slot="end">
-      <ion-button fill="clear" (click)="mostrarFiltros = !mostrarFiltros">
-        <ion-icon name="funnel-outline" slot="icon-only" color="light"></ion-icon>
+      <ion-button  fill="clear" (click)="mostrarFiltros = !mostrarFiltros">
+        <ion-icon color="light" name="funnel-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 
-<ion-content class="ion-padding">
-<ion-card *ngIf="modo === 'listado' && mostrarFiltros"class="ion-padding">
+<ion-content class="ion-padding" style="padding-top: 300px;">
+  <ion-refresher slot="fixed" (ionRefresh)="recargarPaginaActual($event)">
+    <ion-refresher-content
+      pullingIcon="chevron-down-circle-outline">
+    </ion-refresher-content>
+  </ion-refresher>
+<ion-card *ngIf="modo === 'listado' && mostrarFiltros"class="filtros-flotantes">
   <ion-card-header>
     <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
   </ion-card-header>
@@ -113,38 +118,134 @@
   </ng-container>
 
 
-  <ng-container *ngIf="!loadingInicial && modo === 'listado'">
-    <div class="ion-text-center ion-padding">
-      <ion-button size="small" (click)="irAlInicio()">Inicio</ion-button>
-      <ion-button size="small" (click)="paginaAnterior()" [disabled]="paginaActual <= 1">Anterior</ion-button>
-      <ion-label class="ion-padding-horizontal">Página {{ paginaActual }} de {{ totalPaginas }}</ion-label>
-      <ion-button size="small" (click)="paginaSiguiente()">Siguiente</ion-button>
-      <ion-button size="small" (click)="irAlFinal()">Final</ion-button>
-      <ion-button expand="small" color="dark" (click)="cargarTodasLasCotizaciones()">
-        Cargar todas
-      </ion-button>
-    </div>
+<ng-container *ngIf="!loadingInicial && modo === 'listado'">
 
-    <ng-container *ngIf="ocs.length > 0; else sinResultados">
-      <ion-card *ngFor="let oc of ocs; trackBy: trackById" [@fadeIn]>
-        <ion-card-header>
-          <ion-card-title color="primary">Cotización #{{ oc.id }}</ion-card-title>
-          <ion-card-subtitle>Centro de Costo: {{ oc.centroCosto }}</ion-card-subtitle>
-          <ion-card-subtitle>Responsable: {{ oc.responsable }}</ion-card-subtitle>
-        </ion-card-header>
-        <ion-card-content>
-          <ng-container *ngTemplateOutlet="contenidoCard; context: { oc: oc }"></ng-container>
-        </ion-card-content>
-      </ion-card>
-    </ng-container>
-        <div class="ion-text-center ion-padding">
-      <ion-button size="small" (click)="irAlInicio()">Inicio</ion-button>
-      <ion-button size="small" (click)="paginaAnterior()" [disabled]="paginaActual <= 1">Anterior</ion-button>
-      <ion-label class="ion-padding-horizontal">Página {{ paginaActual }} de {{ totalPaginas }}</ion-label>
-      <ion-button size="small" (click)="paginaSiguiente()">Siguiente</ion-button>
-      <ion-button size="small" (click)="irAlFinal()">Final</ion-button>
-    </div>
+  <!-- Toolbar superior -->
+  <ion-card class="ion-padding ion-margin-bottom">
+    <ion-grid class="ion-no-padding">
+      <ion-row class="ion-align-items-center ion-justify-content-between">
+
+        <!-- Selector de periodo -->
+        <ion-col size="12" size-md="5" class="ion-text-center ion-text-md-start">
+          <ion-segment [value]="viendoMesPasado ? 'pasado' : 'actual'">
+            <ion-segment-button value="actual"
+              (click)="viendoMesPasado=false; firstVisible=null; lastVisible=null; historialPaginas=[]; paginaActual=1; irAlInicio()">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <ion-label>Mes actual</ion-label>
+            </ion-segment-button>
+
+            <ion-segment-button value="pasado"
+              (click)="viendoMesPasado=true; firstVisible=null; lastVisible=null; historialPaginas=[]; paginaActual=1; cargarCotizacionesMesAnterior('adelante')">
+              <ion-icon name="time-outline"></ion-icon>
+              <ion-label>Mes pasado</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </ion-col>
+
+        <!-- Estado + acciones rápidas -->
+        <ion-col size="12" size-md="7" class="ion-text-center ion-text-md-end ion-margin-top ion-margin-top-md-0">
+          <ion-chip *ngIf="!viendoMesPasado" color="primary" class="ion-margin-end">
+            <ion-icon name="calendar-number-outline"></ion-icon>
+            <ion-label>Mes actual</ion-label>
+          </ion-chip>
+          <ion-chip *ngIf="viendoMesPasado" color="tertiary" class="ion-margin-end">
+            <ion-icon name="time-outline"></ion-icon>
+            <ion-label>Mes pasado</ion-label>
+          </ion-chip>
+
+          <ion-button fill="clear" size="small"
+                      (click)="viendoMesPasado ? recargarPaginaMesPasado() : recargarPaginaActual()">
+            <ion-icon name="refresh-outline" slot="start"></ion-icon>
+            Refrescar
+          </ion-button>
+
+          <ion-button color="dark" fill="outline" size="small" (click)="cargarTodasLasCotizaciones()">
+            <ion-icon name="cloud-download-outline" slot="start"></ion-icon>
+            Cargar todas
+          </ion-button>
+        </ion-col>
+
+      </ion-row>
+    </ion-grid>
+  </ion-card>
+
+  <!-- Paginación -->
+  <ion-card class="ion-padding ion-margin-bottom">
+    <ion-grid class="ion-no-padding">
+      <ion-row class="ion-align-items-center ion-justify-content-center">
+
+        <!-- Controles mes actual -->
+        <ng-container *ngIf="!viendoMesPasado; else pagerMesPasado">
+          <ion-button size="small" fill="clear" (click)="irAlInicio()">
+            <ion-icon name="play-skip-back-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-button fill="clear" size="small"
+                      (click)="paginaAnterior()"
+                      [disabled]="!hasPrev">
+            <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-badge color="tertiary" class="ion-margin-horizontal">
+            Página {{ paginaActual }}
+          </ion-badge>
+
+          <ion-button fill="clear" size="small"
+                      (click)="paginaSiguiente()"
+                      [disabled]="!hasNext">
+            <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-button size="small" fill="clear" (click)="irAlFinal()">
+            <ion-icon name="play-skip-forward-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ng-container>
+
+        <!-- Controles mes pasado -->
+        <ng-template #pagerMesPasado>
+          <ion-button fill="clear" size="small" (click)="paginaAnteriorMesPasado()" [disabled]="!hasPrev">
+            <ion-icon name="chevron-back-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+
+          <ion-badge color="tertiary" class="ion-margin-horizontal">
+            Página {{ paginaActual }}
+          </ion-badge>
+
+          <ion-button fill="clear" size="small" (click)="paginaSiguienteMesPasado()" [disabled]="!hasNext">
+            <ion-icon name="chevron-forward-outline" slot="icon-only"></ion-icon>
+          </ion-button>
+        </ng-template>
+
+      </ion-row>
+    </ion-grid>
+  </ion-card>
+
+  <!-- Listado -->
+  <ng-container *ngIf="ocs.length > 0; else sinResultados">
+    <ion-card *ngFor="let oc of ocs; trackBy: trackById" [@fadeIn]>
+      <ion-card-header>
+        <ion-card-title color="primary">Cotización #{{ oc.id }}</ion-card-title>
+        <ion-card-subtitle>Centro de Costo: {{ oc.centroCosto }}</ion-card-subtitle>
+        <ion-card-subtitle>Responsable: {{ oc.responsable }}</ion-card-subtitle>
+      </ion-card-header>
+      <ion-card-content>
+        <ng-container *ngTemplateOutlet="contenidoCard; context: { oc: oc }"></ng-container>
+      </ion-card-content>
+    </ion-card>
   </ng-container>
+
+</ng-container>
+
+<ng-template #sinResultados>
+  <ion-card>
+    <ion-card-content class="ion-text-center">
+      <ion-icon name="information-circle-outline" size="large" color="medium"></ion-icon>
+      <h2>No hay cotizaciones</h2>
+      <p>Prueba ajustar filtros o refrescar la página.</p>
+    </ion-card-content>
+  </ion-card>
+</ng-template>
+
 
 <ng-container *ngIf="!loadingInicial && modo === 'busqueda'">
   <ng-container *ngIf="ocs.length > 0; else sinResultados">
@@ -232,6 +333,34 @@
         Subir nueva cotización
       </ion-button>
     </ng-container>
+    <ng-container *ngIf="oc.estatus === 'Pendiente de Aprobación'">
+      <ion-item class="ion-margin-top">
+        <ion-label position="stacked">Comentario para aclaración</ion-label>
+        <ion-textarea [(ngModel)]="oc.comentarioNuevo" placeholder="Explica o aclara la observación..."></ion-textarea>
+      </ion-item>
+
+      <ion-button expand="block" color="warning" class="ion-margin-top" (click)="enviarAclaracion(oc)">
+        Enviar aclaración
+      </ion-button>
+
+      <ion-button expand="block" color="primary" fill="outline" class="ion-margin-top" (click)="subirNuevaCotizacion(oc)">
+        Subir nueva cotización (opcional)
+      </ion-button>
+    </ng-container>
+
+    <!-- 🔥 Bloque para cambiar precio -->
+    <ion-item *ngIf="oc.estatus === 'Pendiente de Aprobación' || oc.estatus === 'Rechazado'" class="ion-margin-top">
+      <ion-label position="stacked">Nuevo precio</ion-label>
+      <ion-input type="number" [(ngModel)]="oc.nuevoMonto" placeholder="Ingresa nuevo monto"></ion-input>
+    </ion-item>
+
+    <ion-button *ngIf="oc.estatus === 'Pendiente de Aprobación' || oc.estatus === 'Rechazado'"
+                expand="block"
+                color="secondary"
+                class="ion-margin-top"
+                (click)="cambiarPrecio(oc, oc.nuevoMonto)">
+      💲 Cambiar Precio
+    </ion-button>
 
     <ion-accordion-group class="ion-margin-top">
       <ion-accordion>

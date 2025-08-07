@@ -5,6 +5,17 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
 import 'firebase/compat/firestore';
+import { ViewChild, AfterViewInit } from '@angular/core';
+import { IonContent } from '@ionic/angular';
+import {
+  getFirestore,
+  collection,
+  query as q,
+  where,
+  orderBy,
+  getCountFromServer,
+} from 'firebase/firestore';
+
 import { animate, style, transition, trigger } from '@angular/animations';
 @Component({
   selector: 'app-historial-oc',
@@ -21,6 +32,8 @@ import { animate, style, transition, trigger } from '@angular/animations';
 
 })
 export class HistorialOcPage implements OnInit {
+  @ViewChild(IonContent) content!: IonContent;
+  viendoMesPasado = false;
   ocs: any[] = [];
   busquedaId: string = '';
   paginaActual: number = 1;
@@ -40,22 +53,43 @@ export class HistorialOcPage implements OnInit {
   filtroFecha: string = '';
   mostrarFiltros: boolean = false;
   filtroComentario: string = '';
+  hasNext = false;
+  hasPrev = false;
   listaContratos: string[] = [
-    '10-10-12',
-    '20-10-01',
-    '30-10-01',
-    '30-10-07',
-    '30-10-08',
-    '30-10-42',
-    '30-10-43',
-    '30-10-52',
-    '30-10-53',
-    '30-10-54',
-    '30-10-57',
-    '30-10-58',
-    '30-10-59',
-    '30-10-60',
-    '30-10-61'
+  'CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA',
+  'PLANTA PREDOSIFICADO CALAMA',
+  'CONTRATO 20915 SUM. HORMIGON DAND',
+  'CONTRATO 23302 CARPETAS',
+  'CONTRATO 23302 AMPLIACION',
+  'OFICINA LOS ANDES',
+  'CASA MATRIZ',
+  'RRHH',
+  'FINANZAS',
+  'SUSTENTABILIDAD',
+  'SOPORTE TI',
+  'STRIP CENTER',
+  'PLANIFICACION',
+  'PLANTA PREDOSIFICADO SAN BERNARDO',
+  'PLANTA HORMIGON URB.SAN BERNARDO',
+  'ALTO MAIPO',
+  'PLANTA HORMIGON URB. RANCAGUA',
+  'PLANTA ARIDOS RANCAGUA',
+  'PLANTA ARIDOS SAN BERNARDO',
+  'CONTRATO 22368 SUM HORMIGON DET',
+  'CONTRATO 28662 CARPETAS',
+  'CONTRATO 29207 MINERIA',
+  'CONTRATO SUMINISTRO DE HORMIGONES DET',
+  'CONTRATO SUMINISTRO DE HORMIGONES DAND',
+  'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND',
+  'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
+  'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
+  'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
+  'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
+  'CONTRATO HORMIGONES Y PREDOSIFICADO',
+  'CONTRATO TALLER CANECHE',
+  'CONTRATO INFRAESTRUCTURA DET',
+  'CONTRATO CHUQUICAMATA',
+  'CONTRATO CARPETAS DET',
   ];
   estadosDisponibles: string[] = ['Preaprobado', 'Rechazado', 'Aprobado', 'Enviada a proveedor','Revisión Guillermo','Casi Aprobado'];
   responsables: string[] = [];
@@ -72,6 +106,14 @@ export class HistorialOcPage implements OnInit {
       this.obtenerResponsablesYContratos();
     }
   }
+
+ngAfterViewInit() {
+  this.content.ionScroll.subscribe(({ detail }) => {
+    if (detail.deltaY > 10 && this.mostrarFiltros) {
+      this.mostrarFiltros = false;
+    }
+  });
+}
 obtenerResponsablesYContratos() {
   const inicioMes = new Date();
   inicioMes.setDate(1);
@@ -97,7 +139,22 @@ obtenerResponsablesYContratos() {
     this.listaContratos = Array.from(contratosSet);
   });
 }
+private sanitizeOC(data: any) {
+  const copia = { ...data };
+  delete copia.archivosBase64;
+  delete copia.archivosStorage;
+  delete copia.historial; // ⚠ si el historial es grande, mejor no traerlo aquí
+  return copia;
+}
 
+private rangoMesActual() {
+  const inicio = new Date();
+  inicio.setDate(1);
+  inicio.setHours(0, 0, 0, 0);
+  const fin = new Date(inicio);
+  fin.setMonth(inicio.getMonth() + 1);
+  return { inicio, fin };
+}
 
 aplicarFiltros() {
   const hayFiltrosActivos = (
@@ -180,11 +237,11 @@ limpiarFiltros() {
   this.filtroResponsable = [];
   this.filtroFecha = '';
   this.filtroComentario = '';
+  this.viendoMesPasado = false;
   this.irAlInicio();
+  this.contarTotalPaginas();
 }
-
-
-contarTotalPaginas() {
+private buildQueryMesActual(ref: firebase.firestore.CollectionReference) {
   const inicioMes = new Date();
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
@@ -192,29 +249,75 @@ contarTotalPaginas() {
   const finMes = new Date(inicioMes);
   finMes.setMonth(inicioMes.getMonth() + 1);
 
-  let query: firebase.firestore.Query = this.firestore.firestore.collection('ordenes_oc')
+  let q: firebase.firestore.Query = ref
     .where('fechaSubida', '>=', inicioMes)
-    .where('fechaSubida', '<', finMes);
+    .where('fechaSubida', '<',  finMes)
+    .orderBy('fechaSubida', 'desc');
 
-  // ✅ Aplicar solo si hay un filtro por campo
-  if (this.filtroEstado.length === 1) {
-    query = query.where('estatus', '==', this.filtroEstado[0]);
-  }
-  if (this.filtroCentro.length === 1) {
-    query = query.where('centroCosto', '==', this.filtroCentro[0]);
-  }
-  if (this.filtroResponsable.length === 1) {
-    query = query.where('responsable', '==', this.filtroResponsable[0]);
-  }
+  // MISMA REGLA que en cargarPagina: solo 1 valor por campo
+  if (this.filtroEstado.length === 1)       q = q.where('estatus', '==', this.filtroEstado[0]);
+  if (this.filtroCentro.length === 1)       q = q.where('centroCosto', '==', this.filtroCentro[0]);
+  if (this.filtroResponsable.length === 1)  q = q.where('responsable', '==', this.filtroResponsable[0]);
 
-  query.get().then(snapshot => {
-    const total = snapshot.size;
-    this.totalPaginas = Math.max(1, Math.ceil(total / this.itemsPorPagina));
-  }).catch(error => {
-    console.error('❌ Error al contar total de páginas:', error);
-    this.totalPaginas = 1;
-  });
+  return q;
 }
+
+
+async contarTotalPaginas() {
+  try {
+    // No contamos en "mes pasado" ni cuando los filtros obligan a filtrar en memoria
+    if (this.viendoMesPasado) { this.totalPaginas = 1; return; }
+
+    const filtrosEnMemoria =
+      this.filtroEstado.length > 1 ||
+      this.filtroCentro.length > 1 ||
+      this.filtroResponsable.length > 1 ||
+      !!this.filtroComentario ||
+      !!this.filtroFecha;
+
+    if (filtrosEnMemoria) { this.totalPaginas = 1; return; }
+
+    // Rango del mes actual
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+    const finMes = new Date(inicioMes);
+    finMes.setMonth(inicioMes.getMonth() + 1);
+
+    // DB modular (usando la app de compat por debajo)
+    const db = getFirestore(firebase.app());
+
+    // MISMA query base que usas para paginar (mes actual)
+    let qry = q(
+      collection(db, 'ordenes_oc'),
+      where('fechaSubida', '>=', inicioMes),
+      where('fechaSubida', '<',  finMes),
+      orderBy('fechaSubida', 'desc'),
+    );
+
+    // Mismos filtros "de servidor": solo 1 valor por campo
+    if (this.filtroEstado.length === 1) {
+      qry = q(qry, where('estatus', '==', this.filtroEstado[0]));
+    }
+    if (this.filtroCentro.length === 1) {
+      qry = q(qry, where('centroCosto', '==', this.filtroCentro[0]));
+    }
+    if (this.filtroResponsable.length === 1) {
+      qry = q(qry, where('responsable', '==', this.filtroResponsable[0]));
+    }
+
+    // ✅ Conteo en servidor (sin traer docs)
+    const agg = await getCountFromServer(qry);
+    const total = agg.data().count || 0;
+
+    this.totalPaginas = Math.max(1, Math.ceil(total / this.itemsPorPagina));
+  } catch (e) {
+    console.error('❌ Error al contar total de páginas:', e);
+    this.totalPaginas = 1;
+  }
+}
+
+
 
 
 
@@ -224,29 +327,21 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   const inicioMes = new Date();
   inicioMes.setDate(1);
   inicioMes.setHours(0, 0, 0, 0);
-
   const finMes = new Date(inicioMes);
   finMes.setMonth(inicioMes.getMonth() + 1);
 
   const query = this.firestore.collection('ordenes_oc', ref => {
     let q = ref
       .where('fechaSubida', '>=', inicioMes)
-      .where('fechaSubida', '<', finMes)
+      .where('fechaSubida', '<',  finMes)
       .orderBy('fechaSubida', 'desc')
-      .limit(this.itemsPorPagina);
+      .limit(this.itemsPorPagina + 1); // <- para hasNext
 
-    // ✅ Aplicar filtros solo si hay uno por campo (los múltiples deben ir en memoria)
-    if (this.filtroEstado.length === 1) {
-      q = q.where('estatus', '==', this.filtroEstado[0]);
-    }
-    if (this.filtroCentro.length === 1) {
-      q = q.where('centroCosto', '==', this.filtroCentro[0]);
-    }
-    if (this.filtroResponsable.length === 1) {
-      q = q.where('responsable', '==', this.filtroResponsable[0]);
-    }
+    if (this.filtroEstado.length === 1)      q = q.where('estatus', '==', this.filtroEstado[0]);
+    if (this.filtroCentro.length === 1)      q = q.where('centroCosto', '==', this.filtroCentro[0]);
+    if (this.filtroResponsable.length === 1) q = q.where('responsable', '==', this.filtroResponsable[0]);
 
-    // ✅ Paginación
+    // anclas de paginación
     if (direccion === 'adelante' && this.lastVisible) {
       q = q.startAfter(this.lastVisible);
     }
@@ -254,12 +349,18 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
       const prev = this.historialPaginas[this.historialPaginas.length - 2];
       q = q.startAt(prev);
     }
-
     return q;
   });
 
   query.get().subscribe(snapshot => {
-    this.ocs = snapshot.docs.map(doc => {
+    const docs = snapshot.docs;
+
+    // calcular navegación
+    this.hasNext = docs.length > this.itemsPorPagina;
+    const pageDocs = this.hasNext ? docs.slice(0, this.itemsPorPagina) : docs;
+
+    // mapear data
+    this.ocs = pageDocs.map(doc => {
       const data = doc.data() as any;
       return {
         ...data,
@@ -274,51 +375,140 @@ cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
       };
     });
 
-    if (!snapshot.empty) {
-      this.firstVisible = snapshot.docs[0];
-      this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
+    if (pageDocs.length) {
+      this.firstVisible = pageDocs[0];
+      this.lastVisible  = pageDocs[pageDocs.length - 1];
 
       if (direccion === 'adelante') {
-        if (this.paginaActual === 1 && this.historialPaginas.length === 0) {
+        // primer render: historial vacío => no incrementar página
+        if (this.historialPaginas.length === 0) {
           this.historialPaginas.push(this.firstVisible);
+          this.paginaActual = 1; // explícito
         } else {
           this.historialPaginas.push(this.firstVisible);
           this.paginaActual++;
         }
-      } else if (direccion === 'atras' && this.historialPaginas.length > 1) {
-        this.historialPaginas.pop();
-        this.paginaActual--;
+      } else if (direccion === 'atras') {
+        if (this.historialPaginas.length > 0) this.historialPaginas.pop();
+        if (this.paginaActual > 1) this.paginaActual--;
       }
-    } else if (direccion === 'adelante') {
-      this.paginaActual--;
+    } else {
+      // sin resultados (p. ej., click en siguiente sin más páginas)
+      this.hasNext = false;
     }
 
+    this.hasPrev = this.paginaActual > 1;
     this.loadingInicial = false;
-  });
+  }, _ => this.loadingInicial = false);
 }
+
+
+
 
 
   convertirFechaFirestore(fecha: any): Date {
     return fecha?.toDate ? fecha.toDate() : fecha;
   }
+recargarPaginaActual(ev?: CustomEvent) {
+  this.loadingInicial = true;
 
+  const { inicio, fin } = this.rangoMesActual();
 
-  paginaSiguiente() {
-    this.cargarPagina('adelante');
-  }
+  const query = this.firestore.collection('ordenes_oc', ref => {
+    let q = ref
+      .where('fechaSubida', '>=', inicio)
+      .where('fechaSubida', '<', fin)
+      .orderBy('fechaSubida', 'desc')
+      .limit(this.itemsPorPagina + 1);
 
-  paginaAnterior() {
-    if (this.paginaActual > 1) {
-      this.cargarPagina('atras');
+    if (this.filtroEstado.length === 1)      q = q.where('estatus', '==', this.filtroEstado[0]);
+    if (this.filtroCentro.length === 1)      q = q.where('centroCosto', '==', this.filtroCentro[0]);
+    if (this.filtroResponsable.length === 1) q = q.where('responsable', '==', this.filtroResponsable[0]);
+
+    // misma ancla para reconstruir la página actual
+    if (this.firstVisible) q = q.startAt(this.firstVisible);
+
+    return q;
+  });
+
+  query.get().subscribe(snapshot => {
+    const docs = snapshot.docs;
+    this.hasNext = docs.length > this.itemsPorPagina;
+    const pageDocs = this.hasNext ? docs.slice(0, this.itemsPorPagina) : docs;
+
+    // 1) Construye versión "ligera" nueva
+    const nuevos = pageDocs.map(doc => {
+      const data = doc.data() as any;
+      return {
+        ...this.sanitizeOC(data),
+        docId: doc.id,
+        fechaSubida: this.convertirFechaFirestore(data.fechaSubida),
+        // flags para visor (se conservan si ya existían; ver merge)
+        mostrarArchivos: false,
+        _archivosCargados: false,
+        cargandoArchivos: false,
+      };
+    });
+
+    // 2) MERGE con los existentes (conservar archivos si ya estaban cargados)
+    const actualPorId = new Map(this.ocs.map(x => [x.docId, x]));
+    const fusion: any[] = [];
+
+    for (const n of nuevos) {
+      const anterior = actualPorId.get(n.docId);
+      if (anterior) {
+        fusion.push({
+          ...anterior,         // conserva archivos y flags si existen
+          ...n,                // pisa con valores frescos (estatus, fecha, etc.)
+          // conservar explícitamente adjuntos si ya estaban cargados
+          archivosBase64: anterior.archivosBase64 ?? n.archivosBase64,
+          archivosVisuales: anterior.archivosVisuales ?? n.archivosVisuales,
+          mostrarArchivos: anterior.mostrarArchivos ?? false,
+          _archivosCargados: anterior._archivosCargados ?? false,
+          cargandoArchivos: false
+        });
+      } else {
+        fusion.push(n);
+      }
     }
-  }
 
-  irAlInicio() {
-    this.paginaActual = 1;
-    this.lastVisible = null;
-    this.historialPaginas = [];
-    this.cargarPagina();
-  }
+    // 3) Reemplaza la lista por la fusionada
+    this.ocs = fusion;
+
+    // 4) Anclas
+    if (pageDocs.length) {
+      this.firstVisible = pageDocs[0];
+      this.lastVisible  = pageDocs[pageDocs.length - 1];
+    }
+
+    this.hasPrev = this.paginaActual > 1;
+    this.loadingInicial = false;
+    if (ev) (ev.target as HTMLIonRefresherElement).complete();
+  }, _ => {
+    this.loadingInicial = false;
+    if (ev) (ev.target as HTMLIonRefresherElement).complete();
+  });
+}
+
+private resetNavegacion() {
+  this.paginaActual = 1;
+  this.hasPrev = false;
+  this.hasNext = false;
+  this.firstVisible = null;
+  this.lastVisible = null;
+  this.historialPaginas = [];
+}
+
+
+paginaSiguiente() { if (this.hasNext) this.cargarPagina('adelante'); }
+paginaAnterior()  { if (this.hasPrev)  this.cargarPagina('atras'); }
+
+
+irAlInicio() {
+  this.resetNavegacion();
+  this.cargarPagina('adelante');
+}
+
 
 irAlFinal() {
   const inicioMes = new Date();
@@ -601,32 +791,40 @@ async subirNuevaCotizacion(oc: any) {
     const fecha = new Date();
     const tipo = file.type;
     const nombre = file.name;
-
-    const nombreUsuario = await this.obtenerNombreUsuario();
     const comentario = oc.comentarioNuevo?.trim() || 'Nueva cotización subida tras rechazo';
 
+    const nombreUsuario = await this.obtenerNombreUsuario();
+    const monto = oc.nuevoMonto || oc.montoTotal || 0; // 👈 monto puede venir de input
+
+    // 🧠 lógica de estatus
+    let estatusFinal = 'Revisión Guillermo';
+    if (nombreUsuario === 'Guillermo Manzor') {
+      estatusFinal = monto <= 1000000 ? 'Aprobado' : 'Revisión Guillermo';
+    } else if (nombreUsuario === 'Juan Cubillos') {
+      estatusFinal = monto <= 5000000 ? 'Preaprobado' : 'Casi Aprobado';
+    } else if (nombreUsuario === 'Alejandro Candia') {
+      estatusFinal = 'Aprobado';
+    }
+
     const nuevoHistorial = {
-      fecha: fecha,
-      estatus: 'Revisión Guillermo',
+      fecha,
+      estatus: estatusFinal,
       usuario: nombreUsuario,
-      comentario: comentario
+      comentario
     };
 
     const docRef = this.firestore.collection('ordenes_oc').doc(oc.docId);
 
     try {
-      // 🔥 1. Eliminar archivo anterior de Storage (si existe)
+      // 1. Eliminar archivo anterior si existe
       const docSnap = await docRef.get().toPromise();
       const data = docSnap?.data() as any;
-
       if (Array.isArray(data.archivosStorage) && data.archivosStorage.length > 0) {
         const anterior = data.archivosStorage[0];
         const storageUrl = anterior.url;
-
         if (storageUrl) {
           const pathMatch = storageUrl.match(/\/o\/(.*?)\?alt=/);
           const path = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
-
           if (path) {
             const storageRef = firebase.storage().ref().child(path);
             await storageRef.delete();
@@ -634,26 +832,26 @@ async subirNuevaCotizacion(oc: any) {
         }
       }
 
-      // ⬆️ 2. Subir nuevo archivo a Firebase Storage
+      // 2. Subir nuevo archivo
       const storagePath = `cotizaciones_oc/${oc.docId}/nueva_cot_${Date.now()}_${file.name}`;
       const fileRef = firebase.storage().ref().child(storagePath);
       await fileRef.put(file);
       const url = await fileRef.getDownloadURL();
 
-      // 📄 3. Crear nuevo archivo
       const nuevoArchivo = {
-        nombre: nombre,
-        tipo: tipo,
-        url: url,
-        fecha: fecha,
-        fechaEliminacion: new Date(Date.now() + 24 * 60 * 60 * 1000) // opcional
+        nombre,
+        tipo,
+        url,
+        fecha,
+        fechaEliminacion: new Date(Date.now() + 24 * 60 * 60 * 1000)
       };
 
-      // 🔄 4. Guardar en Firestore
+      // 3. Actualizar Firestore con nuevo archivo, monto y estatus
       await docRef.update({
         archivosStorage: [nuevoArchivo],
-        estatus: 'Preaprobado',
-        comentario: comentario,
+        estatus: estatusFinal,
+        comentario,
+        montoTotal: monto,
         fechaSubida: fecha,
         historial: firebase.firestore.FieldValue.arrayUnion(nuevoHistorial)
       });
@@ -670,9 +868,216 @@ async subirNuevaCotizacion(oc: any) {
   input.click();
 }
 
+async enviarAclaracion(oc: any) {
+  const comentario = oc.comentarioNuevo?.trim();
+  if (!comentario) {
+    alert('Por favor ingresa un comentario antes de enviar la aclaración.');
+    return;
+  }
+
+  const nombreUsuario = await this.obtenerNombreUsuario();
+  const fecha = new Date();
 
 
+  let nuevoEstatus = oc.estatus === 'Pendiente de Aprobación' ? 'Revisión Guillermo' : oc.estatus;
 
+  const nuevoHistorial = {
+    usuario: nombreUsuario,
+    estatus: nuevoEstatus,
+    fecha,
+    comentario
+  };
+
+  try {
+    await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
+      comentario,
+      estatus: nuevoEstatus,
+      historial: firebase.firestore.FieldValue.arrayUnion(nuevoHistorial),
+      fechaSubida: fecha
+    });
+
+    alert(`✅ Comentario enviado y estatus cambiado a "${nuevoEstatus}".`);
+    this.irAlInicio();
+  } catch (error) {
+    console.error('❌ Error al enviar aclaración:', error);
+    alert('Ocurrió un error al enviar la aclaración.');
+  }
+}
+
+async cambiarPrecio(oc: any, nuevoMonto: number) {
+  if (!nuevoMonto || nuevoMonto <= 0) {
+    alert('El monto ingresado no es válido.');
+    return;
+  }
+
+  if (oc.estatus !== 'Pendiente de Aprobación' && oc.estatus !== 'Rechazado') {
+    alert('Solo se puede cambiar el precio cuando el estatus es Pendiente de Aprobación o Rechazado.');
+    return;
+  }
+
+  const nombreUsuario = await this.obtenerNombreUsuario();
+  const fecha = new Date();
+
+  const nuevoHistorial = {
+    usuario: nombreUsuario,
+    estatus: oc.estatus,
+    fecha,
+    comentario: `Cambio de monto a ${nuevoMonto}`
+  };
+
+  try {
+    await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
+      montoTotal: nuevoMonto,
+      historial: firebase.firestore.FieldValue.arrayUnion(nuevoHistorial),
+      fechaSubida: fecha
+    });
+
+    alert('✅ Precio actualizado correctamente.');
+    this.irAlInicio();
+  } catch (error) {
+    console.error('❌ Error al cambiar precio:', error);
+    alert('Ocurrió un error al actualizar el precio.');
+  }
+}
+cargarCotizacionesMesAnterior(direccion: 'adelante' | 'atras' = 'adelante') {
+  this.loadingInicial = true;
+
+  // al entrar en este método, activamos el modo "mes pasado"
+  this.viendoMesPasado = true;
+
+  // si es la primera vez (no hay anclas), resetea paginación
+  if (!this.firstVisible && !this.lastVisible && this.historialPaginas.length === 0) {
+    this.paginaActual = 1;
+  }
+
+  // 📅 Rango del mes pasado
+  const inicioMesPasado = new Date();
+  inicioMesPasado.setMonth(inicioMesPasado.getMonth() - 1);
+  inicioMesPasado.setDate(1);
+  inicioMesPasado.setHours(0, 0, 0, 0);
+
+  const finMesPasado = new Date(inicioMesPasado);
+  finMesPasado.setMonth(inicioMesPasado.getMonth() + 1);
+
+  const query = this.firestore.collection('ordenes_oc', ref => {
+    let q = ref
+      .where('fechaSubida', '>=', inicioMesPasado)
+      .where('fechaSubida', '<',  finMesPasado)
+      .orderBy('fechaSubida', 'desc')
+      .limit(this.itemsPorPagina + 1); // detectar si hay siguiente
+
+    // Paginación
+    if (direccion === 'adelante' && this.lastVisible) {
+      q = q.startAfter(this.lastVisible);
+    }
+    if (direccion === 'atras' && this.historialPaginas.length >= 2) {
+      const prev = this.historialPaginas[this.historialPaginas.length - 2];
+      q = q.startAt(prev);
+    }
+    return q;
+  });
+
+  query.get().subscribe(snapshot => {
+    const docs = snapshot.docs;
+
+    // ¿hay siguiente?
+    this.hasNext = docs.length > this.itemsPorPagina;
+
+    // Tomar los N visibles
+    const pageDocs = this.hasNext ? docs.slice(0, this.itemsPorPagina) : docs;
+
+    this.ocs = pageDocs.map(doc => {
+      const data = doc.data() as any;
+
+      // ---- Archivos de Storage (visuales)
+      const archivosVisuales = Array.isArray(data.archivosStorage)
+        ? data.archivosStorage.map((archivo: any, i: number) => {
+            const tipo = archivo.tipo || 'application/pdf';
+            const esPDF = tipo === 'application/pdf';
+            const esImagen = tipo.startsWith('image/');
+            const urlSegura = typeof archivo.url === 'string'
+              ? this.sanitizer.bypassSecurityTrustResourceUrl(archivo.url)
+              : archivo.url;
+
+            return {
+              nombre: archivo.nombre || `archivo_${i + 1}`,
+              tipo,
+              esPDF,
+              esImagen,
+              url: urlSegura,
+              mostrar: false,
+            };
+          })
+        : [];
+
+    // ---- Base64 como placeholders (tu mostrarArchivoDesdeArray crea la URL al abrir)
+      const archivosBase64 = Array.isArray(data.archivosBase64)
+        ? data.archivosBase64.map((archivo: any, i: number) => ({
+            ...archivo,
+            nombre: archivo.nombre || `adjunto_${i + 1}`,
+            url: null,
+            mostrar: false,
+          }))
+        : [];
+
+      return {
+        ...data,
+        docId: doc.id,
+        fechaSubida: this.convertirFechaFirestore(data.fechaSubida),
+        archivosVisuales,
+        archivosBase64,
+        // flags UI
+        mostrarArchivos: false,
+        _archivosCargados: true,
+        cargandoArchivos: false,
+      };
+    });
+
+    // Anclas
+    if (pageDocs.length) {
+      this.firstVisible = pageDocs[0];
+      this.lastVisible  = pageDocs[pageDocs.length - 1];
+    }
+
+    // Historial/página
+    if (direccion === 'adelante') {
+      if (this.paginaActual > 1 || this.historialPaginas.length > 0) this.paginaActual++;
+      if (this.firstVisible) this.historialPaginas.push(this.firstVisible);
+    } else {
+      if (this.historialPaginas.length > 0) this.historialPaginas.pop();
+      if (this.paginaActual > 1) this.paginaActual--;
+    }
+    this.hasPrev = this.paginaActual > 1;
+
+    // Evitamos conteo caro
+    this.totalPaginas = 1;
+
+    this.loadingInicial = false;
+  }, _ => {
+    this.loadingInicial = false;
+  });
+}
+
+// 👇 botones para navegar/refrescar dentro del mes pasado
+paginaSiguienteMesPasado() { if (this.hasNext) this.cargarCotizacionesMesAnterior('adelante'); }
+paginaAnteriorMesPasado() { if (this.historialPaginas.length >= 2) this.cargarCotizacionesMesAnterior('atras'); }
+recargarPaginaMesPasado()  {
+  // reconstruye la misma página usando la ancla actual
+  const keepFirst = this.firstVisible;
+  const keepHist  = [...this.historialPaginas];
+  const keepPage  = this.paginaActual;
+  this.firstVisible = keepFirst;
+  this.historialPaginas = keepHist;
+  this.paginaActual = keepPage;
+  this.cargarCotizacionesMesAnterior('adelante');
+}
+
+// 👇 salir del modo mes pasado y volver a mes actual
+volverMesActual() {
+  this.viendoMesPasado = false;
+  this.resetNavegacion();
+  this.cargarPagina('adelante');
+}
 
 cambioModo() {
   this.ocs = [];

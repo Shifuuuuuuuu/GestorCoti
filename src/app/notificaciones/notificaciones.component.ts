@@ -13,20 +13,29 @@ export class NotificacionesComponent  implements OnInit {
   ocsPendientes: any[] = [];
   mostrarCard: boolean = true;
   uid: string = '';
-
+  nombreUsuario: string = '';
   constructor(
     private notificacionesService: NotificacionesService,
     private auth: AngularFireAuth,
-    private modalCtrl: ModalController
+    private modalCtrl: ModalController,
+    private firestore: AngularFirestore
   ) {}
 
-  async ngOnInit() {
-    this.ocsPendientes = [...this.notificacionesService.ocsPendientes];
-    this.verificarVisibilidad();
+async ngOnInit() {
+  const user = await this.auth.currentUser;
+  this.uid = user?.uid || '';
+  if (!this.uid) return;
 
-    const user = await this.auth.currentUser;
-    this.uid = user?.uid || '';
-  }
+  const userDoc = await this.firestore.collection('Usuarios').doc(this.uid).get().toPromise();
+  const userData = userDoc?.data() as { fullName?: string } || {};
+  this.nombreUsuario = userData.fullName || '';
+
+  // Obtener notificaciones personalizadas: cotizador y creador de SOLPED
+  this.ocsPendientes = await this.notificacionesService.obtenerNotificacionesPersonalizadas(this.nombreUsuario, this.uid);
+  this.verificarVisibilidad();
+}
+
+
 
   formatearFecha(fecha: any): string {
     const date = fecha?.toDate?.() || new Date(fecha);
@@ -65,5 +74,13 @@ export class NotificacionesComponent  implements OnInit {
     } else {
       alert('⚠️ No se encontró un PDF en esta OC.');
     }
+  }
+    obtenerTipoNotificacion(oc: any): string {
+    if (oc?.responsable === this.nombreUsuario) {
+      return 'Cotizador';
+    } else if (oc?.tipoNotificacion === 'solped') {
+      return 'Autor SOLPED';
+    }
+    return 'Otro';
   }
 }

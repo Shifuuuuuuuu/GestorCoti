@@ -145,54 +145,78 @@ async verResumenSolped(oc: any) {
     const solpedSnap = await this.firestore.collection('solpes').doc(oc.solpedId).get().toPromise();
     const solpedData = solpedSnap?.data() as any;
 
-    if (solpedData) {
-      // 🔍 Traer todas las OCs que están asociadas a esta SOLPED
-      const ocsSnap = await this.firestore
-        .collection('ordenes_oc', ref => ref.where('solpedId', '==', oc.solpedId))
-        .get()
-        .toPromise();
-
-      const ocsRelacionadas = ocsSnap?.docs.map(doc => doc.data()) || [];
-
-      // 🔎 Extraer todos los items aprobados de esas OCs
-      const todosItemsCotizados = ocsRelacionadas
-        .reduce((acumulador: any[], oc: any) => {
-          return acumulador.concat(oc.items || []);
-        }, [])
-        .filter((item: any) => item.estado === 'aprobado')
-        .map((item: any) => item.item);
-
-
-      // ✅ Mapear los ítems de la SOLPED y marcar si están cotizados
-      const items = solpedData.items?.map((item: any) => {
-        const estaCotizado = todosItemsCotizados.includes(item.item);
-        console.log(`ITEM ${item.item}:`, estaCotizado ? '✔ Cotizado' : '✖ No cotizado');
-        return {
-          ...item,
-          estaCotizado
-        };
-      }) || [];
-
-      // 📦 Guardar el resumen para mostrar
-      oc.detalleSolped = {
-        numero_solpe: solpedData.numero_solpe || 'N/A',
-        empresa: solpedData.empresa || 'N/A',
-        tipo_solped: solpedData.tipo_solped || 'N/A',
-        fecha: solpedData.fecha_creacion?.toDate?.()?.toLocaleDateString() || 'N/A',
-        cantidadItems: items.length,
-        items,
-        imagenAdjunta: solpedData.imagen_url || null
-      };
-
-    } else {
+    if (!solpedData) {
       this.mostrarToast('No se encontró la SOLPED asociada.', 'warning');
+      return;
     }
+
+    // 🔍 Traer todas las OCs relacionadas a esta SOLPED
+    const ocsSnap = await this.firestore
+      .collection('ordenes_oc', ref => ref.where('solpedId', '==', oc.solpedId))
+      .get()
+      .toPromise();
+
+    const ocsRelacionadas = ocsSnap?.docs.map(doc => doc.data()) || [];
+
+    // 🔎 Extraer los items y agrupar por ID de item
+    const mapaEstados: Record<string, Set<string>> = {}; // ejemplo: { "ITEM123": Set { "parcial", "completo" } }
+
+    ocsRelacionadas.forEach((ocData: any) => {
+      (ocData.items || []).forEach((item: any) => {
+        const key = item.item?.toString();
+        if (!mapaEstados[key]) mapaEstados[key] = new Set();
+        if (item.estado_cotizacion) {
+          mapaEstados[key].add(item.estado_cotizacion);
+        }
+      });
+    });
+
+    // ✅ Evaluar el estado de cada ítem en base a los valores encontrados
+    const items = (solpedData.items || []).map((item: any) => {
+      const key = item.item?.toString();
+      const estados = mapaEstados[key] || new Set();
+
+      let estadoCotizacion = 'ninguno';
+
+      if (estados.has('completo')) {
+        estadoCotizacion = 'completo';
+      } else if (estados.has('parcial')) {
+        estadoCotizacion = 'parcial';
+      }
+
+      return {
+        ...item,
+        estadoCotizacion
+      };
+    });
+
+    // 📦 Guardar el resumen para mostrar
+    oc.detalleSolped = {
+      numero_solpe: solpedData.numero_solpe || 'N/A',
+      empresa: solpedData.empresa || 'N/A',
+      tipo_solped: solpedData.tipo_solped || 'N/A',
+      fecha: solpedData.fecha_creacion?.toDate?.()?.toLocaleDateString() || 'N/A',
+      cantidadItems: items.length,
+      items,
+      imagenAdjunta: solpedData.imagen_url || null
+    };
+
   } catch (error) {
     console.error('❌ Error al cargar la SOLPED:', error);
     this.mostrarToast('Error al cargar la SOLPED.', 'danger');
   }
 }
 
+
+
+
+getColorEstadoCotizacion(estado: string): string {
+  switch (estado) {
+    case 'completo': return 'success';   // verde
+    case 'parcial': return 'warning';    // amarillo
+    default: return 'danger';            // rojo
+  }
+}
 
 
 
@@ -359,28 +383,65 @@ async aprobarOC(oc: any) {
   const usuario = await this.obtenerNombreUsuario();
   const fecha = new Date().toISOString();
   const monto = oc.precioTotalConIVA || 0;
+  const empresa = (oc.empresa || '').trim();
 
   let estatusFinal = 'Aprobado'; // por defecto
 
-  // 🧠 Aplicar la lógica completa
-  if (usuario === 'Guillermo Manzor') {
-    if (monto <= 250000) {
-      estatusFinal = 'Aprobado'; // aprueba directamente
-    } else {
-      estatusFinal = 'Preaprobado'; // pasa a Juan
+  // 🧠 Lógica diferenciada por empresa
+  if (empresa === 'Xtreme Mining') {
+    switch (usuario) {
+      case 'Guillermo Manzor':
+      case 'Felipe Gonzalez':
+      case 'Ricardo Santibañez':
+        estatusFinal = monto >= 1000000 ? 'Revisión Mining' : 'Aprobado';
+        break;
+
+      case 'Patricio Muñoz':
+        estatusFinal = monto <= 2000000 ? 'Aprobado' : 'Escalado César Palma';
+        break;
+
+      case 'Cesar Palma':
+        estatusFinal = monto > 2000000 ? 'Aprobado' : 'Pendiente';
+        break;
+
+      // También pueden validar Mining:
+      case 'Juan Cubillos':
+        estatusFinal = monto <= 5000000 ? 'Aprobado' : 'Casi Aprobado';
+        break;
+
+      case 'Alejandro Candia':
+        estatusFinal = 'Aprobado';
+        break;
+
+      default:
+        this.mostrarToast('Usuario no autorizado para validar OCs de Xtreme Mining.', 'warning');
+        return;
     }
 
-  } else if (usuario === 'Juan Cubillos') {
-    if (monto <= 2500000) {
-      estatusFinal = 'Aprobado'; // aprueba directamente
-    } else {
-      estatusFinal = 'Casi Aprobado'; // pasa a Alejandro
-    }
+  } else if (empresa === 'Xtreme Servicio') {
+    switch (usuario) {
+      case 'Guillermo Manzor':
+        estatusFinal = monto <= 1000000 ? 'Aprobado' : 'Preaprobado';
+        break;
 
-  } else if (usuario === 'Alejandro Candia') {
-    estatusFinal = 'Aprobado'; // aprueba cualquier monto
+      case 'Juan Cubillos':
+        estatusFinal = monto <= 5000000 ? 'Aprobado' : 'Casi Aprobado';
+        break;
+
+      case 'Alejandro Candia':
+        estatusFinal = 'Aprobado';
+        break;
+
+      default:
+        this.mostrarToast('Usuario no autorizado para validar OCs de Xtreme Servicio.', 'warning');
+        return;
+    }
+  } else {
+    this.mostrarToast(`Empresa ${empresa} no reconocida para aprobación.`, 'warning');
+    return;
   }
 
+  // 📜 Guardar en historial
   const nuevoHistorial = [...(oc.historial || []), {
     usuario,
     estatus: estatusFinal,
@@ -398,7 +459,7 @@ async aprobarOC(oc: any) {
 
   await this.firestore.collection('ordenes_oc').doc(oc.docId).update(datosActualizados);
 
-  // 🔄 Si está asociada a SOLPED, actualizar ítems
+  // 🔄 Actualizar ítems en la SOLPED si corresponde
   if (oc.solpedId) {
     const solpedRef = this.firestore.collection('solpes').doc(oc.solpedId);
     const solpedSnap = await solpedRef.get().toPromise();
@@ -428,17 +489,12 @@ async aprobarOC(oc: any) {
     }
   }
 
-  // 🧹 Eliminar de la lista actual
+  // 🧹 Eliminar OC aprobada del listado actual
   this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
 
-  const mensajeFinal = {
-    'Aprobado': 'OC aprobada correctamente.',
-    'Preaprobado': 'OC enviada a revisión de Juan Cubillos.',
-    'Casi Aprobado': 'OC enviada a revisión de Alejandro Candia.'
-  }[estatusFinal] || 'OC aprobada.';
-
-  this.mostrarToast(mensajeFinal, 'success');
+  this.mostrarToast(`OC aprobada por ${usuario} con estatus: ${estatusFinal}`, 'success');
 }
+
 
 
 
@@ -487,6 +543,33 @@ async rechazarOC(oc: any) {
   // 3. Eliminar del listado actual
   this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
   this.mostrarToast('OC rechazada y los ítems fueron devueltos a pendiente.', 'danger');
+}
+async solicitarAclaracion(oc: any) {
+  const comentario = oc.comentarioTemporal?.trim();
+  if (!comentario) {
+    this.mostrarToast('Por favor escribe un comentario antes de solicitar aclaración.', 'warning');
+    return;
+  }
+
+  const usuario = await this.obtenerNombreUsuario();
+  const fecha = new Date().toISOString();
+
+  const nuevoHistorial = [...(oc.historial || []), {
+    usuario,
+    estatus: 'Pendiente de Aprobación',
+    fecha,
+    comentario
+  }];
+
+  // Actualiza el estatus en Firestore
+  await this.firestore.collection('ordenes_oc').doc(oc.docId).update({
+    estatus: 'Pendiente de Aprobación',
+    historial: nuevoHistorial
+  });
+
+  // Elimina del listado actual
+  this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
+  this.mostrarToast('Solicitud de aclaración enviada.', 'warning');
 }
 
 getColorByEstado(estado: string): string {

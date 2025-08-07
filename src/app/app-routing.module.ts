@@ -88,6 +88,10 @@ const routes: Routes = [
     path: 'crear-usuarios',
     loadChildren: () => import('./crear-usuarios/crear-usuarios.module').then( m => m.CrearUsuariosPageModule),canActivate: [AuthGuard]
   },
+  {
+    path: 'modal-seleccionar-oc',
+    loadChildren: () => import('./modal-seleccionar-oc/modal-seleccionar-oc.module').then( m => m.ModalSeleccionarOcPageModule)
+  },
 
 ];
 

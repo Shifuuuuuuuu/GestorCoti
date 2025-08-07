@@ -26,42 +26,147 @@ verificarOCNuevasAprobadasTiempoReal(callback: (hayNuevas: boolean) => void): vo
     const uid = user.uid;
 
     try {
-      const userDoc = await this.afs.collection('Usuarios').doc(uid).get().toPromise();
-      const userData = userDoc?.data() as any;
+      const userDocSnap = await this.afs.collection('Usuarios').doc(uid).get().toPromise();
+      const userData = userDocSnap?.data() as any;
       const nombreUsuario = userData?.fullName || '';
+
       const hace5Dias = new Date();
       hace5Dias.setDate(hace5Dias.getDate() - 5);
       const desde = firebase.firestore.Timestamp.fromDate(hace5Dias);
 
-      // Escucha en tiempo real
-      this.afs.collection('ordenes_oc', ref =>
+      // 🔍 OCs donde el usuario es cotizador responsable
+      const cotizadorSnap = await this.afs.collection('ordenes_oc', ref =>
         ref.where('estatus', '==', 'Aprobado')
            .where('responsable', '==', nombreUsuario)
            .where('fechaSubida', '>=', desde)
-      ).snapshotChanges().subscribe(async snapshot => {
-        const todas = snapshot.map(snap => {
-          const data = snap.payload.doc.data() as any;
-          return { id: snap.payload.doc.id, ...data };
-        });
+      ).get().toPromise() as firebase.firestore.QuerySnapshot<any>;
 
-        // Verifica vistas
-        const vistasSnap = await this.afs.collection('Usuarios')
-          .doc(uid).collection('notificaciones_vistas').get().toPromise();
+      // 🔍 SOLPEDs creadas por el usuario
+      const solpedSnap = await this.afs.collection('solpes', ref =>
+        ref.where('usuario', '==', nombreUsuario)
+      ).get().toPromise() as firebase.firestore.QuerySnapshot<any>;
 
-        const vistas = vistasSnap?.docs.map(d => d.id) || [];
-        const filtradas = todas.filter(oc => !vistas.includes(oc.id));
+      const solpedIds = solpedSnap.docs.map((doc: firebase.firestore.QueryDocumentSnapshot<any>) => doc.id);
 
-        this.ocsPendientes = filtradas;
-        this.tieneNotificaciones$.next(filtradas.length > 0);
-        callback(filtradas.length > 0);
-      });
+      // 🔍 Todas las OCs recientes (para cruzar con las SOLPEDs)
+      const ocSolpedSnap = await this.afs.collection('ordenes_oc', ref =>
+        ref.where('estatus', '==', 'Aprobado')
+           .where('fechaSubida', '>=', desde)
+      ).get().toPromise() as firebase.firestore.QuerySnapshot<any>;
+
+      // 🔍 OCs ya vistas
+      const vistasSnap = await this.afs.collection('Usuarios')
+        .doc(uid).collection('notificaciones_vistas')
+        .get().toPromise() as firebase.firestore.QuerySnapshot<any>;
+      const vistas = vistasSnap.docs.map(doc => doc.id);
+
+      // 📌 OCs donde soy cotizador
+      const ocsCotizador = cotizadorSnap.docs
+        .map(doc => ({ id: doc.id, ...(doc.data() || {}) }))
+        .filter(oc => !vistas.includes(oc.id));
+
+      // 📌 OCs que están asociadas a SOLPEDs que yo creé
+      const ocsSolped = ocSolpedSnap.docs
+        .map(doc => ({ id: doc.id, ...(doc.data() || {}) }))
+        .filter(oc => solpedIds.includes(oc.solpedId) && !vistas.includes(oc.id));
+
+      // ✅ Unimos y evitamos duplicados por ID
+      const todas = [...ocsCotizador, ...ocsSolped].filter((value, index, self) =>
+        index === self.findIndex(v => v.id === value.id)
+      );
+
+      this.ocsPendientes = todas;
+      this.tieneNotificaciones$.next(todas.length > 0);
+      callback(todas.length > 0);
 
     } catch (error) {
-      console.error('❌ Error en tiempo real:', error);
+      console.error('❌ Error al obtener notificaciones OC:', error);
       callback(false);
     }
   });
 }
+
+async obtenerNotificacionesPersonalizadas(nombreUsuario: string, uid: string): Promise<any[]> {
+  try {
+    const hace5Dias = new Date();
+    hace5Dias.setDate(hace5Dias.getDate() - 5);
+    const desde = firebase.firestore.Timestamp.fromDate(hace5Dias);
+
+    // 🔍 OCs donde el usuario es cotizador
+    const cotizadorSnap = await this.afs.collection('ordenes_oc', ref =>
+      ref.where('estatus', '==', 'Aprobado')
+         .where('responsable', '==', nombreUsuario)
+         .where('fechaSubida', '>=', desde)
+    ).get().toPromise() as firebase.firestore.QuerySnapshot<any>;
+
+    // 🔍 SOLPEDs creadas por el usuario
+    const solpedSnap = await this.afs.collection('solpes', ref =>
+      ref.where('usuario', '==', nombreUsuario)
+    ).get().toPromise() as firebase.firestore.QuerySnapshot<any>;
+
+    const solpedIds = solpedSnap.docs.map(doc => doc.id);
+
+    // 🔍 OCs asociadas a esas SOLPEDs
+    const ocSolpedSnap = await this.afs.collection('ordenes_oc', ref =>
+      ref.where('estatus', '==', 'Aprobado')
+         .where('fechaSubida', '>=', desde)
+    ).get().toPromise() as firebase.firestore.QuerySnapshot<any>;
+
+    // 🔍 SOLPEDs con cambio de estatus en los últimos días
+    const solpedsCambiadasSnap = await this.afs.collection('solpes', ref =>
+      ref.where('usuario', '==', nombreUsuario)
+         .where('fechaCambio', '>=', desde)
+    ).get().toPromise() as firebase.firestore.QuerySnapshot<any>;
+
+    // 🔍 Vistas
+    const vistasSnap = await this.afs.collection('Usuarios')
+      .doc(uid).collection('notificaciones_vistas')
+      .get().toPromise() as firebase.firestore.QuerySnapshot<any>;
+    const vistas = vistasSnap?.docs.map(doc => doc.id) || [];
+
+    // 🟢 OCs donde soy cotizador
+    const ocsCotizador = cotizadorSnap.docs.map(doc => {
+      const data = doc.data() as any;
+      return {
+        id: doc.id,
+        ...data,
+        tipoNotificacion: 'cotizador'
+      };
+    }).filter(oc => !vistas.includes(oc.id));
+
+    // 🔵 OCs asociadas a SOLPEDs mías
+    const ocsSolped = ocSolpedSnap.docs.map(doc => {
+      const data = doc.data() as any;
+      return {
+        id: doc.id,
+        ...data,
+        tipoNotificacion: 'solped'
+      };
+    }).filter(oc => solpedIds.includes(oc.solpedId) && !vistas.includes(oc.id));
+
+    // 🟡 Cambios en mis SOLPEDs
+    const solpedNotis = solpedsCambiadasSnap.docs.map(doc => {
+      const data = doc.data() as any;
+      return {
+        id: doc.id,
+        ...data,
+        tipoNotificacion: 'cambio-solped'
+      };
+    }).filter(solped => !vistas.includes(solped.id));
+
+    // ✅ Unir y evitar duplicados
+    const todas = [...ocsCotizador, ...ocsSolped, ...solpedNotis].filter(
+      (item, index, self) => index === self.findIndex(i => i.id === item.id)
+    );
+
+    return todas;
+
+  } catch (error) {
+    console.error('❌ Error al obtener notificaciones personalizadas:', error);
+    return [];
+  }
+}
+
 
 async marcarOCComoVista(uid: string, idOC: string): Promise<void> {
   try {
@@ -90,8 +195,6 @@ async marcarOCComoVista(uid: string, idOC: string): Promise<void> {
     console.error('❌ Error al guardar vista de OC:', error);
   }
 }
-
-
 
 
   limpiarNotificaciones() {

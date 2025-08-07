@@ -24,8 +24,9 @@
       <!-- Checkbox para usar SOLPED -->
       <ion-item lines="none">
         <ion-label>¿Asociar a una SOLPED?</ion-label>
-        <ion-checkbox [(ngModel)]="usarSolped" slot="end"></ion-checkbox>
+        <ion-checkbox [(ngModel)]="usarSolped" slot="end" (ionChange)="onToggleUsarSolped()"></ion-checkbox>
       </ion-item>
+
 
       <!-- Selector de SOLPED -->
       <ng-container *ngIf="usarSolped">
@@ -101,46 +102,41 @@
       <ion-item>
         <ion-label position="floating">Centro de Costo</ion-label>
         <ion-select [(ngModel)]="centroCosto" required>
-                  <ion-select-option value="22368">CONTRATO SUMINISTRO DE HORMIGONES DET</ion-select-option>
-                  <ion-select-option value="20915">CONTRATO SUMINISTRO DE HORMIGONES DAND</ion-select-option>
-                  <ion-select-option value="23302">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
-                  <ion-select-option value="28662">CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET</ion-select-option>
-                  <ion-select-option value="SANJOAQUIN">SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN</ion-select-option>
-                  <ion-select-option value="URBANOS">SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR</ion-select-option>
-                  <ion-select-option value="CS">CONTRATO DE SUMINISTRO DE HORMIGONES CS</ion-select-option>
-                  <ion-select-option value="PREDOSIFICADO">CONTRATO HORMIGONES Y PREDOSIFICADO</ion-select-option>
-                  <ion-select-option value="CANECHE">CONTRATO TALLER CANECHE</ion-select-option>
-                  <ion-select-option value="CASAMATRIZ">CONTRATO CASA MATRIZ</ion-select-option>
-                  <ion-select-option value="ALTOMAIPO">CONTRATO ALTO MAIPO</ion-select-option>
-                  <ion-select-option value="INFRAESTRUCTURA">CONTRATO INFRAESTRUCTURA DET</ion-select-option>
-                  <ion-select-option value="CHUQUICAMATA">CONTRATO CHUQUICAMATA</ion-select-option>
-                  <ion-select-option value="CARPETASDET">CONTRATO CARPETAS DET</ion-select-option>
-                  <ion-select-option value="10-10-12">ZEMAQ</ion-select-option>
-                  <ion-select-option value="20-10-01">BENÍTEZ</ion-select-option>
-                  <ion-select-option value="30-10-01">CASA MATRIZ</ion-select-option>
-                  <ion-select-option value="30-10-07">PREDOSIFICADO - SAN BERNARDO</ion-select-option>
-                  <ion-select-option value="30-10-08">ÁRIDOS SAN JOAQUÍN</ion-select-option>
-                  <ion-select-option value="30-10-42">RAÚL ALFARO</ion-select-option>
-                  <ion-select-option value="30-10-43-A">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43-B">TALLER CANECHE</ion-select-option>
-                  <ion-select-option value="30-10-43-C">DET NUEVO</ion-select-option>
-                  <ion-select-option value="30-10-43-D">ESTODCADA 8</ion-select-option>
-                  <ion-select-option value="30-10-44">DET PLANTA COLON</ion-select-option>
-                  <ion-select-option value="30-10-45">DET PLANTA CALETONES</ion-select-option>
-                  <ion-select-option value="30-10-46">DET AGUA DULCE</ion-select-option>
-                  <ion-select-option value="30-10-48">DET ESMERALDA</ion-select-option>
-                  <ion-select-option value="30-10-49">DET NP NNM</ion-select-option>
-                  <ion-select-option value="30-10-50">DET ACH NNM</ion-select-option>
-                  <ion-select-option value="30-10-52">LUIS CABRERA</ion-select-option>
-                  <ion-select-option value="30-10-53">URBANO SAN BERNARDO</ion-select-option>
-                  <ion-select-option value="30-10-54">URBANO OLIVAR</ion-select-option>
-                  <ion-select-option value="30-10-55">DET TENIENTE</ion-select-option>
-                  <ion-select-option value="30-10-57">CALAMA</ion-select-option>
-                  <ion-select-option value="30-10-58">GASTÓN CASTILLO</ion-select-option>
-                  <ion-select-option value="30-10-58">ALVARO VACHER</ion-select-option>
-                  <ion-select-option value="30-10-59">INFRAESTRUCTURA MINERA</ion-select-option>
-                  <ion-select-option value="30-10-60">CALAMA</ion-select-option>
-                  <ion-select-option value="30-10-61">ALTO MAIPO</ion-select-option>
+              <ion-select-option value="27483">CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA</ion-select-option>
+              <ion-select-option value="PPCALAMA">PLANTA PREDOSIFICADO CALAMA</ion-select-option>
+              <ion-select-option value="20915">CONTRATO 20915 SUM. HORMIGON DAND</ion-select-option>
+              <ion-select-option value="23302-CARPETAS">CONTRATO 23302 CARPETAS</ion-select-option>
+              <ion-select-option value="23302-AMPL">CONTRATO 23302 AMPLIACION</ion-select-option>
+              <ion-select-option value="OFANDES">OFICINA LOS ANDES</ion-select-option>
+              <ion-select-option value="CASAMATRIZ">CASA MATRIZ</ion-select-option>
+              <ion-select-option value="RRHH">RRHH</ion-select-option>
+              <ion-select-option value="FINANZAS">FINANZAS</ion-select-option>
+              <ion-select-option value="SUST">SUSTENTABILIDAD</ion-select-option>
+              <ion-select-option value="SOPTI">SOPORTE TI</ion-select-option>
+              <ion-select-option value="STRIPCENTER">STRIP CENTER</ion-select-option>
+              <ion-select-option value="PLANIF">PLANIFICACION</ion-select-option>
+              <ion-select-option value="PPSB">PLANTA PREDOSIFICADO SAN BERNARDO</ion-select-option>
+              <ion-select-option value="PHUSB">PLANTA HORMIGON URB.SAN BERNARDO</ion-select-option>
+              <ion-select-option value="ALTOMAIPO">ALTO MAIPO</ion-select-option>
+              <ion-select-option value="PHURAN">PLANTA HORMIGON URB. RANCAGUA</ion-select-option>
+              <ion-select-option value="PARAN">PLANTA ARIDOS RANCAGUA</ion-select-option>
+              <ion-select-option value="PASB">PLANTA ARIDOS SAN BERNARDO</ion-select-option>
+              <ion-select-option value="22368">CONTRATO 22368 SUM HORMIGON DET</ion-select-option>
+              <ion-select-option value="28662">CONTRATO 28662 CARPETAS</ion-select-option>
+              <ion-select-option value="29207">CONTRATO 29207 MINERIA</ion-select-option>
+              <ion-select-option value="INFRA">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
+              <ion-select-option value="HORMIGONES DET">CONTRATO SUMINISTRO DE HORMIGONES DET</ion-select-option>
+              <ion-select-option value="HORMIGONES DAND">CONTRATO SUMINISTRO DE HORMIGONES DAND</ion-select-option>
+              <ion-select-option value="23302">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
+              <ion-select-option value="28662">CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET</ion-select-option>
+              <ion-select-option value="SANJOAQUIN">SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN</ion-select-option>
+              <ion-select-option value="URBANOS">SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR</ion-select-option>
+              <ion-select-option value="CS">CONTRATO DE SUMINISTRO DE HORMIGONES CS</ion-select-option>
+              <ion-select-option value="PREDOSIFICADO">CONTRATO HORMIGONES Y PREDOSIFICADO</ion-select-option>
+              <ion-select-option value="CANECHE">CONTRATO TALLER CANECHE</ion-select-option>
+              <ion-select-option value="CHUQUICAMATA">CONTRATO CHUQUICAMATA</ion-select-option>
+              <ion-select-option value="CARPETASDET">CONTRATO CARPETAS DET</ion-select-option>
+              <ion-select-option value="30-10-11">GCIA. SERV. OBRA PAVIMENTACION RT CONTRATO FAM</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
@@ -195,7 +191,64 @@
         <ion-button expand="block" (click)="abrirSelectorArchivos()">Seleccionar Archivos</ion-button>
 
       </ion-item>
+      <!-- AUTORIZACIÓN ADJUNTA -->
+      <ion-card *ngIf="usarSolped && solpedSeleccionada && autorizacionUrlRaw">
+        <ion-card-header>
+          <ion-card-title>📎 Autorización adjunta</ion-card-title>
+          <ion-note *ngIf="autorizacionNombre" class="ion-text-wrap">
+            {{ autorizacionNombre }}
+          </ion-note>
+          <ion-chip *ngIf="autorizacionExt" color="medium" class="ion-margin-top">
+            <ion-label>.{{ autorizacionExt }}</ion-label>
+          </ion-chip>
+        </ion-card-header>
 
+        <ion-card-content>
+          <!-- Preview PDF -->
+          <ng-container *ngIf="autorizacionEsPDF">
+            <iframe
+              [src]="autorizacionSafeUrl"
+              width="100%"
+              height="500"
+              style="border:none;"
+            ></iframe>
+          </ng-container>
+
+          <!-- Preview Imagen -->
+          <ng-container *ngIf="!autorizacionEsPDF && autorizacionEsImagen">
+            <div style="display:flex;justify-content:center;align-items:center;">
+              <img
+                [src]="autorizacionSafeUrl"
+                alt="Autorización"
+                style="max-width:100%; max-height:500px; border-radius:12px; object-fit:contain;"
+              />
+            </div>
+          </ng-container>
+
+          <!-- Sin preview (XLS/XLSX/DOC, etc.) -->
+          <ion-item lines="none" *ngIf="!autorizacionEsPDF && !autorizacionEsImagen">
+            <ion-icon name="document-attach-outline" slot="start"></ion-icon>
+            <ion-label class="ion-text-wrap">
+              Este archivo no se puede previsualizar aquí. Puedes abrirlo o descargarlo.
+            </ion-label>
+          </ion-item>
+
+          <div class="ion-margin-top" style="display:flex; gap:.5rem; flex-wrap:wrap;">
+            <ion-button fill="outline" [href]="autorizacionUrlRaw" target="_blank" rel="noopener">
+              Ver en otra pestaña
+            </ion-button>
+            <a
+              [href]="autorizacionUrlRaw"
+              [attr.download]="autorizacionNombre || 'autorizacion'"
+              style="text-decoration:none"
+            >
+              <ion-button>
+                Descargar
+              </ion-button>
+            </a>
+          </div>
+        </ion-card-content>
+      </ion-card>
       <!-- Vista previa del archivo -->
       <ion-card *ngFor="let archivo of archivos; let i = index">
         <ion-card-header class="ion-align-items-center ion-justify-content-between">

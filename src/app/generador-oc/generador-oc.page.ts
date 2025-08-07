@@ -42,47 +42,51 @@ export class GeneradorOcPage implements OnInit {
   monedaSeleccionada: string = 'CLP';
   tipoCambioUSD: number = 950;
   tipoCambioEUR: number = 1050;
+  empresaPorDefecto: string = 'Xtreme Servicio';
+  autorizacionNombre: string | null = null;
+  autorizacionUrlRaw: string | null = null;
+  autorizacionSafeUrl: SafeResourceUrl | null = null;
+  autorizacionEsPDF = false;
+  autorizacionEsImagen = false;
+  autorizacionExt = '';
   centrosCosto: { [key: string]: string } = {
-  '22368': 'CONTRATO SUMINISTRO DE HORMIGONES DET',
-  '20915': 'CONTRATO SUMINISTRO DE HORMIGONES DAND',
+  '27483': 'CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA',
+  'PPCALAMA': 'PLANTA PREDOSIFICADO CALAMA',
+  '20915': 'CONTRATO 20915 SUM. HORMIGON DAND',
+  '23302-CARPETAS': 'CONTRATO 23302 CARPETAS',
+  '23302-AMPL': 'CONTRATO 23302 AMPLIACION',
+  'OFANDES': 'OFICINA LOS ANDES',
+  'CASAMATRIZ': 'CASA MATRIZ',
+  'RRHH': 'RRHH',
+  'FINANZAS': 'FINANZAS',
+  'SUST': 'SUSTENTABILIDAD',
+  'SOPTI': 'SOPORTE TI',
+  'STRIPCENTER': 'STRIP CENTER',
+  'PLANIF': 'PLANIFICACION',
+  'PPSB': 'PLANTA PREDOSIFICADO SAN BERNARDO',
+  'PHUSB': 'PLANTA HORMIGON URB.SAN BERNARDO',
+  'ALTOMAIPO': 'ALTO MAIPO',
+  'PHURAN': 'PLANTA HORMIGON URB. RANCAGUA',
+  'PARAN': 'PLANTA ARIDOS RANCAGUA',
+  'PASB': 'PLANTA ARIDOS SAN BERNARDO',
+  '22368': 'CONTRATO 22368 SUM HORMIGON DET',
+  '28662': 'CONTRATO 28662 CARPETAS',
+  '29207': 'CONTRATO 29207 MINERIA',
+  'HROMIGONES DET': 'CONTRATO SUMINISTRO DE HORMIGONES DET',
+  'HORMIGONES DAMD': 'CONTRATO SUMINISTRO DE HORMIGONES DAND',
   '23302': 'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND',
-  '28662': 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
+  'DET': 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
   'SANJOAQUIN': 'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
   'URBANOS': 'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
   'CS': 'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
   'PREDOSIFICADO': 'CONTRATO HORMIGONES Y PREDOSIFICADO',
   'CANECHE': 'CONTRATO TALLER CANECHE',
-  'CASAMATRIZ': 'CONTRATO CASA MATRIZ',
-  'ALTOMAIPO': 'CONTRATO ALTO MAIPO',
   'INFRAESTRUCTURA': 'CONTRATO INFRAESTRUCTURA DET',
   'CHUQUICAMATA': 'CONTRATO CHUQUICAMATA',
   'CARPETASDET':'CONTRATO CARPETAS DET',
-  '10-10-12': 'ZEMAQ',
-  '20-10-01': 'BENÍTEZ',
-  '30-10-01': 'CASA MATRIZ',
-  '30-10-07': 'PREDOSIFICADO - SAN BERNARDO',
-  '30-10-08': 'ÁRIDOS SAN JOAQUÍN',
-  '30-10-42': 'RAUL ALFARO',
-  '30-10-43-A': 'DET NUEVO',
-  '30-10-43-B': 'TALLER CANECHE',
-  '30-10-43-C': 'DET NUEVO',
-  '30-10-43-D': 'ESTODCADA 8',
-  '30-10-44': 'DET PLANTA COLON',
-  '30-10-45': 'DET PLANTA CALETONES',
-  '30-10-46': 'DET AGUA DULCE',
-  '30-10-48': 'DET ESMERALDA',
-  '30-10-49': 'DET NP NNM',
-  '30-10-50': 'DET ACH NNM',
-  '30-10-52': 'LUIS CABRERA',
-  '30-10-53': 'URBANO SAN BERNARDO',
-  '30-10-54': 'URBANO OLIVAR',
-  '30-10-55': 'DET TENIENTE',
-  '30-10-57': 'CALAMA',
-  '30-10-58': 'GASTÓN CASTILLO',
-  '30-10-59': 'INFRAESTRUCTURA MINERA',
-  '30-10-60': 'CALAMA',
-  '30-10-61': 'ALTO MAIPO',
-};
+  '30-10-11':'GCIA. SERV. OBRA PAVIMENTACION RT CONTRATO FAM'
+  };
+
 
   constructor(
     private firestore: AngularFirestore,
@@ -108,7 +112,37 @@ cargarSolpedSolicitadas() {
       .sort((a, b) => (a.numero_solpe || 0) - (b.numero_solpe || 0));
   });
 }
+private setAutorizacionDesdeSolped(solped: any) {
+  this.autorizacionNombre = solped?.autorizacion_nombre || null;
+  this.autorizacionUrlRaw = solped?.autorizacion_url || null;
 
+  // reset
+  this.autorizacionEsPDF = false;
+  this.autorizacionEsImagen = false;
+  this.autorizacionSafeUrl = null;
+  this.autorizacionExt = '';
+
+  if (!this.autorizacionUrlRaw) return;
+
+  // Detectar extensión
+  const nombre = (this.autorizacionNombre || '').toLowerCase();
+  const urlLower = this.autorizacionUrlRaw.toLowerCase();
+  const guess = (nombre || urlLower);
+  this.autorizacionExt = guess.split('.').pop() || '';
+
+  this.autorizacionEsPDF = guess.endsWith('.pdf');
+  this.autorizacionEsImagen = /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(guess);
+
+  // Para previsualización segura
+  if (this.autorizacionEsPDF || this.autorizacionEsImagen) {
+    // Para PDF, puedes añadir #toolbar=0 si quieres ocultar la barra
+    const urlParaIframe = this.autorizacionEsPDF
+      ? `${this.autorizacionUrlRaw}#toolbar=0`
+      : this.autorizacionUrlRaw;
+
+    this.autorizacionSafeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(urlParaIframe);
+  }
+}
 
 async obtenerNombreUsuarioYFiltrarSolped() {
   const user = await this.auth.currentUser;
@@ -143,17 +177,34 @@ async onArchivoSeleccionado(event: any) {
 }
 
 formatearPrecio(event: any) {
-  const rawValue = event.detail.value.replace(/\D/g, '');
-  const numero = Number(rawValue);
-  this.precioTotalConIVA = numero;
+  // 1) Parsear solo números del input (ion-input entrega event.detail.value)
+  const input = (event?.detail?.value ?? '').toString();
+  const soloNumeros = input.replace(/\D/g, '');
+  const valor = soloNumeros ? parseInt(soloNumeros, 10) : 0;
 
-  this.precioFormateado = numero.toLocaleString('es-CL', {
+  // 2) Guardar el valor crudo
+  this.precioTotalConIVA = valor;
+
+  // 3) Formato visual según moneda seleccionada
+  const moneda = this.monedaSeleccionada || 'CLP';
+  this.precioFormateado = valor.toLocaleString('es-CL', {
     style: 'currency',
-    currency: this.moneda || 'CLP', // ✅ usar moneda seleccionada
+    currency: moneda,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   });
 
+  // 4) (Opcional) Si quieres tener el total convertido a CLP aquí mismo:
+  //    *No* es obligatorio si tu calcularAprobador ya convierte internamente.
+  let totalEnCLP = valor;
+  if (this.monedaSeleccionada === 'USD') totalEnCLP = valor * this.tipoCambioUSD;
+  else if (this.monedaSeleccionada === 'EUR') totalEnCLP = valor * this.tipoCambioEUR;
+  else if (this.monedaSeleccionada === 'UF' && (this as any).tipoCambioUF) {
+    totalEnCLP = valor * (this as any).tipoCambioUF; // solo si definiste tipoCambioUF
+  }
+  // this.totalConvertidoCLP = totalEnCLP; // <- si quieres guardarlo
+
+  // 5) Recalcular aprobador con el nuevo valor/moneda
   this.calcularAprobador();
 }
 
@@ -162,36 +213,45 @@ formatearPrecio(event: any) {
 calcularAprobador() {
   let total = this.precioTotalConIVA;
 
-  // Convertir a CLP si la moneda es distinta
-  if (this.monedaSeleccionada === 'USD') {
-    total = total * this.tipoCambioUSD;
-  } else if (this.monedaSeleccionada === 'EUR') {
-    total = total * this.tipoCambioEUR;
-  }
+  if (this.moneda === 'USD') total = total * this.tipoCambioUSD;
+  else if (this.moneda === 'EUR') total = total * this.tipoCambioEUR;
 
-  const empresa = this.solpedSeleccionada?.empresa?.toLowerCase() || '';
+  // 👇 si NO usa SOLPED, fuerza 'Xtreme Servicio'
+  const empresaBase = this.usarSolped
+    ? (this.solpedSeleccionada?.empresa || this.empresaPorDefecto)
+    : this.empresaPorDefecto;
 
-  if (empresa.includes('xtreme mining')) {
-    if (total <= 1000000) {
-      this.aprobadorSugerido = 'Felipe / Ricardo/ Guillermo Manzor';
-          } else if (total <= 2500000) {
-      this.aprobadorSugerido = 'Juan Cubillos';
-    } else {
-      this.aprobadorSugerido = 'Alejandro Candia';
-    }
+  const empresa = (empresaBase || '').toLowerCase();
+
+  if (empresa === 'xtreme mining') {
+    if (total <= 1000000) this.aprobadorSugerido = 'Felipe Gonzalez / Ricardo Santibañez / Guillermo Manzor';
+    else if (total <= 2000000) this.aprobadorSugerido = 'Patricio Muñoz';
+    else if (total <= 5000000) this.aprobadorSugerido = 'Juan Cubillos';
+    else this.aprobadorSugerido = 'Alejandro Candia';
+  } else if (empresa === 'xtreme servicio') {
+    if (total <= 250000) this.aprobadorSugerido = 'Guillermo Manzor';
+    else if (total <= 5000000) this.aprobadorSugerido = 'Juan Cubillos';
+    else this.aprobadorSugerido = 'Alejandro Candia';
   } else {
-    if (total <= 250000) {
-      this.aprobadorSugerido = 'Guillermo Manzor';
-    } else if (total <= 2500000) {
-      this.aprobadorSugerido = 'Juan Cubillos';
-    } else {
-      this.aprobadorSugerido = 'Alejandro Candia';
-    }
+    this.aprobadorSugerido = 'Empresa no reconocida';
   }
 }
 
-
-
+onToggleUsarSolped() {
+  if (!this.usarSolped) {
+    this.solpedSeleccionada = null;
+    this.solpedSeleccionadaId = '';
+    this.itemsSolped = [];
+    // limpiar autorización
+    this.autorizacionNombre = null;
+    this.autorizacionUrlRaw = null;
+    this.autorizacionSafeUrl = null;
+    this.autorizacionEsPDF = false;
+    this.autorizacionEsImagen = false;
+    this.autorizacionExt = '';
+  }
+  this.calcularAprobador();
+}
 
 
 
@@ -201,18 +261,31 @@ eliminarArchivo(index: number) {
 }
 
 onChangeSolped() {
-  if (!this.solpedSeleccionadaId) return;
+  if (!this.solpedSeleccionadaId) {
+    // limpiar si deseleccionan
+    this.solpedSeleccionada = null;
+    this.itemsSolped = [];
+    this.autorizacionNombre = null;
+    this.autorizacionUrlRaw = null;
+    this.autorizacionSafeUrl = null;
+    this.autorizacionEsPDF = false;
+    this.autorizacionEsImagen = false;
+    this.autorizacionExt = '';
+    return;
+  }
 
   this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).get().subscribe(doc => {
     const data: any = doc.data();
     this.solpedSeleccionada = data;
 
-    this.centroCosto = data.numero_contrato || '';
+    // 👇 mover aquí
+    this.setAutorizacionDesdeSolped(this.solpedSeleccionada);
 
+    this.centroCosto = data.numero_contrato || '';
     const todosItems = data.items || [];
 
     this.itemsSolped = todosItems
-      .filter((item: any) => item.estado !== 'completado') // ✅ FILTRAR ítems completados
+      .filter((item: any) => item.estado !== 'completado')
       .map((item: any) => ({
         ...item,
         cantidad_cotizada: item.cantidad_cotizada || 0,
@@ -221,6 +294,7 @@ onChangeSolped() {
       }));
   });
 }
+
 async onMultipleFilesSelected(event: any) {
   const archivosSeleccionados: File[] = Array.from(event.target.files);
 
@@ -256,124 +330,148 @@ async enviarOC() {
   if (this.tipoCompra === 'patente' && !this.destinoCompra.trim()) return this.mostrarToast('Debes ingresar la patente.', 'warning');
   if (!this.precioTotalConIVA || this.precioTotalConIVA <= 0) return this.mostrarToast('Debes ingresar un precio válido.', 'warning');
   if (!this.moneda) return this.mostrarToast('Debes seleccionar una moneda.', 'warning');
+
+  // 👇 Solo exigimos SOLPED si el checkbox está marcado
+  if (this.usarSolped && !this.solpedSeleccionadaId) {
+    return this.mostrarToast('Selecciona una SOLPED o desactiva la opción.', 'warning');
+  }
+
   if (this.archivos.length === 0) return this.mostrarToast('Debes subir al menos un archivo.', 'warning');
-  if (this.usarSolped && !this.solpedSeleccionadaId) return this.mostrarToast('Selecciona una SOLPED o desactiva la opción.', 'warning');
 
   this.enviando = true;
 
-  const user = await this.auth.currentUser;
-  const uid = user?.uid;
-  let usuario = 'Desconocido';
+  try {
+    // 👤 Usuario actual
+    const user = await this.auth.currentUser;
+    const uid = user?.uid;
+    let usuario = 'Desconocido';
 
-  if (uid) {
-    const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
-    if (userDoc?.exists) {
-      const userData = userDoc.data() as any;
-      usuario = userData?.fullName || usuario;
-    }
-  }
-
-  const fecha = new Date().toISOString();
-  const id = await this.obtenerNuevoId();
-  const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
-
-  const estatusInicial = 'Revisión Guillermo';
-
-  const historialEntry = {
-    usuario,
-    estatus: estatusInicial,
-    fecha
-  };
-
-  const dataToSave: any = {
-    id,
-    centroCosto: this.centroCosto,
-    centroCostoNombre: centroNombre,
-    tipoCompra: this.tipoCompra,
-    destinoCompra: this.tipoCompra === 'patente' ? this.destinoCompra : '',
-    estatus: estatusInicial,
-    fechaSubida: firebase.firestore.Timestamp.fromDate(new Date()),
-    historial: [historialEntry],
-    responsable: usuario,
-    comentario: this.comentario || '',
-    numero_contrato: this.centroCosto,
-    nombre_centro_costo: centroNombre,
-    moneda: this.moneda,
-    precioTotalConIVA: this.precioTotalConIVA,
-    aprobadorSugerido: this.aprobadorSugerido,
-    archivosStorage: []
-  };
-
-  // 🔄 Subir archivos
-  const archivosSubidos: any[] = [];
-  const storage = getStorage();
-
-  for (const archivo of this.archivos) {
-    if (!archivo || archivo.size < 100) {
-      console.warn(`⚠️ Archivo inválido o vacío: ${archivo?.name}`);
-      this.mostrarToast(`El archivo ${archivo?.name} parece estar vacío.`, 'warning');
-      continue;
+    if (uid) {
+      const userDoc = await this.firestore.collection('Usuarios').doc(uid).get().toPromise();
+      if (userDoc?.exists) {
+        const userData = userDoc.data() as any;
+        usuario = userData?.fullName || usuario;
+      }
     }
 
-    const nombre = archivo.name || 'archivo_sin_nombre';
-    const tipoDetectado = archivo.tipo || archivo.type || 'application/octet-stream';
-    const path = `ordenes_oc/${id}/${nombre}`;
-    const storageRef = ref(storage, path);
+    const fecha = new Date().toISOString();
+    const id = await this.obtenerNuevoId();
+    const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
 
-    try {
-      const snapshot = await uploadBytes(storageRef, archivo);
-      const downloadURL = await getDownloadURL(snapshot.ref);
+    // 📌 Empresa final (de SOLPED o por defecto) — SIEMPRE definida
+    const empresaElegida = (this.usarSolped && this.solpedSeleccionada?.empresa)
+      ? this.solpedSeleccionada.empresa
+      : this.empresaPorDefecto; // <-- 'Xtreme Servicio' por defecto
 
-      archivosSubidos.push({
-        nombre,
-        tipo: tipoDetectado,
-        url: downloadURL
-      });
-    } catch (error) {
-      console.error('❌ Error al subir archivo a Storage:', error);
-      this.mostrarToast('Error al subir archivo a Storage.', 'danger');
-      this.enviando = false;
-      return;
+    // 🔁 Recalcular aprobador en base a la empresa y monto/moneda actuales
+    // Si tu calcularAprobador usa el estado del checkbox, basta con llamarla:
+    this.calcularAprobador();
+    let aprobadorSugerido = this.aprobadorSugerido;
+
+    // 🔹 Lógica especial para Felipe y Ricardo
+    let estatusInicial = 'Revisión Guillermo';
+    if (usuario === 'Felipe Gonzalez' || usuario === 'Ricardo Santibañez') {
+      if (this.precioTotalConIVA <= 1000000) {
+        estatusInicial = 'Aprobado';
+        aprobadorSugerido = usuario;
+      } else if (this.precioTotalConIVA <= 2000000) {
+        estatusInicial = 'Preaprobado';
+        aprobadorSugerido = 'Patricio Muñoz';
+      } else {
+        estatusInicial = 'Escalado César Palma';
+        aprobadorSugerido = 'César Palma';
+      }
     }
-  }
 
-  dataToSave.archivosStorage = archivosSubidos;
+    const historialEntry = { usuario, estatus: estatusInicial, fecha };
 
-  // 🔄 Si hay SOLPED asociada
-  if (this.usarSolped && this.solpedSeleccionadaId) {
-    dataToSave.solpedId = this.solpedSeleccionadaId;
-    dataToSave.numero_solped = this.solpedSeleccionada?.numero_solpe || 0;
-    dataToSave.empresa = this.solpedSeleccionada?.empresa || 'No definida';
-    dataToSave.tipo_solped = this.solpedSeleccionada?.tipo_solped || 'No definido';
+    // 🧾 Objeto a guardar
+    const dataToSave: any = {
+      id,
+      centroCosto: this.centroCosto,
+      centroCostoNombre: centroNombre,
+      tipoCompra: this.tipoCompra,
+      destinoCompra: this.tipoCompra === 'patente' ? this.destinoCompra : '',
+      estatus: estatusInicial,
+      fechaSubida: firebase.firestore.Timestamp.fromDate(new Date()),
+      historial: [historialEntry],
+      responsable: usuario,
+      comentario: this.comentario || '',
+      numero_contrato: this.centroCosto,
+      nombre_centro_costo: centroNombre,
+      moneda: this.moneda, // usa la misma variable que usas en el form
+      precioTotalConIVA: this.precioTotalConIVA,
+      aprobadorSugerido,
+      empresa: empresaElegida,  // 👈 SIEMPRE guarda la empresa correcta
+      archivosStorage: []
+    };
 
-    const itemsFinal = this.itemsSolped.map((item) => {
-      const cantidadTotal = item.cantidad;
-      const cantidadAnterior = item.cantidad_cotizada || 0;
-      const cantidadNueva = Number(item.cantidad_para_cotizar || 0);
-      const cantidadActualizada = cantidadAnterior + cantidadNueva;
+    // ☁️ Subir archivos a Storage
+    const archivosSubidos: any[] = [];
+    const storage = getStorage();
 
-      let nuevoEstado = 'pendiente';
-      if (cantidadActualizada >= cantidadTotal) {
-        nuevoEstado = 'revision'; // ✅ lógica actualizada
-      } else if (cantidadActualizada > 0) {
-        nuevoEstado = 'parcial';
+    for (const archivo of this.archivos) {
+      if (!archivo || archivo.size < 100) {
+        console.warn(`⚠️ Archivo inválido o vacío: ${archivo?.name}`);
+        this.mostrarToast(`El archivo ${archivo?.name} parece estar vacío.`, 'warning');
+        continue;
       }
 
-      return {
-        ...item,
-        cantidad_cotizada: cantidadActualizada,
-        cantidad_para_cotizar: cantidadNueva,
-        estado: nuevoEstado
-      };
-    });
+      const nombre = archivo.name || 'archivo_sin_nombre';
+      const tipoDetectado = archivo.tipo || archivo.type || 'application/octet-stream';
+      const path = `ordenes_oc/${id}/${nombre}`;
+      const storageRef = ref(storage, path);
 
-    dataToSave.items = itemsFinal;
-  }
+      const snapshot = await uploadBytes(storageRef, archivo);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      archivosSubidos.push({ nombre, tipo: tipoDetectado, url: downloadURL });
+    }
 
-  try {
+    dataToSave.archivosStorage = archivosSubidos;
+
+    // 🔄 Si hay SOLPED asociada (checkbox marcado)
+    if (this.usarSolped && this.solpedSeleccionadaId) {
+      dataToSave.solpedId = this.solpedSeleccionadaId;
+      dataToSave.numero_solped = this.solpedSeleccionada?.numero_solpe || 0;
+      dataToSave.tipo_solped = this.solpedSeleccionada?.tipo_solped || 'No definido';
+
+      // Items a guardar dentro de la OC (resumen de lo cotizado)
+      const itemsFinal = this.itemsSolped.map((item) => {
+        const cantidadTotal = item.cantidad;
+        const cantidadAnterior = item.cantidad_cotizada || 0;
+        const cantidadNueva = Number(item.cantidad_para_cotizar || 0);
+        const cantidadActualizada = cantidadAnterior + cantidadNueva;
+
+        let nuevoEstado = 'pendiente';
+        let estadoCotizacion = 'ninguno';
+
+        if (cantidadActualizada >= cantidadTotal) {
+          nuevoEstado = 'revision';
+          estadoCotizacion = 'completo';
+        } else if (cantidadNueva > 0) {
+          nuevoEstado = 'parcial';
+          estadoCotizacion = 'parcial';
+        }
+
+        return {
+          ...item,
+          cantidad_cotizada: cantidadActualizada,
+          cantidad_para_cotizar: cantidadNueva,
+          estado: nuevoEstado,
+          estado_cotizacion: estadoCotizacion
+        };
+      });
+
+      dataToSave.items = itemsFinal;
+    } else {
+      // 👇 Sin SOLPED asociada
+      dataToSave.tipo_solped = 'Sin SOLPED';
+    }
+
+    // 📝 Guardar OC
     await this.firestore.collection('ordenes_oc').add(dataToSave);
 
-    // 🔄 Actualizar estado de la SOLPED
+    // 🔁 Actualizar la SOLPED solo si hay asociación
     if (this.usarSolped && this.solpedSeleccionadaId) {
       const docSnapshot = await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).get().toPromise();
       if (docSnapshot?.exists) {
@@ -391,23 +489,26 @@ async enviarOC() {
             const cantidadFinal = cantidadAnterior + cantidadNueva;
 
             let nuevoEstado = 'pendiente';
+            let estadoCotizacion = 'ninguno';
+
             if (cantidadFinal >= cantidadTotal) {
-              nuevoEstado = 'revision'; // ✅ lógica actualizada
-            } else if (cantidadFinal > 0) {
+              nuevoEstado = 'revision';
+              estadoCotizacion = 'completo';
+            } else if (cantidadNueva > 0) {
               nuevoEstado = 'parcial';
+              estadoCotizacion = 'parcial';
             }
 
             return {
               ...item,
               cantidad_cotizada: cantidadFinal,
-              estado: nuevoEstado
+              estado: nuevoEstado,
+              estado_cotizacion: estadoCotizacion
             };
           }
-
           return item;
         });
 
-        // Siempre dejar estatus de SOLPED en "Cotizando" (no se marca Completado aquí)
         await this.firestore.collection('solpes').doc(this.solpedSeleccionadaId).update({
           items: itemsActualizados,
           estatus: 'Cotizando'
@@ -424,7 +525,7 @@ async enviarOC() {
     this.archivos = [];
     this.comentario = '';
     this.itemsSeleccionados.clear();
-    this.usarSolped = true;
+    this.usarSolped = true; // si prefieres conservar el estado del checkbox, elimina esta línea
     this.solpedSeleccionadaId = '';
     this.itemsSolped = [];
     this.precioTotalConIVA = 0;
@@ -443,6 +544,7 @@ async enviarOC() {
     this.enviando = false;
   }
 }
+
 
 
 

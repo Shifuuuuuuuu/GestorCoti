@@ -16,13 +16,23 @@
     </div>
     <div
       class="menu-item"
-      *ngIf="nombreUsuario === 'Guillermo Manzor'"
+      *ngIf="nombreUsuario === 'Guillermo Manzor' || nombreUsuario === 'Felipe Gonzalez' || nombreUsuario === 'Ricardo Santibañez' "
       (click)="navigateTo('validar-oc')"
     >
       <ion-icon name="checkmark-done-outline" class="menu-icon"></ion-icon>
       <p>Aprobador de Cotización</p>
       <span>Revisa y valida las cotizaciones</span>
     </div>
+    <div
+      class="menu-item"
+      *ngIf="nombreUsuario === 'Felipe Gonzalez' || nombreUsuario === 'Ricardo Santibañez'"
+      (click)="navigateTo('solpe')"
+    >
+      <ion-icon name="file-tray-stacked-outline" class="menu-icon"></ion-icon>
+      <p>Generar SOLPED</p>
+      <span>Crea una nueva SOLPED</span>
+    </div>
+
     <div class="menu-item" (click)="navigateTo('gestor-oc')">
       <ion-icon name="briefcase-outline" class="menu-icon"></ion-icon>
       <p>Gestor de Cotización</p>

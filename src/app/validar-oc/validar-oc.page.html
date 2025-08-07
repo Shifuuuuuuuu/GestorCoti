@@ -96,20 +96,32 @@
                 </ion-item>
               </ion-list>
 
-              <!-- Ítems -->
+              <!-- Ítems con estado de cotización -->
               <ion-list *ngIf="oc.detalleSolped?.items?.length > 0">
-                <ion-item *ngFor="let item of oc.detalleSolped.items" [ngClass]="{ 'item-cotizado': item.estaCotizado }">
+                <ion-item *ngFor="let item of oc.detalleSolped.items">
                   <ion-label class="ion-text-wrap">
                     <p><strong>🧾 Código:</strong> {{ item.item }}</p>
                     <p><strong>📝 Descripción:</strong> {{ item.descripcion }}</p>
-                    <p><strong>🔢 Cantidad:</strong> {{ item.cantidad }}</p>
-                    <p [style.color]="item.estaCotizado ? 'green' : 'red'" style="font-weight: bold;">
-                      {{ item.estaCotizado ? '✔ Cotizado' : '✖ No cotizado' }}
+                    <p><strong>🔢 Cantidad Total:</strong> {{ item.cantidad }}</p>
+                    <p>
+                      <strong>📌 Estado de Cotización:</strong>
+                      <ion-badge [color]="getColorEstadoCotizacion(item.estadoCotizacion)">
+                        {{
+                          item.estadoCotizacion === 'completo' ? '✅ Cotizando' :
+                          item.estadoCotizacion === 'parcial' ? '🟡 Cotizando parcial' : '❌ No cotizado'
+                        }}
+                      </ion-badge>
                     </p>
                   </ion-label>
                   <ion-icon
-                    [name]="item.estaCotizado ? 'checkmark-circle-outline' : 'close-circle-outline'"
-                    [color]="item.estaCotizado ? 'success' : 'danger'"
+                    [name]="
+                      item.estadoCotizacion === 'completo'
+                        ? 'checkmark-circle-outline'
+                        : item.estadoCotizacion === 'parcial'
+                          ? 'remove-circle-outline'
+                          : 'close-circle-outline'
+                    "
+                    [color]="getColorEstadoCotizacion(item.estadoCotizacion)"
                     slot="end"
                     style="font-size: 24px;">
                   </ion-icon>
@@ -172,26 +184,6 @@
               </div>
             </ion-card-content>
           </ion-card>
-        <!-- ÍTEMS DE LA SOLPED -->
-        <ion-card *ngIf="oc.itemsEvaluados?.length > 0" class="ion-margin-top">
-          <ion-card-header>
-            <ion-card-title>📦 Ítems Asociados</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list>
-              <ion-item *ngFor="let item of oc.itemsEvaluados">
-                <ion-label class="ion-text-wrap">
-                  <h3>{{ item.descripcion }}</h3>
-                  <p>Cantidad: {{ item.cantidad }} - Unidad: {{ item.unidad }}</p>
-                </ion-label>
-                <ion-badge [color]="getColorByEstado(item.estado)" slot="end" class="ion-padding-horizontal">
-                  {{ item.estado }}
-                </ion-badge>
-              </ion-item>
-            </ion-list>
-          </ion-card-content>
-        </ion-card>
-
         <!-- Comentario general -->
         <ion-item lines="inset" class="ion-margin-top">
           <ion-label position="floating">Comentario</ion-label>
@@ -199,11 +191,14 @@
         </ion-item>
 
         <ion-row class="ion-justify-content-between ion-margin-top" *ngIf="oc.estatus !== 'Aprobado' && oc.estatus !== 'Rechazado'">
-          <ion-col size="6">
+          <ion-col size="4">
             <ion-button expand="block" color="success" shape="block" (click)="aprobarOC(oc)">Aprobar</ion-button>
           </ion-col>
-          <ion-col size="6">
+          <ion-col size="4">
             <ion-button expand="block" color="danger" shape="block" (click)="rechazarOC(oc)">Rechazar</ion-button>
+          </ion-col>
+          <ion-col size="4">
+            <ion-button expand="block" color="warning" shape="block" (click)="solicitarAclaracion(oc)">Solicitar Aclaración</ion-button>
           </ion-col>
         </ion-row>
       </ion-card-content>

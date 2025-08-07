@@ -186,10 +186,33 @@
 
         <ion-col size="12" size-md="6">
           <ion-item>
-            <ion-label position="stacked">Centro de costo</ion-label>
-            <ion-select [(ngModel)]="filtroContrato" interface="popover" multiple="true">
-              <ion-select-option value="22368">CONTRATO SUMINISTRO DE HORMIGONES DET</ion-select-option>
-              <ion-select-option value="20915">CONTRATO SUMINISTRO DE HORMIGONES DAND</ion-select-option>
+            <ion-label position="floating">Centro de costo</ion-label>
+            <ion-select [(ngModel)]="filtroContrato" multiple="true">
+              <ion-select-option value="27483">CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA</ion-select-option>
+              <ion-select-option value="PPCALAMA">PLANTA PREDOSIFICADO CALAMA</ion-select-option>
+              <ion-select-option value="20915">CONTRATO 20915 SUM. HORMIGON DAND</ion-select-option>
+              <ion-select-option value="23302-CARPETAS">CONTRATO 23302 CARPETAS</ion-select-option>
+              <ion-select-option value="23302-AMPL">CONTRATO 23302 AMPLIACION</ion-select-option>
+              <ion-select-option value="OFANDES">OFICINA LOS ANDES</ion-select-option>
+              <ion-select-option value="CASAMATRIZ">CASA MATRIZ</ion-select-option>
+              <ion-select-option value="RRHH">RRHH</ion-select-option>
+              <ion-select-option value="FINANZAS">FINANZAS</ion-select-option>
+              <ion-select-option value="SUST">SUSTENTABILIDAD</ion-select-option>
+              <ion-select-option value="SOPTI">SOPORTE TI</ion-select-option>
+              <ion-select-option value="STRIPCENTER">STRIP CENTER</ion-select-option>
+              <ion-select-option value="PLANIF">PLANIFICACION</ion-select-option>
+              <ion-select-option value="PPSB">PLANTA PREDOSIFICADO SAN BERNARDO</ion-select-option>
+              <ion-select-option value="PHUSB">PLANTA HORMIGON URB.SAN BERNARDO</ion-select-option>
+              <ion-select-option value="ALTOMAIPO">ALTO MAIPO</ion-select-option>
+              <ion-select-option value="PHURAN">PLANTA HORMIGON URB. RANCAGUA</ion-select-option>
+              <ion-select-option value="PARAN">PLANTA ARIDOS RANCAGUA</ion-select-option>
+              <ion-select-option value="PASB">PLANTA ARIDOS SAN BERNARDO</ion-select-option>
+              <ion-select-option value="22368">CONTRATO 22368 SUM HORMIGON DET</ion-select-option>
+              <ion-select-option value="28662">CONTRATO 28662 CARPETAS</ion-select-option>
+              <ion-select-option value="29207">CONTRATO 29207 MINERIA</ion-select-option>
+              <ion-select-option value="INFRA">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
+              <ion-select-option value="HORMIGONES DET">CONTRATO SUMINISTRO DE HORMIGONES DET</ion-select-option>
+              <ion-select-option value="HORMIGONES DAND">CONTRATO SUMINISTRO DE HORMIGONES DAND</ion-select-option>
               <ion-select-option value="23302">CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND</ion-select-option>
               <ion-select-option value="28662">CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET</ion-select-option>
               <ion-select-option value="SANJOAQUIN">SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN</ion-select-option>
@@ -197,9 +220,6 @@
               <ion-select-option value="CS">CONTRATO DE SUMINISTRO DE HORMIGONES CS</ion-select-option>
               <ion-select-option value="PREDOSIFICADO">CONTRATO HORMIGONES Y PREDOSIFICADO</ion-select-option>
               <ion-select-option value="CANECHE">CONTRATO TALLER CANECHE</ion-select-option>
-              <ion-select-option value="CASAMATRIZ">CONTRATO CASA MATRIZ</ion-select-option>
-              <ion-select-option value="ALTOMAIPO">CONTRATO ALTO MAIPO</ion-select-option>
-              <ion-select-option value="INFRAESTRUCTURA">CONTRATO INFRAESTRUCTURA DET</ion-select-option>
               <ion-select-option value="CHUQUICAMATA">CONTRATO CHUQUICAMATA</ion-select-option>
               <ion-select-option value="CARPETASDET">CONTRATO CARPETAS DET</ion-select-option>
             </ion-select>
@@ -269,7 +289,7 @@
           <ion-label>
             <h2 color="primary">📄 SOLPED #{{ solpe.numero_solpe }}</h2>
             <p style="font-size: 14px;">
-              Fecha: {{ solpe.fecha }} | Contrato: {{ solpe.numero_contrato }} {{ solpe.nombre_centro_costo }} |
+              Fecha: {{ solpe.fecha }} | Contrato:{{ solpe.nombre_centro_costo }} |
               Tipo: {{ solpe.tipo_solped }} | Nombre: {{ solpe.nombre_solped }} | Usuario: {{ solpe.usuario }} | Empresa: {{ solpe.empresa }}
             </p>
           </ion-label>

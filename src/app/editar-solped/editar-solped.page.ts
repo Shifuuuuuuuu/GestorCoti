@@ -667,52 +667,112 @@ crearArchivoUrl(base64: string, tipo: string): string {
 
     return new Blob(byteArrays, { type: contentType });
   }
-  async cambiarEstatus(solpe: any) {
-    const alert = await this.alertController.create({
-      header: 'Cambiar Estado de la SOLPED',
-      inputs: [
-        { name: 'estatus', type: 'radio', label: 'OC enviada a proveedor', value: 'OC enviada a proveedor' },
-        { name: 'estatus', type: 'radio', label: 'Por importación', value: 'Por importación' },
-      ],
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        {
-          text: 'Siguiente',
-          handler: async (estatusSeleccionado: string) => {
-            if (!estatusSeleccionado) return;
-            const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
-            try {
-              await solpeRef.update({ estatus: estatusSeleccionado });
-              let usuarioNombre = 'Desconocido';
-              const afUser = await this.afAuth.currentUser;
-              if (afUser?.uid) {
-                const userSnap = await this.firestore
-                  .collection('Usuarios')
-                  .doc(afUser.uid)
-                  .get()
-                  .toPromise();
-                if (userSnap?.exists) {
-                  const data = userSnap.data() as any;
-                  usuarioNombre = data.fullName ?? usuarioNombre;
-                }
+async cambiarEstatus(solpe: any) {
+  const alert = await this.alertController.create({
+    header: 'Cambiar Estado de la SOLPED',
+    inputs: [
+      { name: 'estatus', type: 'radio', label: 'OC enviada a proveedor', value: 'OC enviada a proveedor' },
+      { name: 'estatus', type: 'radio', label: 'Por importación', value: 'Por importación' },
+      { name: 'estatus', type: 'radio', label: 'Completado', value: 'Completado' }, // 👈 NUEVO
+    ],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Siguiente',
+        handler: async (estatusSeleccionado: string) => {
+          if (!estatusSeleccionado) return;
+
+          if (estatusSeleccionado === 'Completado') {
+            // 👇 Si es "Completado", usa la rutina especial que también actualiza los ítems
+            await this.completarSolpe(solpe);
+            return;
+          }
+
+          // 🔹 Comportamiento original para otros estados
+          const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
+          try {
+            await solpeRef.update({ estatus: estatusSeleccionado });
+
+            let usuarioNombre = 'Desconocido';
+            const afUser = await this.afAuth.currentUser;
+            if (afUser?.uid) {
+              const userSnap = await this.firestore
+                .collection('Usuarios')
+                .doc(afUser.uid)
+                .get()
+                .toPromise();
+              if (userSnap?.exists) {
+                const data = userSnap.data() as any;
+                usuarioNombre = data.fullName ?? usuarioNombre;
               }
-              await solpeRef.collection('historialEstados').add({
-                fecha: new Date(),
-                estatus: estatusSeleccionado,
-                usuario: usuarioNombre
-              });
-              solpe.estatus = estatusSeleccionado;
-              this.mostrarToast(`SOLPED marcada como "${estatusSeleccionado}"`, 'success');
-            } catch (err) {
-              console.error(err);
-              this.mostrarToast('Error al actualizar estatus', 'danger');
             }
+
+            await solpeRef.collection('historialEstados').add({
+              fecha: new Date(),
+              estatus: estatusSeleccionado,
+              usuario: usuarioNombre
+            });
+
+            solpe.estatus = estatusSeleccionado;
+            this.mostrarToast(`SOLPED marcada como "${estatusSeleccionado}"`, 'success');
+          } catch (err) {
+            console.error(err);
+            this.mostrarToast('Error al actualizar estatus', 'danger');
           }
         }
-      ]
+      }
+    ]
+  });
+
+  await alert.present();
+}
+
+private async completarSolpe(solpe: any) {
+  const solpeRef = this.firestore.collection('solpes').doc(solpe.id);
+
+  try {
+    // Obtener nombre del usuario que ejecuta el cambio
+    let usuarioNombre = 'Desconocido';
+    const afUser = await this.afAuth.currentUser;
+    if (afUser?.uid) {
+      const userSnap = await this.firestore.collection('Usuarios').doc(afUser.uid).get().toPromise();
+      if (userSnap?.exists) {
+        const data = userSnap.data() as any;
+        usuarioNombre = data?.fullName ?? usuarioNombre;
+      }
+    }
+
+    const itemsActualizados = (solpe.items || []).map((it: any) => ({
+      ...it,
+      estado: 'Completado'
+    }));
+
+
+    await solpeRef.update({
+      estatus: 'Completado',
+      items: itemsActualizados
     });
-    await alert.present();
+
+
+    await solpeRef.collection('historialEstados').add({
+      fecha: new Date(),
+      estatus: 'Completado',
+      usuario: usuarioNombre,
+
+      comentario: 'Se regularizó esta SOLPED y se completaron todos los ítems.'
+    });
+
+
+    solpe.estatus = 'Completado';
+    solpe.items = itemsActualizados;
+
+    // Mensaje al usuario
+    this.mostrarToast('Se regularizó esta SOLPED. Todos los ítems quedaron en "Completado".', 'success');
+  } catch (error) {
+    console.error('Error al completar SOLPED:', error);
+    this.mostrarToast('No se pudo completar la SOLPED.', 'danger');
   }
+}
 
   async mostrarToast(mensaje: string, color: 'success' | 'danger') {
     const toast = await this.toastController.create({

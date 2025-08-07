@@ -44,24 +44,49 @@ export class SolpePage implements OnInit  {
   'María José Ballesteros'
   ];
   loadingEmpresa: boolean = false;
+  esperandoEnvio: boolean = false;
+  contadorEnvio: number = 0;
+  intervaloEnvio: any = null;
 
 
 centrosCosto: { [key: string]: string } = {
-  '22368': 'CONTRATO SUMINISTRO DE HORMIGONES DET',
-  '20915': 'CONTRATO SUMINISTRO DE HORMIGONES DAND',
+  '27483': 'CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA',
+  'PPCALAMA': 'PLANTA PREDOSIFICADO CALAMA',
+  '20915': 'CONTRATO 20915 SUM. HORMIGON DAND',
+  '23302-CARPETAS': 'CONTRATO 23302 CARPETAS',
+  '23302-AMPL': 'CONTRATO 23302 AMPLIACION',
+  'OFANDES': 'OFICINA LOS ANDES',
+  'CASAMATRIZ': 'CASA MATRIZ',
+  'RRHH': 'RRHH',
+  'FINANZAS': 'FINANZAS',
+  'SUST': 'SUSTENTABILIDAD',
+  'SOPTI': 'SOPORTE TI',
+  'STRIPCENTER': 'STRIP CENTER',
+  'PLANIF': 'PLANIFICACION',
+  'PPSB': 'PLANTA PREDOSIFICADO SAN BERNARDO',
+  'PHUSB': 'PLANTA HORMIGON URB.SAN BERNARDO',
+  'ALTOMAIPO': 'ALTO MAIPO',
+  'PHURAN': 'PLANTA HORMIGON URB. RANCAGUA',
+  'PARAN': 'PLANTA ARIDOS RANCAGUA',
+  'PASB': 'PLANTA ARIDOS SAN BERNARDO',
+  '22368': 'CONTRATO 22368 SUM HORMIGON DET',
+  '28662': 'CONTRATO 28662 CARPETAS',
+  '29207': 'CONTRATO 29207 MINERIA',
+  'HROMIGONES DET': 'CONTRATO SUMINISTRO DE HORMIGONES DET',
+  'HORMIGONES DAMD': 'CONTRATO SUMINISTRO DE HORMIGONES DAND',
   '23302': 'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND',
-  '28662': 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
+  'DET': 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
   'SANJOAQUIN': 'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
   'URBANOS': 'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
   'CS': 'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
   'PREDOSIFICADO': 'CONTRATO HORMIGONES Y PREDOSIFICADO',
   'CANECHE': 'CONTRATO TALLER CANECHE',
-  'CASAMATRIZ': 'CONTRATO CASA MATRIZ',
-  'ALTOMAIPO': 'CONTRATO ALTO MAIPO',
   'INFRAESTRUCTURA': 'CONTRATO INFRAESTRUCTURA DET',
   'CHUQUICAMATA': 'CONTRATO CHUQUICAMATA',
   'CARPETASDET':'CONTRATO CARPETAS DET',
+    '30-10-11':'GCIA. SERV. OBRA PAVIMENTACION RT CONTRATO FAM'
 };
+
 
 
 
@@ -247,6 +272,28 @@ async obtenerUltimoNumeroSolpePorEmpresa(empresa: string): Promise<number> {
 async actualizarEmpresa(event: any) {
   const empresaSeleccionada = event.detail.value;
   this.solpe.empresa = empresaSeleccionada;
+  if (empresaSeleccionada === 'Xtreme Mining') {
+    this.usuariosDisponibles = [
+      'Ricardo Santibañez',
+      'Felipe Gonzalez',
+      'Daniela Lizama'
+    ];
+  } else if (empresaSeleccionada === 'Xtreme Servicio') {
+    this.usuariosDisponibles = [
+      'Daniela Lizama',
+      'Luis Orellana',
+      'Guillermo Manzor',
+      'María José Ballesteros'
+    ];
+  }else if (empresaSeleccionada === 'Xtreme Hormigones') {
+    this.usuariosDisponibles = [
+      'Ricardo Santibañez',
+      'Felipe Gonzalez',
+      'Daniela Lizama'
+    ];
+  } else {
+    this.usuariosDisponibles = [];
+  }
 
   // Mostrar el loader
   const loading = await this.loadingCtrl.create({
@@ -269,9 +316,6 @@ async actualizarEmpresa(event: any) {
     await loading.dismiss();
   }
 }
-
-
-
 
 
   ionViewWillEnter() {
@@ -403,15 +447,23 @@ editarItem(index: number) {
   }
 
 async guardarSolpe() {
-  if (this.enviandoSolpe) {
-    this.mostrarToast('Espera antes de enviar otra SOLPED', 'warning');
+  if (this.enviandoSolpe || this.esperandoEnvio) {
+    this.mostrarToast(`Espera ${this.contadorEnvio} segundos antes de enviar nuevamente`, 'warning');
     return;
   }
 
   this.enviandoSolpe = true;
-  setTimeout(() => {
-    this.enviandoSolpe = false;
-  }, 5000);
+  this.esperandoEnvio = true;
+  this.contadorEnvio = 7;
+
+  this.intervaloEnvio = setInterval(() => {
+    this.contadorEnvio--;
+    if (this.contadorEnvio <= 0) {
+      clearInterval(this.intervaloEnvio);
+      this.enviandoSolpe = false;
+      this.esperandoEnvio = false;
+    }
+  }, 1000);
 
   if (!this.solpe.numero_contrato) {
     this.mostrarToast('Debes seleccionar un Centro de Costo', 'warning');
@@ -456,7 +508,7 @@ async guardarSolpe() {
       numero_contrato: this.solpe.numero_contrato,
       nombre_centro_costo: this.solpe.nombre_centro_costo || this.centrosCosto[this.solpe.numero_contrato] || '',
       usuario: this.solpe.usuario,
-      dirigidoA: this.solpe.dirigidoA, // ✅ array de cotizadores
+      dirigidoA: this.solpe.dirigidoA,
       nombre_solped: this.solpe.nombre_solped,
       tipo_solped: this.solpe.tipo_solped,
       empresa: this.solpe.empresa,
@@ -492,6 +544,7 @@ async guardarSolpe() {
     this.mostrarToast('Error al guardar la SOLPED', 'danger');
   }
 }
+
 
 
 async obtenerYAsignarNumeroSolpe(empresa: string): Promise<number> {

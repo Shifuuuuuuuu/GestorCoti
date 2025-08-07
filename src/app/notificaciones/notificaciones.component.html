@@ -1,6 +1,6 @@
 <ion-card *ngIf="mostrarCard" class="card-notificaciones">
   <ion-card-header class="header-notificaciones">
-    <ion-card-title>🔔 Nuevas OC Aprobadas</ion-card-title>
+    <ion-card-title>🔔 Notificaciones recientes</ion-card-title>
     <ion-button fill="clear" size="small" slot="end" (click)="cerrar()" class="btn-cerrar">
       <ion-icon name="close-outline"></ion-icon>
     </ion-button>
@@ -9,14 +9,45 @@
   <ion-card-content class="contenido-scroll">
     <ion-list>
       <ion-item *ngFor="let oc of ocsPendientes; let i = index" class="item-notificacion">
-        <ion-icon name="document-outline" slot="start" color="primary"></ion-icon>
+        <ion-icon [name]="oc.tipoNotificacion === 'cambio-solped' ? 'sync-outline' : 'document-outline'" slot="start" color="primary"></ion-icon>
+
         <ion-label>
-          <h3>OC #{{ oc.id }}</h3>
-          <p>Aprobada el {{ formatearFecha(oc.fechaSubida) }}</p>
+          <h3>
+            {{ oc.tipoNotificacion === 'cambio-solped' ? 'SOLPED #' + (oc.numero_solped || oc.id) : 'Cotización #' + oc.id }}
+          </h3>
+
+          <p>
+            {{ oc.tipoNotificacion === 'cambio-solped'
+              ? 'Estatus actualizado el ' + formatearFecha(oc.fechaCambio)
+              : 'Aprobada el ' + formatearFecha(oc.fechaSubida) }}
+          </p>
+
+          <!-- Mostrar número de SOLPED si existe -->
+          <p *ngIf="oc.numero_solped && oc.tipoNotificacion === 'cambio-solped'">
+            <strong>N° SOLPED:</strong> {{ oc.numero_solped }}
+          </p>
+
+          <p>
+            <ion-chip color="success" *ngIf="oc.tipoNotificacion === 'cotizador'">
+              <ion-icon name="person-circle" color="light" slot="start"></ion-icon>
+              OC generada por ti
+            </ion-chip>
+            <ion-chip color="primary" *ngIf="oc.tipoNotificacion === 'solped'">
+              <ion-icon name="create-outline" color="light" slot="start"></ion-icon>
+              Cotización asociada a tu SOLPED
+            </ion-chip>
+            <ion-chip color="warning" *ngIf="oc.tipoNotificacion === 'cambio-solped'">
+              <ion-icon name="sync-outline" color="light" slot="start"></ion-icon>
+              Estado de tu SOLPED actualizado
+            </ion-chip>
+          </p>
         </ion-label>
-        <ion-button fill="outline" size="small" (click)="verPDF(oc)">
+
+        <!-- Botón PDF solo para OCs -->
+        <ion-button fill="outline" size="small" *ngIf="oc.tipoNotificacion !== 'cambio-solped'" (click)="verPDF(oc)">
           Ver PDF
         </ion-button>
+
         <ion-button color="danger" fill="clear" size="small" (click)="eliminarNotificacion(i)">
           <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
         </ion-button>
@@ -24,7 +55,6 @@
     </ion-list>
   </ion-card-content>
 
-  <!-- ✅ Botón al pie del card -->
   <ion-card-content class="footer-cerrar">
     <ion-button expand="block" color="medium" (click)="cerrar()">
       Cerrar Notificaciones

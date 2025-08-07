@@ -79,11 +79,94 @@ usuariosDisponibles: string[] = [];
 
 ngOnInit() {
   if (this.modo === 'listado') {
-    this.contarTotalPaginas();
     this.cargarPagina();
   }
 
   this.cargarUsuarios();
+}
+
+// --- Helpers para limpiar payloads pesados de cada doc
+private sanitizeOC(data: any) {
+  const copia = { ...data };
+  delete copia.archivosBase64;
+  delete copia.archivosStorage;
+  return copia;
+}
+
+// --- Arma la query de la página **actual** respetando paginación
+// Cambia la firma para evitar el choque con unknown
+private buildQueryDePaginaActual(
+  ref: firebase.firestore.CollectionReference<any>,                // 👈
+  direccion: 'actual' | 'adelante' | 'atras' = 'actual'
+): firebase.firestore.Query<any> {                                  // 👈
+  let q: firebase.firestore.Query<any> = ref.orderBy('id', 'desc').limit(this.itemsPorPagina);
+
+  if (direccion === 'adelante' && this.lastVisible) {
+    q = q.startAfter(this.lastVisible as firebase.firestore.QueryDocumentSnapshot<any>); // 👈 cast puntual
+  }
+
+  if (direccion === 'atras' && this.historialPaginas.length >= 2) {
+    const anterior = this.historialPaginas[this.historialPaginas.length - 2];
+    q = q.startAt(anterior as firebase.firestore.QueryDocumentSnapshot<any>);            // 👈 cast puntual
+  }
+
+  if (direccion === 'actual' && this.firstVisible) {
+    q = q.startAt(this.firstVisible as firebase.firestore.QueryDocumentSnapshot<any>);   // 👈 cast puntual
+  }
+
+  return q;
+}
+
+
+// --- Hace merge por docId: agrega/quita/actualiza sin perder animaciones
+private mergePorDocId(actual: any[], nuevos: any[]) {
+  const mapaActual = new Map(actual.map(x => [x.docId, x]));
+  const mapaNuevo  = new Map(nuevos.map(x => [x.docId, x]));
+
+  // Actualiza o añade
+  nuevos.forEach(n => {
+    if (mapaActual.has(n.docId)) {
+      const a = mapaActual.get(n.docId)!;
+      Object.assign(a, n); // aplica cambios
+    } else {
+      actual.push(n); // nuevo en la página
+    }
+  });
+
+  // Elimina los que ya no están en la página
+  for (let i = actual.length - 1; i >= 0; i--) {
+    if (!mapaNuevo.has(actual[i].docId)) {
+      actual.splice(i, 1);
+    }
+  }
+}
+
+// --- Método público para el botón/ion-refresher
+async recargarPaginaActual(ev?: CustomEvent) {
+  try {
+    this.cargando = true;
+
+    const ref = this.firestore.collection('ordenes_oc').ref as firebase.firestore.CollectionReference; // compat
+    const q = this.buildQueryDePaginaActual(ref, 'actual');
+    const snap = await q.get(); // compat: devuelve QuerySnapshot
+
+    if (!snap.empty) {
+      const nuevos = snap.docs.map(doc => ({
+        docId: doc.id,
+        ...this.sanitizeOC(doc.data() as any)
+      }));
+
+      this.mergePorDocId(this.ocsFiltradas, nuevos);
+
+      this.firstVisible = snap.docs[0];
+      this.lastVisible  = snap.docs[snap.docs.length - 1];
+    }
+  } catch (e) {
+    console.error('Error al recargar página actual:', e);
+  } finally {
+    this.cargando = false;
+    if (ev) (ev.target as HTMLIonRefresherElement).complete();
+  }
 }
 
 
@@ -160,56 +243,43 @@ async editarCamposAdicionales(oc: any) {
 async aplicarFiltros() {
   this.cargando = true;
   try {
-    let query = this.firestore.collection('ordenes_oc', ref => {
-      let q = ref.orderBy('fechaSubida', 'desc');
+    const queryRef = this.firestore.collection('ordenes_oc', ref => {
+      let q: firebase.firestore.Query = ref.orderBy('fechaSubida', 'desc');
 
-      if (this.filtroEstatus) {
-        q = q.where('estatus', '==', this.filtroEstatus);
-      }
+      if (this.filtroEstatus)   q = q.where('estatus', '==', this.filtroEstatus);
+      if (this.filtroCentroCosto) q = q.where('centroCosto', '==', this.filtroCentroCosto);
+      if (this.filtroUsuario)   q = q.where('usuario', '==', this.filtroUsuario);
 
-      if (this.filtroCentroCosto) {
-        q = q.where('centroCosto', '==', this.filtroCentroCosto);
-      }
-
-      if (this.filtroUsuario) {
-        q = q.where('usuario', '==', this.filtroUsuario);
+      // Rango exacto del día
+      if (this.filtroFecha) {
+        const start = new Date(this.filtroFecha + 'T00:00:00');
+        const end   = new Date(this.filtroFecha + 'T23:59:59.999');
+        q = q.where('fechaSubida', '>=', start).where('fechaSubida', '<=', end);
       }
 
       return q;
     });
 
-    const snapshot = await firstValueFrom(query.get());
+    const snapshot = await firstValueFrom(queryRef.get());
 
-    let filtrados = snapshot.docs.map(doc => {
-      const data = doc.data() as any;
-      // ⚠️ Eliminar campos pesados
-      delete data.archivosBase64;
-      delete data.archivosStorage;
-
-      return {
-        docId: doc.id,
-        ...data
-      };
-    });
-
-    // Filtrar por fecha exacta (si se usa)
-    if (this.filtroFecha) {
-      filtrados = filtrados.filter(oc => {
-        const fecha = oc.fechaSubida?.toDate?.().toISOString().split('T')[0];
-        return fecha === this.filtroFecha;
-      });
-    }
+    const filtrados = snapshot.docs.map(doc => ({
+      docId: doc.id,
+      ...this.sanitizeOC(doc.data() as any)
+    }));
 
     this.ocsFiltradas = filtrados.slice(0, this.itemsPorPagina);
     this.totalPaginas = Math.ceil(filtrados.length / this.itemsPorPagina);
     this.paginaActual = 1;
-
+    this.firstVisible = snapshot.docs[0] ?? null;
+    this.lastVisible  = snapshot.docs[Math.min(this.itemsPorPagina - 1, snapshot.docs.length - 1)] ?? null;
+    this.historialPaginas = this.firstVisible ? [this.firstVisible] : [];
   } catch (error) {
     console.error('Error al aplicar filtros:', error);
   } finally {
     this.cargando = false;
   }
 }
+
 
 
 
@@ -251,18 +321,16 @@ irAlInicio() {
   this.cargarPagina(); // dirección por defecto: 'adelante'
 }
 
-async contarTotalPaginas() {
-  try {
-    const snapshot = await firstValueFrom(
-      this.firestore.collection('ordenes_oc').get()
-    );
-    const total = snapshot.size;
-    this.totalPaginas = Math.ceil(total / this.itemsPorPagina);
-  } catch (error) {
-    console.error('Error al contar páginas:', error);
+
+async refrescarResultadoBusquedaActual() {
+  if (!this.resultadoBusqueda?.docId) return;
+  const doc = await this.firestore.collection('ordenes_oc').doc(this.resultadoBusqueda.docId).ref.get();
+  if (doc.exists) {
+    this.resultadoBusqueda = { docId: doc.id, ...this.sanitizeOC(doc.data() as any) };
+  } else {
+    this.resultadoBusqueda = null; // pudo haberse eliminado
   }
 }
-
 
 irAlFinal() {
   this.cargando = true;
@@ -304,61 +372,36 @@ irAlFinal() {
 
 async cargarPagina(direccion: 'adelante' | 'atras' = 'adelante') {
   this.cargando = true;
-
   try {
-    const ref = this.firestore.collection('ordenes_oc', ref => {
-      let query = ref.orderBy('id', 'desc').limit(this.itemsPorPagina);
-
-      if (direccion === 'adelante' && this.lastVisible) {
-        query = query.startAfter(this.lastVisible);
-      }
-
-      if (direccion === 'atras' && this.historialPaginas.length >= 2) {
-        const anterior = this.historialPaginas[this.historialPaginas.length - 2];
-        query = query.startAt(anterior);
-      }
-
-      return query;
-    });
-
-    const snapshot = await firstValueFrom(ref.get());
+    const ref = this.firestore.collection('ordenes_oc').ref;
+    const q = this.buildQueryDePaginaActual(ref, direccion);
+    const snapshot = await q.get();
 
     if (!snapshot.empty) {
-      this.ocsFiltradas = snapshot.docs.map(doc => {
-        const data = doc.data() as any;
-        delete data.archivosBase64;
-        delete data.archivosStorage;
-
-        return {
-          docId: doc.id,
-          ...data
-        };
-      });
+      this.ocsFiltradas = snapshot.docs.map(doc => ({
+        docId: doc.id,
+        ...this.sanitizeOC(doc.data() as any)
+      }));
 
       this.firstVisible = snapshot.docs[0];
-      this.lastVisible = snapshot.docs[snapshot.docs.length - 1];
+      this.lastVisible  = snapshot.docs[snapshot.docs.length - 1];
 
       if (direccion === 'adelante') {
-        // Solo aumenta si no es la primera carga
         if (this.paginaActual > 1 || this.historialPaginas.length > 0) {
           this.paginaActual++;
         }
         this.historialPaginas.push(this.firstVisible);
-      } else if (direccion === 'atras') {
+      } else {
         this.historialPaginas.pop();
         this.paginaActual--;
       }
     }
-
   } catch (error) {
     console.error('Error al cargar página:', error);
   } finally {
     this.cargando = false;
   }
 }
-
-
-
 
 
 

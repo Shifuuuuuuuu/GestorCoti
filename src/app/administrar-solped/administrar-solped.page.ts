@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { AngularFirestore, QueryDocumentSnapshot } from '@angular/fire/compat/firestore';
 import { AlertController, MenuController } from '@ionic/angular';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { ModalController } from '@ionic/angular';
+import { ModalSeleccionarOcPage } from '../modal-seleccionar-oc/modal-seleccionar-oc.page'; // ajusta si está en otra ruta
+
 @Component({
   selector: 'app-administrar-solped',
   templateUrl: './administrar-solped.page.html',
@@ -62,7 +65,8 @@ export class AdministrarSolpedPage implements OnInit {
   constructor(
     private firestore: AngularFirestore,
     private alertController: AlertController,
-    private menu: MenuController
+    private menu: MenuController,
+    private modalCtrl: ModalController
   ) {}
 
   ngOnInit() {
@@ -158,6 +162,20 @@ formatearCLP(valor: number): string {
       });
     });
   }
+async enlazarOC(solped: any) {
+  const modal = await this.modalCtrl.create({
+    component: ModalSeleccionarOcPage,
+    componentProps: {
+      numeroSolped: solped.numero_solpe,
+      solpedId: solped.id
+    }
+  });
+
+  await modal.present();
+}
+
+
+
 
   buscarPorNumeroExacto() {
     const numero = Number(this.busquedaExacta.trim());

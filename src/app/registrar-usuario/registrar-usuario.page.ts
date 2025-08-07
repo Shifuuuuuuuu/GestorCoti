@@ -65,7 +65,29 @@ async register(event?: Event) {
     'Ebastidas@xtrememining.cl',
     'gmatus@xtrememining.cl',
     'acp@xtrememining.cl',
-    'cmolina@xtrememining.cl'
+    'cmolina@xtrememining.cl',
+    'fgonzalez@xtrememining.cl',
+    'rsantibanez@xtrememining.cl',
+    'pmunoz@xtrememining.cl',
+
+    'fhidalgo@xtrememining.cl',
+    'aalbornoz@xtremehormigones.cl',
+    'vhermosilla@xtremehormigones.cl',
+    'cmolina@xtrememining.cl',
+    'jvallejos@xtrememining.cl',
+    'jpantoja20915@xtrememining.cl',
+    'ccastro@xtrememining.cl',
+    'srios@xtrememining.cl',
+    'fcornejo@xtrememining.cl',
+    'elobos@xtrememining.cl',
+    'lsalinas@xtrememining.cl',
+    'yvasquez@xtrememining.cl',
+    'jlopez@xtrememining.cl',
+    'rroman@xtrememining.cl',
+    'jvillarroel@xtrememining.cl',
+    'crag78@gmail.com',
+    'cristianpichonhernandez28@gmail.com',
+    'jbenitez@xtremehormigones.cl'
   ].map(c => c.trim().toLowerCase());
 
   const emailLimpio = email.trim().toLowerCase();

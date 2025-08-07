@@ -3,16 +3,25 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/" color="light"></ion-back-button>
     </ion-buttons>
+
+    <!-- BOTÓN RECARGAR (solo verifica cambios de la página actual) -->
     <ion-buttons slot="end">
+      <ion-button fill="clear" (click)="recargarPaginaActual()">
+        <ion-icon name="refresh-outline" slot="icon-only" color="light"></ion-icon>
+      </ion-button>
       <ion-button fill="clear" (click)="mostrarFiltros = !mostrarFiltros">
         <ion-icon name="funnel-outline" slot="icon-only" color="light"></ion-icon>
       </ion-button>
     </ion-buttons>
+
     <ion-title style="color: white;">Administrar Cotizaciones</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true" class="ion-padding">
+    <ion-refresher slot="fixed" (ionRefresh)="recargarPaginaActual($event)">
+      <ion-refresher-content pullingIcon="chevron-down-circle-outline"></ion-refresher-content>
+    </ion-refresher>
   <ion-card *ngIf="mostrarFiltros && modo === 'listado'" class="filtro-card">
   <ion-card-header>
     <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
@@ -153,7 +162,6 @@
   <div *ngIf="ocsFiltradas.length > 0" class="ion-text-center ion-padding">
     <ion-button (click)="irAlInicio()" size="small">Inicio</ion-button>
     <ion-button (click)="paginaAnterior()" [disabled]="paginaActual <= 1" size="small">Anterior</ion-button>
-    <ion-label class="ion-padding-horizontal">Página {{ paginaActual }} de {{ totalPaginas }}</ion-label>
     <ion-button (click)="paginaSiguiente()" size="small">Siguiente</ion-button>
     <ion-button (click)="irAlFinal()" size="small">Final</ion-button>
   </div>
@@ -210,7 +218,6 @@
   <div *ngIf="ocsFiltradas.length > 0" class="ion-text-center ion-padding">
     <ion-button (click)="irAlInicio()" size="small">Inicio</ion-button>
     <ion-button (click)="paginaAnterior()" [disabled]="paginaActual <= 1" size="small">Anterior</ion-button>
-    <ion-label class="ion-padding-horizontal">Página {{ paginaActual }} de {{ totalPaginas }}</ion-label>
     <ion-button (click)="paginaSiguiente()" size="small">Siguiente</ion-button>
     <ion-button (click)="irAlFinal()" size="small">Final</ion-button>
   </div>

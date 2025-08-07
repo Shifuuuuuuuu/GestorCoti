@@ -96,11 +96,14 @@
         </ion-card-header>
         <ion-card-content>
           <ion-row class="ion-justify-content-between">
-            <ion-col size="6">
+            <ion-col size="4">
               <ion-button color="primary" expand="block" size="small" (click)="editarCompleto(resultadoBusqueda)">Editar</ion-button>
             </ion-col>
-            <ion-col size="6">
+            <ion-col size="4">
               <ion-button color="danger" expand="block" size="small" (click)="eliminarSolped(resultadoBusqueda)">Eliminar</ion-button>
+            </ion-col>
+            <ion-col size="4">
+              <ion-button expand="block" color="small" (click)="enlazarOC(resultadoBusqueda)">Enlazar OC</ion-button>
             </ion-col>
           </ion-row>
         </ion-card-content>
@@ -144,11 +147,14 @@
         </ion-card-header>
         <ion-card-content>
           <ion-row class="ion-justify-content-between">
-            <ion-col size="6">
+            <ion-col size="4">
               <ion-button color="primary" expand="block" size="small" (click)="editarCompleto(solped)">Editar</ion-button>
             </ion-col>
-            <ion-col size="6">
+            <ion-col size="4">
               <ion-button color="danger" expand="block" size="small" (click)="eliminarSolped(solped)">Eliminar</ion-button>
+            </ion-col>
+            <ion-col size="4">
+              <ion-button expand="block" color="small" (click)="enlazarOC(resultadoBusqueda)">Enlazar OC</ion-button>
             </ion-col>
           </ion-row>
 
