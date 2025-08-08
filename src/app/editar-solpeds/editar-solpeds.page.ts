@@ -261,21 +261,24 @@ cargarSolpes() {
     .subscribe(snapshot => {
       const solpesTemp: any[] = [];
       snapshot.docs.forEach((doc: any) => {
-        const solpe = doc.data();
-        solpe.id = doc.id;
+        const data = doc.data();
+        const solpe = { id: doc.id, ...data }; // usa spread para no perder nada
+        // DEBUG: imprime si trae autorización:
+        if (solpe.autorizacion_url) {
+          console.log('✅ SOLPE con autorización:', solpe.numero_solpe, solpe.autorizacion_nombre, solpe.autorizacion_url);
+        }
         solpe.comentarios = solpe.comentarios || [];
         solpesTemp.push(solpe);
       });
 
       this.solpesOriginal = solpesTemp;
       this.solpesFiltradas = [...this.solpesOriginal];
-
-      // ✅ Agrupar por empresa aquí
       this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
-
       this.loading = false;
+      this.cdRef.detectChanges();
     });
 }
+
 
 descargarExcel(solpe: any) {
   const worksheetData: any[][] = [];
@@ -561,6 +564,24 @@ puedeEditarCantidad(fechaCreacion: any): boolean {
     return false;
   }
 }
+abrirAutorizacion(solpe: any) {
+  const url = solpe?.autorizacion_url;
+  if (!url) { this.mostrarToast('No hay archivo de autorización.', 'danger'); return; }
+  window.open(url, '_blank');
+}
+
+descargarAutorizacion(solpe: any) {
+  const url = solpe?.autorizacion_url;
+  if (!url) { this.mostrarToast('No hay archivo de autorización.', 'danger'); return; }
+  const nombre = solpe?.autorizacion_nombre || 'autorizacion';
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 
 async editarItem(solpeId: string, item: any) {
   const alert = await this.alertController.create({

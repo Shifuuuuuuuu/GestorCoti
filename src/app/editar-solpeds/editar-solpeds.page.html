@@ -472,12 +472,21 @@
             </ion-accordion>
           </ion-accordion-group>
           </ion-list>
+          <!-- Caja para escribir comentario (HISTORIAL) -->
           <ion-item>
-            <ion-label position="stacked">💬 Agregar Comentario</ion-label>
-            <ion-textarea [(ngModel)]="solpe.nuevoComentario" autoGrow="true" placeholder="Escribe un comentario..."></ion-textarea>
+            <ion-label position="stacked">💬 Agregar comentario</ion-label>
+            <ion-textarea
+              [(ngModel)]="solpe.nuevoComentario"
+              autoGrow="true"
+              placeholder="Escribe un comentario...">
+            </ion-textarea>
           </ion-item>
 
-          <ion-button expand="block" color="primary" (click)="agregarComentario(solpe)">
+          <ion-button
+            expand="block"
+            color="primary"
+            (click)="agregarComentario(solpe)"
+            [disabled]="!(solpe.nuevoComentario && solpe.nuevoComentario.trim())">
             Enviar
           </ion-button>
           <!-- Mostrar comentarios anteriores -->
@@ -495,6 +504,19 @@
               </ion-label>
             </ion-item>
           </ion-list>
+            <ion-item *ngIf="solpe?.autorizacion_url" lines="full" class="ion-margin-top">
+              <ion-icon name="attach-outline" slot="start"></ion-icon>
+              <ion-label>
+                <h3>Autorización adjunta</h3>
+                <p>{{ solpe?.autorizacion_nombre || 'Archivo de autorización' }}</p>
+              </ion-label>
+              <ion-button size="small" color="primary" (click)="abrirAutorizacion(solpe)" slot="end">
+                Ver
+              </ion-button>
+              <ion-button size="small" fill="outline" color="medium" (click)="descargarAutorizacion(solpe)" slot="end">
+                Descargar
+              </ion-button>
+            </ion-item>
       </ion-card-content>
     </ion-card>
   </ng-container>

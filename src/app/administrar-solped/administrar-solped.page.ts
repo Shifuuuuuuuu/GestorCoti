@@ -4,6 +4,7 @@ import { AlertController, MenuController } from '@ionic/angular';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { ModalController } from '@ionic/angular';
 import { ModalSeleccionarOcPage } from '../modal-seleccionar-oc/modal-seleccionar-oc.page'; // ajusta si está en otra ruta
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 @Component({
   selector: 'app-administrar-solped',
@@ -19,6 +20,11 @@ import { ModalSeleccionarOcPage } from '../modal-seleccionar-oc/modal-selecciona
   ]
 })
 export class AdministrarSolpedPage implements OnInit {
+  estadosItemDisponibles: string[] = ['pendiente', 'parcial', 'completo'];
+  mostrarModalItems = false;
+  itemsEditando: any[] = [];
+  archivosNuevos: (File | null)[] = []; // un File por ítem a reemplazar
+  indicePreviewRevocado: string[] = [];
   solpeds: any[] = [];
   solpedFiltrados: any[] = [];
   mostrarFiltros: boolean = false;
@@ -38,28 +44,47 @@ export class AdministrarSolpedPage implements OnInit {
   resultadoBusqueda: any = null;
   listaUsuarios: { id: string, fullName: string }[] = [];
   listaContratos: string[] = [
-    '10-10-12',
-    '20-10-01',
-    '30-10-01',
-    '30-10-07',
-    '30-10-08',
-    '30-10-42',
-    '30-10-43',
-    '30-10-52',
-    '30-10-53',
-    '30-10-54',
-    '30-10-57',
-    '30-10-58',
-    '30-10-59',
-    '30-10-60',
-    '30-10-61'
+  'CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA',
+  'PLANTA PREDOSIFICADO CALAMA',
+  'CONTRATO 20915 SUM. HORMIGON DAND',
+  'CONTRATO 23302 CARPETAS',
+  'CONTRATO 23302 AMPLIACION',
+  'OFICINA LOS ANDES',
+  'CASA MATRIZ',
+  'RRHH',
+  'FINANZAS',
+  'SUSTENTABILIDAD',
+  'SOPORTE TI',
+  'STRIP CENTER',
+  'PLANIFICACION',
+  'PLANTA PREDOSIFICADO SAN BERNARDO',
+  'PLANTA HORMIGON URB.SAN BERNARDO',
+  'ALTO MAIPO',
+  'PLANTA HORMIGON URB. RANCAGUA',
+  'PLANTA ARIDOS RANCAGUA',
+  'PLANTA ARIDOS SAN BERNARDO',
+  'CONTRATO 22368 SUM HORMIGON DET',
+  'CONTRATO 28662 CARPETAS',
+  'CONTRATO 29207 MINERIA',
+  'CONTRATO SUMINISTRO DE HORMIGONES DET',
+  'CONTRATO SUMINISTRO DE HORMIGONES DAND',
+  'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND',
+  'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
+  'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
+  'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
+  'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
+  'CONTRATO HORMIGONES Y PREDOSIFICADO',
+  'CONTRATO TALLER CANECHE',
+  'CONTRATO INFRAESTRUCTURA DET',
+  'CONTRATO CHUQUICAMATA',
+  'CONTRATO CARPETAS DET',
+  'GCIA. SERV. OBRA PAVIMENTACION RT CONTRATO FAM'
   ];
   mostrarModalEdicion = false;
   solpedEditando: any = null;
 
   estadosDisponibles: string[] = [
-    'Solicitado', 'Preaprobado', 'Aprobado', 'Rechazado',
-    'Tránsito a Faena', 'OC enviada a proveedor', 'Por Importación'
+    'Solicitado', 'Completado', 'Cotizando', 'Rechazado'
   ];
 
   constructor(
@@ -381,7 +406,94 @@ limpiarFiltros() {
   this.busqueda = '';
   this.filtrarSolpeds();
 }
+abrirEditorItems(solped: any) {
+  if (!solped) return;
+  this.solpedEditando = { ...solped };
+  this.itemsEditando = (solped.items || []).map((it: any) => ({ ...it }));
+  this.archivosNuevos = this.itemsEditando.map(() => null);
+  this.mostrarModalItems = true;
+}
+onFileChange(event: any, idx: number) {
+  const file = event.target?.files?.[0];
+  if (!file) return;
+  this.archivosNuevos[idx] = file;
 
+  // preview local opcional
+  const localUrl = URL.createObjectURL(file);
+  this.itemsEditando[idx].previewLocal = localUrl;
+  this.indicePreviewRevocado.push(localUrl);
+}
+quitarImagen(idx: number) {
+  this.itemsEditando[idx].imagenURL = '';
+  this.archivosNuevos[idx] = null;
+  this.itemsEditando[idx].previewLocal = '';
+}
+agregarItem() {
+  this.itemsEditando.push({
+    descripcion: '',
+    cantidad: 0,
+    cantidad_cotizada: 0,
+    imagenURL: ''
+  });
+  this.archivosNuevos.push(null);
+}
+eliminarItem(idx: number) {
+  this.itemsEditando.splice(idx, 1);
+  this.archivosNuevos.splice(idx, 1);
+}
+async guardarItemsEditados() {
+  if (!this.solpedEditando) return;
+  const storage = getStorage();
+
+  // Subir imágenes nuevas y normalizar números
+  for (let i = 0; i < this.itemsEditando.length; i++) {
+    const it = this.itemsEditando[i];
+
+    // Asegura numéricos
+    it.cantidad = Number(it.cantidad ?? 0);
+    it.cantidad_cotizada = Number(it.cantidad_cotizada ?? 0);
+
+    // Si hay imagen nueva, súbela y reemplaza imagenURL
+    if (this.archivosNuevos[i]) {
+      const file = this.archivosNuevos[i]!;
+      const path = `solpes/${this.solpedEditando.id}/items/${i}_${Date.now()}_${file.name}`;
+      const storageRef = ref(storage, path);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      it.imagenURL = url;
+      it.previewLocal = '';
+    }
+  }
+
+  // Historial
+  const cambio = {
+    fecha: new Date(),
+    usuario: this.solpedEditando.usuario || 'admin',
+    estatus: 'Edición de ítems'
+  };
+  const historial = this.solpedEditando.historial || [];
+  historial.push(cambio);
+
+  // Persistir
+  await this.firestore.collection('solpes').doc(this.solpedEditando.id).update({
+    items: this.itemsEditando,
+    historial
+  });
+
+  // Cierra modal, limpia y refresca
+  this.mostrarModalItems = false;
+  this.itemsEditando = [];
+  this.archivosNuevos = [];
+  this.indicePreviewRevocado.forEach(u => URL.revokeObjectURL(u));
+  this.indicePreviewRevocado = [];
+  this.solpedEditando = null;
+
+  if (this.modo === 'listado') {
+    this.cargarPagina(); // refresca la página actual
+  } else {
+    this.buscarPorNumeroExacto();
+  }
+}
   cargarSolpeds() {
     this.firestore.collection('solpes').snapshotChanges().subscribe(snapshot => {
       this.solpeds = snapshot.map(doc => {
