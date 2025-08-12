@@ -1,0 +1,42 @@
+/* Popover más grande y cómodo */
+.popover-centro {
+  --width: min(820px, 96vw);
+  --max-width: 96vw;
+  --height: 70vh;
+  --max-height: 80vh;
+
+  /* Fondo mejor cubierto */
+  --backdrop-opacity: 0.45; /* más oscuro para contraste */
+  --backdrop-color: rgba(0, 0, 0, 0.45);
+
+  /* Bordes y sombra */
+  --border-radius: 16px;
+  --box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+
+  /* 👇 Mover el popover un poco más arriba */
+  transform: translateY(-80px) !important;
+}
+
+/* Asegurar que el contenido use todo el alto del popover */
+.popover-centro ion-content {
+  height: 100%;
+  --padding-top: 8px;
+}
+
+/* Searchbar un poco más grande */
+.popover-centro ion-searchbar {
+  --border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+/* Mejor legibilidad de ítems */
+.popover-centro ion-item {
+  --min-height: 52px;
+}
+ion-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}

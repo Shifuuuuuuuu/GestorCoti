@@ -37,7 +37,7 @@ export class HistorialOcPage implements OnInit {
   ocs: any[] = [];
   busquedaId: string = '';
   paginaActual: number = 1;
-  itemsPorPagina: number = 5;
+  itemsPorPagina: number = 20;
   lastVisible: any = null;
   firstVisible: any = null;
   historialPaginas: any[] = [];

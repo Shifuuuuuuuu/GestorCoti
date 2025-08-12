@@ -49,45 +49,51 @@ export class GeneradorOcPage implements OnInit {
   autorizacionEsPDF = false;
   autorizacionEsImagen = false;
   autorizacionExt = '';
-  centrosCosto: { [key: string]: string } = {
-  '27483': 'CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA',
-  'PPCALAMA': 'PLANTA PREDOSIFICADO CALAMA',
-  '20915': 'CONTRATO 20915 SUM. HORMIGON DAND',
-  '23302-CARPETAS': 'CONTRATO 23302 CARPETAS',
-  '23302-AMPL': 'CONTRATO 23302 AMPLIACION',
-  'OFANDES': 'OFICINA LOS ANDES',
-  'CASAMATRIZ': 'CASA MATRIZ',
-  'RRHH': 'RRHH',
-  'FINANZAS': 'FINANZAS',
-  'SUST': 'SUSTENTABILIDAD',
-  'SOPTI': 'SOPORTE TI',
-  'STRIPCENTER': 'STRIP CENTER',
-  'PLANIF': 'PLANIFICACION',
-  'PPSB': 'PLANTA PREDOSIFICADO SAN BERNARDO',
-  'PHUSB': 'PLANTA HORMIGON URB.SAN BERNARDO',
-  'ALTOMAIPO': 'ALTO MAIPO',
-  'PHURAN': 'PLANTA HORMIGON URB. RANCAGUA',
-  'PARAN': 'PLANTA ARIDOS RANCAGUA',
-  'PASB': 'PLANTA ARIDOS SAN BERNARDO',
-  '22368': 'CONTRATO 22368 SUM HORMIGON DET',
-  '28662': 'CONTRATO 28662 CARPETAS',
-  '29207': 'CONTRATO 29207 MINERIA',
-  'HROMIGONES DET': 'CONTRATO SUMINISTRO DE HORMIGONES DET',
-  'HORMIGONES DAMD': 'CONTRATO SUMINISTRO DE HORMIGONES DAND',
-  '23302': 'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND',
-  'DET': 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET',
-  'SANJOAQUIN': 'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN',
-  'URBANOS': 'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR',
-  'CS': 'CONTRATO DE SUMINISTRO DE HORMIGONES CS',
-  'PREDOSIFICADO': 'CONTRATO HORMIGONES Y PREDOSIFICADO',
-  'CANECHE': 'CONTRATO TALLER CANECHE',
-  'INFRAESTRUCTURA': 'CONTRATO INFRAESTRUCTURA DET',
-  'CHUQUICAMATA': 'CONTRATO CHUQUICAMATA',
-  'CARPETASDET':'CONTRATO CARPETAS DET',
-  '30-10-11':'GCIA. SERV. OBRA PAVIMENTACION RT CONTRATO FAM'
-  };
+  isCentroOpen = false;
+  centroEvent: any;
+  centrosFiltrados: { key: string; name: string }[] = [];
+  filtroCentro = '';
+  centrosCostoLista: { key: string; name: string }[] = [
+    { key: '27483', name: 'CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA' },
+    { key: 'PPCALAMA', name: 'PLANTA PREDOSIFICADO CALAMA' },
+    { key: '20915', name: 'CONTRATO 20915 SUM. HORMIGON DAND' },
+    { key: '23302-CARPETAS', name: 'CONTRATO 23302 CARPETAS' },
+    { key: '23302-AMPL', name: 'CONTRATO 23302 AMPLIACION' },
+    { key: 'OFANDES', name: 'OFICINA LOS ANDES' },
+    { key: 'CASAMATRIZ', name: 'CASA MATRIZ' },
+    { key: 'RRHH', name: 'RRHH' },
+    { key: 'FINANZAS', name: 'FINANZAS' },
+    { key: 'SUST', name: 'SUSTENTABILIDAD' },
+    { key: 'SOPTI', name: 'SOPORTE TI' },
+    { key: 'STRIPCENTER', name: 'STRIP CENTER' },
+    { key: 'PLANIF', name: 'PLANIFICACION' },
+    { key: 'PPSB', name: 'PLANTA PREDOSIFICADO SAN BERNARDO' },
+    { key: 'PHUSB', name: 'PLANTA HORMIGON URB.SAN BERNARDO' },
+    { key: 'ALTOMAIPO', name: 'ALTO MAIPO' },
+    { key: 'PHURAN', name: 'PLANTA HORMIGON URB. RANCAGUA' },
+    { key: 'PARAN', name: 'PLANTA ARIDOS RANCAGUA' },
+    { key: 'PASB', name: 'PLANTA ARIDOS SAN BERNARDO' },
+    { key: '22368', name: 'CONTRATO 22368 SUM HORMIGON DET' },
+    { key: '28662', name: 'CONTRATO 28662 CARPETAS' },
+    { key: '29207', name: 'CONTRATO 29207 MINERIA' },
+    { key: 'HORMIGONES DET', name: 'CONTRATO SUMINISTRO DE HORMIGONES DET' },
+    { key: 'HORMIGONES DAND', name: 'CONTRATO SUMINISTRO DE HORMIGONES DAND' },
+    { key: '23302', name: 'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND' },
+    { key: 'DET', name: 'CONTRATO REPARACIÓN DE CARPETAS DE RODADO DET' },
+    { key: 'SANJOAQUIN', name: 'SERVICIO PLANTA DE ÁRIDOS SAN JOAQUÍN' },
+    { key: 'URBANOS', name: 'SUMINISTRO DE HORMIGONES URBANOS SAN BERNARDO Y OLIVAR' },
+    { key: 'CS', name: 'CONTRATO DE SUMINISTRO DE HORMIGONES CS' },
+    { key: 'PREDOSIFICADO', name: 'CONTRATO HORMIGONES Y PREDOSIFICADO' },
+    { key: 'CANECHE', name: 'CONTRATO TALLER CANECHE' },
+    { key: 'INFRAESTRUCTURA', name: 'CONTRATO INFRAESTRUCTURA DET' },
+    { key: 'CHUQUICAMATA', name: 'CONTRATO CHUQUICAMATA' },
+    { key: 'CARPETASDET', name: 'CONTRATO CARPETAS DET' },
+    { key: '30-10-11', name: 'GCIA. SERV. OBRA PAVIMENTACION RT CONTRATO FAM' },
 
-
+    // 👇 Ejemplos de duplicados (si los necesitas)
+    { key: '28662', name: 'CONTRATO 28662 CARPETAS' },
+    { key: '23302', name: 'CONTRATO MANTENCIÓN Y REPARACIÓN DE INFRAESTRUCTURA DAND' },
+  ];
   constructor(
     private firestore: AngularFirestore,
     private auth: AngularFireAuth,
@@ -100,6 +106,7 @@ export class GeneradorOcPage implements OnInit {
     this.cargarSiguienteNumero();
     this.cargarSolpedSolicitadas();
     this.obtenerNombreUsuarioYFiltrarSolped();
+    this.centrosFiltrados = this.centrosCostoLista.slice();
   }
 cargarSolpedSolicitadas() {
   this.firestore.collection('solpes', ref =>
@@ -111,6 +118,36 @@ cargarSolpedSolicitadas() {
       .map(doc => ({ id: doc.id, ...(doc.data() as any) }))
       .sort((a, b) => (a.numero_solpe || 0) - (b.numero_solpe || 0));
   });
+}
+openCentro(ev: any) {
+  this.centroEvent = ev;
+  this.isCentroOpen = true;
+  this.filtroCentro = '';
+  this.centrosFiltrados = this.centrosCostoLista.slice(); // 👈 muestra TODOS (incluye repetidos)
+}
+
+filtrarCentros() {
+  const f = (this.filtroCentro || '').toLowerCase();
+  this.centrosFiltrados = !f
+    ? this.centrosCostoLista.slice()
+    : this.centrosCostoLista.filter(c =>
+        c.key.toLowerCase().includes(f) || c.name.toLowerCase().includes(f)
+      );
+}
+get nombreCentroCosto(): string {
+  // Si tienes la lista (permite duplicados)
+  if (Array.isArray(this.centrosCostoLista) && this.centrosCostoLista.length) {
+    const found = this.centrosCostoLista.find(c => c.key === this.centroCosto);
+    if (found?.name) return found.name;
+  }
+  // Fallback: usa el objeto map que ya tienes
+  return (this as any).centrosCosto?.[this.centroCosto] ?? '';
+}
+seleccionarCentro(c: { key: string; name: string }) {
+  this.centroCosto = c.key;
+  this.isCentroOpen = false;
+  this.filtroCentro = '';
+  this.centrosFiltrados = this.centrosCostoLista.slice();
 }
 private setAutorizacionDesdeSolped(solped: any) {
   this.autorizacionNombre = solped?.autorizacion_nombre || null;
@@ -356,7 +393,8 @@ async enviarOC() {
 
     const fecha = new Date().toISOString();
     const id = await this.obtenerNuevoId();
-    const centroNombre = this.centrosCosto[this.centroCosto] || 'Desconocido';
+    const centroEncontrado = this.centrosCostoLista.find(c => c.key === this.centroCosto);
+    const centroNombre = centroEncontrado ? centroEncontrado.name : 'Desconocido';
 
     // 📌 Empresa final (de SOLPED o por defecto) — SIEMPRE definida
     const empresaElegida = (this.usarSolped && this.solpedSeleccionada?.empresa)

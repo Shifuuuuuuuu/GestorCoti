@@ -65,6 +65,22 @@ ion-card {
 ion-icon {
   color: var(--ion-menu-icon-color) !important;
 }
+/* en src/global.scss */
+ion-popover.popover-centro::part(backdrop) {
+  background: rgba(0,0,0,.45);
+  opacity: 1; /* opcional */
+}
+
+/* tu popover grande y más arriba, sin tocar otros */
+ion-popover.popover-centro::part(content) {
+  width: min(820px, 96vw);
+  max-width: 96vw;
+  height: 70vh;
+  max-height: 80vh;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.22);
+  transform: translateY(-60px);
+}
 
 
 /**

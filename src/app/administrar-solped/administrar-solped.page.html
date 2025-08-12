@@ -135,44 +135,53 @@
     </div>
 
     <ion-list *ngIf="solpedFiltrados.length > 0; else sinOCsListado">
-      <ion-card *ngFor="let solped of solpedFiltrados" [@fadeIn]>
+      <ion-card *ngFor="let s of solpedFiltrados; trackBy: trackBySolped" [@fadeIn]>
+
         <ion-card-header>
-          <ion-card-title color="primary">📄 SOLPED Nº {{ solped.numero_solpe }}</ion-card-title>
-          <ion-label>Usuario: <strong>{{ solped.usuario }}</strong></ion-label><br>
-          <ion-label>Centro de Costo: <strong>{{ solped.numero_contrato || 'No definido' }}</strong></ion-label><br>
+          <ion-card-title color="primary">📄 SOLPED Nº {{ s.numero_solpe }}</ion-card-title>
+          <ion-label>Usuario: <strong>{{ s.usuario }}</strong></ion-label><br>
+          <ion-label>Centro de Costo: <strong>{{ s.numero_contrato || 'No definido' }}</strong></ion-label><br>
           <ion-label>Estado:
-            <strong [style.color]="getColorByStatus(solped.estatus)">
-              {{ solped.estatus || 'Sin estado' }}
+            <strong [style.color]="getColorByStatus(s.estatus)">
+              {{ s.estatus || 'Sin estado' }}
             </strong>
           </ion-label><br>
-          <ion-label *ngIf="solped.precioTotalConIVA">
+          <ion-label *ngIf="s.precioTotalConIVA">
             Precio Total con IVA:
-            <strong>{{ formatearCLP(solped.precioTotalConIVA) }}</strong>
+            <strong>{{ formatearCLP(s.precioTotalConIVA) }}</strong>
           </ion-label>
         </ion-card-header>
+
         <ion-card-content>
           <ion-row class="ion-justify-content-between">
             <ion-col size="2">
-              <ion-button color="primary" expand="block" size="small" (click)="editarCompleto(solped)">Editar</ion-button>
+              <ion-button color="primary" expand="block" size="small" (click)="editarCompleto(s)">Editar</ion-button>
             </ion-col>
             <ion-col size="2">
-              <ion-button color="tertiary" expand="block" size="small" (click)="abrirEditorItems(solped)">
+              <ion-button color="tertiary" expand="block" size="small" (click)="abrirEditorItems(s)">
                 Editar Ítems
               </ion-button>
             </ion-col>
             <ion-col size="2">
-              <ion-button color="danger" expand="block" size="small" (click)="eliminarSolped(solped)">Eliminar</ion-button>
+              <ion-button color="danger" expand="block" size="small" (click)="eliminarSolped(s)">Eliminar</ion-button>
             </ion-col>
             <ion-col size="2">
-              <ion-button size="small" expand="block" color="medium" (click)="enlazarOC(resultadoBusqueda)">Enlazar OC</ion-button>
+              <ion-button
+                size="small"
+                expand="block"
+                color="medium"
+                (click)="enlazarOC(s)"
+                [disabled]="!s?.id || !s?.numero_solpe">
+                Enlazar OC
+              </ion-button>
             </ion-col>
           </ion-row>
 
-          <ion-item lines="none" *ngIf="solped.historial?.length">
+          <ion-item lines="none" *ngIf="s.historial?.length">
             <ion-label class="ion-text-wrap">
               <strong>Historial:</strong>
               <ion-list lines="none">
-                <ion-item *ngFor="let h of solped.historial">
+                <ion-item *ngFor="let h of s.historial">
                   <ion-label class="ion-text-wrap">
                     {{ h.fecha?.toDate() | date:'short' }} - <strong>{{ h.usuario }}</strong> cambió estado a <em>{{ h.estatus }}</em>
                   </ion-label>
@@ -181,6 +190,7 @@
             </ion-label>
           </ion-item>
         </ion-card-content>
+
       </ion-card>
     </ion-list>
 
@@ -232,7 +242,7 @@
       </ion-content>
     </ng-template>
   </ion-modal>
-  <ion-modal [isOpen]="mostrarModalItems" (didDismiss)="mostrarModalItems = false">
+<ion-modal [isOpen]="mostrarModalItems" (didDismiss)="mostrarModalItems = false">
   <ng-template>
     <ion-header>
       <ion-toolbar style="--background: red;">
@@ -244,7 +254,15 @@
       <ion-list *ngIf="itemsEditando?.length; else sinItems">
         <ion-item lines="full" *ngFor="let item of itemsEditando; let i = index">
           <ion-label class="ion-text-wrap">
-            <h2>Ítem {{ i + 1 }}</h2>
+            <ion-item lines="none">
+              <ion-label position="stacked">Item</ion-label>
+              <ion-input [(ngModel)]="item.item" placeholder="Ej: Ítem 01"></ion-input>
+            </ion-item>
+
+            <ion-item lines="none">
+              <ion-label position="stacked">Código referencial</ion-label>
+              <ion-input [(ngModel)]="item.codigo_referencial" placeholder="Ej: ABC-123"></ion-input>
+            </ion-item>
 
             <ion-item lines="none">
               <ion-label position="stacked">Descripción</ion-label>
@@ -260,19 +278,23 @@
               <ion-label position="stacked">Cantidad Cotizada</ion-label>
               <ion-input type="number" [(ngModel)]="item.cantidad_cotizada"></ion-input>
             </ion-item>
+
+            <!-- ESTADO: usar 'estado' -->
             <ion-item lines="none">
               <ion-label position="stacked">Estado del Ítem</ion-label>
-              <ion-select [(ngModel)]="item.estado_item" interface="popover">
+              <ion-select interface="popover" [(ngModel)]="item.estado">
                 <ion-select-option *ngFor="let estado of estadosItemDisponibles" [value]="estado">
                   {{ estado }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
+
+            <!-- IMAGEN: usar 'imagen_url' -->
             <div class="ion-padding-vertical">
               <div class="ion-margin-bottom">
                 <strong>Imagen actual:</strong>
-                <div *ngIf="item.imagenURL; else sinImg">
-                  <img [src]="item.imagenURL" style="max-width: 180px; border-radius: 8px; display:block; margin-top:8px" />
+                <div *ngIf="item.imagen_url; else sinImg">
+                  <img [src]="item.imagen_url" style="max-width: 180px; border-radius: 8px; display:block; margin-top:8px" />
                 </div>
                 <ng-template #sinImg><p style="margin-top:8px">Sin imagen</p></ng-template>
               </div>
@@ -282,14 +304,14 @@
                 <img [src]="item.previewLocal" style="max-width: 180px; border-radius: 8px; display:block; margin-top:8px" />
               </div>
 
-              <ion-button size="small" fill="outline">
+              <ion-button size="small" fill="outline" style="position:relative; overflow:hidden;">
                 <input type="file" accept="image/*" (change)="onFileChange($event, i)" style="opacity:0;position:absolute;left:0;top:0;bottom:0;right:0;cursor:pointer;">
                 Seleccionar nueva imagen
               </ion-button>
-              <ion-button size="small" color="medium" (click)="quitarImagen(i)" *ngIf="item.imagenURL || item.previewLocal">
+
+              <ion-button size="small" color="medium" (click)="quitarImagen(i)" *ngIf="item.imagen_url || item.previewLocal">
                 Quitar imagen
               </ion-button>
-
             </div>
 
             <div class="ion-text-right">
@@ -325,5 +347,6 @@
     </ion-content>
   </ng-template>
 </ion-modal>
+
 
 </ion-content>

@@ -187,20 +187,62 @@ formatearCLP(valor: number): string {
       });
     });
   }
-async enlazarOC(solped: any) {
+async enlazarOC(solped?: any) {
+  const seleccionado = solped ?? (this.modo === 'busqueda' ? this.resultadoBusqueda : null);
+
+  if (!seleccionado) {
+    const alerta = await this.alertController.create({
+      header: 'Sin SOLPED',
+      message: 'Selecciona una SOLPED válida antes de enlazar una OC.',
+      buttons: ['OK']
+    });
+    await alerta.present();
+    return;
+  }
+
+  const numeroSolpe = Number(seleccionado?.numero_solpe ?? 0);
+  const solpedId = seleccionado?.id ?? '';
+
+  if (!solpedId || !numeroSolpe) {
+    const alerta = await this.alertController.create({
+      header: 'Datos incompletos',
+      message: 'La SOLPED seleccionada no tiene ID o número válido.',
+      buttons: ['OK']
+    });
+    await alerta.present();
+    return;
+  }
+
   const modal = await this.modalCtrl.create({
     component: ModalSeleccionarOcPage,
     componentProps: {
-      numeroSolped: solped.numero_solpe,
-      solpedId: solped.id
+      numeroSolped: numeroSolpe,
+      solpedId: solpedId
     }
   });
 
   await modal.present();
 }
 
+trackBySolped(index: number, s: any) {
+  return s?.id ?? s?.numero_solpe ?? index;
+}
 
+private toStr(v: any): string {
+  if (typeof v === 'string') return v.trim();
+  if (v === null || v === undefined) return '';
+  return String(v).trim();
+}
 
+private toLowerStr(v: any, fallback = ''): string {
+  const s = this.toStr(v);
+  return s ? s.toLowerCase() : fallback;
+}
+
+private toNum(v: any, fallback = 0): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
 
   buscarPorNumeroExacto() {
     const numero = Number(this.busquedaExacta.trim());
@@ -409,10 +451,35 @@ limpiarFiltros() {
 abrirEditorItems(solped: any) {
   if (!solped) return;
   this.solpedEditando = { ...solped };
-  this.itemsEditando = (solped.items || []).map((it: any) => ({ ...it }));
+
+  const defaults = {
+    descripcion: '',
+    cantidad: 0,
+    cantidad_cotizada: 0,
+    imagen_url: '',      // <- clave final
+    estado: '', // <- clave final
+    codigo_referencial: '',
+    item: ''
+  };
+
+  this.itemsEditando = (solped.items || []).map((it: any) => ({
+    ...defaults,
+    ...it,
+    imagen_url: this.toStr(it?.imagen_url ?? it?.imagenURL),
+    estado: this.toStr(it?.estado ?? it?.estado_item ?? 'pendiente'),
+    descripcion: this.toStr(it?.descripcion),
+    codigo_referencial: this.toStr(it?.codigo_referencial),
+    item: this.toStr(it?.item),
+    cantidad: this.toNum(it?.cantidad, 0),
+    cantidad_cotizada: this.toNum(it?.cantidad_cotizada, 0),
+  }));
+
   this.archivosNuevos = this.itemsEditando.map(() => null);
   this.mostrarModalItems = true;
 }
+
+
+
 onFileChange(event: any, idx: number) {
   const file = event.target?.files?.[0];
   if (!file) return;
@@ -424,19 +491,27 @@ onFileChange(event: any, idx: number) {
   this.indicePreviewRevocado.push(localUrl);
 }
 quitarImagen(idx: number) {
-  this.itemsEditando[idx].imagenURL = '';
+  this.itemsEditando[idx].imagen_url = ''; // usa imagen_url
   this.archivosNuevos[idx] = null;
   this.itemsEditando[idx].previewLocal = '';
 }
+
+
 agregarItem() {
   this.itemsEditando.push({
     descripcion: '',
     cantidad: 0,
     cantidad_cotizada: 0,
-    imagenURL: ''
+    imagen_url: '',
+    estado: '',
+    codigo_referencial: '',
+    item: ''
   });
   this.archivosNuevos.push(null);
 }
+
+
+
 eliminarItem(idx: number) {
   this.itemsEditando.splice(idx, 1);
   this.archivosNuevos.splice(idx, 1);
@@ -445,27 +520,39 @@ async guardarItemsEditados() {
   if (!this.solpedEditando) return;
   const storage = getStorage();
 
-  // Subir imágenes nuevas y normalizar números
   for (let i = 0; i < this.itemsEditando.length; i++) {
     const it = this.itemsEditando[i];
 
-    // Asegura numéricos
-    it.cantidad = Number(it.cantidad ?? 0);
-    it.cantidad_cotizada = Number(it.cantidad_cotizada ?? 0);
+    // Normaliza y conserva 'estado' tal cual lo eligió el usuario
+    const safe: any = {
+      ...it, // primero lo que viene del editor
+      descripcion: this.toStr(it.descripcion),
+      codigo_referencial: this.toStr(it.codigo_referencial),
+      item: this.toStr(it.item),
+      estado: this.toStr(it.estado || 'pendiente'),
+      cantidad: this.toNum(it.cantidad, 0),
+      cantidad_cotizada: this.toNum(it.cantidad_cotizada, 0),
+      imagen_url: this.toStr(it.imagen_url ?? it.imagenURL), // compat. hacia atrás
+    };
 
-    // Si hay imagen nueva, súbela y reemplaza imagenURL
+    // Subida de imagen nueva: SIEMPRE escribe en imagen_url
     if (this.archivosNuevos[i]) {
       const file = this.archivosNuevos[i]!;
       const path = `solpes/${this.solpedEditando.id}/items/${i}_${Date.now()}_${file.name}`;
       const storageRef = ref(storage, path);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
-      it.imagenURL = url;
-      it.previewLocal = '';
+      safe.imagen_url = url;
+      safe.previewLocal = '';
     }
+
+    // Limpia alias antiguos para que no “pisen” al reabrir
+    delete safe.imagenURL;
+    delete safe.estado_item;
+
+    this.itemsEditando[i] = safe;
   }
 
-  // Historial
   const cambio = {
     fecha: new Date(),
     usuario: this.solpedEditando.usuario || 'admin',
@@ -474,13 +561,11 @@ async guardarItemsEditados() {
   const historial = this.solpedEditando.historial || [];
   historial.push(cambio);
 
-  // Persistir
   await this.firestore.collection('solpes').doc(this.solpedEditando.id).update({
     items: this.itemsEditando,
     historial
   });
 
-  // Cierra modal, limpia y refresca
   this.mostrarModalItems = false;
   this.itemsEditando = [];
   this.archivosNuevos = [];
@@ -488,12 +573,13 @@ async guardarItemsEditados() {
   this.indicePreviewRevocado = [];
   this.solpedEditando = null;
 
-  if (this.modo === 'listado') {
-    this.cargarPagina(); // refresca la página actual
-  } else {
-    this.buscarPorNumeroExacto();
-  }
+  if (this.modo === 'listado') this.cargarPagina();
+  else this.buscarPorNumeroExacto();
 }
+
+
+
+
   cargarSolpeds() {
     this.firestore.collection('solpes').snapshotChanges().subscribe(snapshot => {
       this.solpeds = snapshot.map(doc => {
