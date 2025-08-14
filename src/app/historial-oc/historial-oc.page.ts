@@ -146,6 +146,29 @@ private sanitizeOC(data: any) {
   delete copia.historial; // ⚠ si el historial es grande, mejor no traerlo aquí
   return copia;
 }
+private async borrarArchivoStorage(anterior: { url?: string; path?: string }) {
+  const storage = firebase.app().storage();
+  try {
+    let ref: firebase.storage.Reference | null = null;
+
+    if (anterior?.path) {
+      // Borramos por path si está guardado
+      ref = storage.ref(anterior.path);
+    } else if (anterior?.url) {
+      // Más robusto que regex y compatible con dominios nuevos
+      ref = storage.refFromURL(anterior.url);
+    }
+
+    if (!ref) return;
+
+    await ref.delete();
+  } catch (e: any) {
+    // Si no existe, lo ignoramos; cualquier otro error sí lo propagamos
+    if (e?.code !== 'storage/object-not-found') {
+      throw e;
+    }
+  }
+}
 
 private rangoMesActual() {
   const inicio = new Date();
@@ -778,7 +801,6 @@ crearArchivoUrl(base64: string, tipo: string): SafeResourceUrl {
   trackById(index: number, oc: any): string {
     return oc.docId;
   }
-
 async subirNuevaCotizacion(oc: any) {
   const input = document.createElement('input');
   input.type = 'file';
@@ -794,9 +816,9 @@ async subirNuevaCotizacion(oc: any) {
     const comentario = oc.comentarioNuevo?.trim() || 'Nueva cotización subida tras rechazo';
 
     const nombreUsuario = await this.obtenerNombreUsuario();
-    const monto = oc.nuevoMonto || oc.montoTotal || 0; // 👈 monto puede venir de input
+    const monto = oc.nuevoMonto || oc.montoTotal || 0;
 
-    // 🧠 lógica de estatus
+    // 🧠 lógica de estatus (igual que la tuya)
     let estatusFinal = 'Revisión Guillermo';
     if (nombreUsuario === 'Guillermo Manzor') {
       estatusFinal = monto <= 1000000 ? 'Aprobado' : 'Revisión Guillermo';
@@ -816,25 +838,21 @@ async subirNuevaCotizacion(oc: any) {
     const docRef = this.firestore.collection('ordenes_oc').doc(oc.docId);
 
     try {
-      // 1. Eliminar archivo anterior si existe
+      // 1) Eliminar archivo(s) anterior(es) si existe(n), ignorando 404
       const docSnap = await docRef.get().toPromise();
       const data = docSnap?.data() as any;
-      if (Array.isArray(data.archivosStorage) && data.archivosStorage.length > 0) {
-        const anterior = data.archivosStorage[0];
-        const storageUrl = anterior.url;
-        if (storageUrl) {
-          const pathMatch = storageUrl.match(/\/o\/(.*?)\?alt=/);
-          const path = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
-          if (path) {
-            const storageRef = firebase.storage().ref().child(path);
-            await storageRef.delete();
-          }
+
+      if (Array.isArray(data?.archivosStorage) && data.archivosStorage.length > 0) {
+        for (const anterior of data.archivosStorage) {
+          await this.borrarArchivoStorage(anterior); // ← ahora robusto
         }
       }
 
-      // 2. Subir nuevo archivo
-      const storagePath = `cotizaciones_oc/${oc.docId}/nueva_cot_${Date.now()}_${file.name}`;
-      const fileRef = firebase.storage().ref().child(storagePath);
+      // 2) Subir nuevo archivo (usa carpeta consistente con el docId)
+      const storage = firebase.app().storage();
+      const storagePath = `ordenes_oc/${oc.docId}/cot_${Date.now()}_${file.name}`;
+      const fileRef = storage.ref(storagePath);
+
       await fileRef.put(file);
       const url = await fileRef.getDownloadURL();
 
@@ -842,11 +860,11 @@ async subirNuevaCotizacion(oc: any) {
         nombre,
         tipo,
         url,
-        fecha,
-        fechaEliminacion: new Date(Date.now() + 24 * 60 * 60 * 1000)
+        path: storagePath,     // 👈 guarda path para borrar sin depender de la URL
+        fecha
       };
 
-      // 3. Actualizar Firestore con nuevo archivo, monto y estatus
+      // 3) Actualizar Firestore
       await docRef.update({
         archivosStorage: [nuevoArchivo],
         estatus: estatusFinal,
@@ -867,6 +885,7 @@ async subirNuevaCotizacion(oc: any) {
 
   input.click();
 }
+
 
 async enviarAclaracion(oc: any) {
   const comentario = oc.comentarioNuevo?.trim();

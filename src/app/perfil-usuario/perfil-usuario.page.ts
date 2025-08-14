@@ -81,7 +81,8 @@ export class PerfilUsuarioPage implements OnInit {
       'jvillarroel@xtrememining.cl',
       'crag78@gmail.com',
       'cristianpichonhernandez28@gmail.com',
-      'jbenitez@xtremehormigones.cl'
+      'jbenitez@xtremehormigones.cl',
+      'tallercm@xtremeservicios.cl'
   ];
 
   constructor(

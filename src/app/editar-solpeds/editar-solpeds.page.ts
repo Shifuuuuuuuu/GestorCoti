@@ -50,6 +50,7 @@ export class EditarSolpedsPage implements OnInit {
   userUid: string = '';
   solpesAgrupadas: { [empresa: string]: any[] } = {};
   busquedaGeneral: string = '';
+  empresaSegmento: string = 'todas';
 
   constructor(
     private firestore: AngularFirestore,
@@ -125,6 +126,14 @@ buscarPorReferencia() {
     return enNombre || enUsuario || enItems;
   });
 
+  this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
+}
+filtrarPorSegmentoEmpresa() {
+  if (this.empresaSegmento === 'todas') {
+    this.solpesFiltradas = [...this.solpesOriginal];
+  } else {
+    this.solpesFiltradas = this.solpesOriginal.filter(solpe => solpe.empresa === this.empresaSegmento);
+  }
   this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
 }
 

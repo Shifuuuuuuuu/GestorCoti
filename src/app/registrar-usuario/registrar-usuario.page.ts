@@ -69,7 +69,6 @@ async register(event?: Event) {
     'fgonzalez@xtrememining.cl',
     'rsantibanez@xtrememining.cl',
     'pmunoz@xtrememining.cl',
-
     'fhidalgo@xtrememining.cl',
     'aalbornoz@xtremehormigones.cl',
     'vhermosilla@xtremehormigones.cl',
@@ -78,14 +77,15 @@ async register(event?: Event) {
     'jpantoja20915@xtrememining.cl',
     'ccastro@xtrememining.cl',
     'srios@xtrememining.cl',
-
     'fcornejo@xtrememining.cl',
     'elobos@xtrememining.cl',
+
     'lsalinas@xtrememining.cl',
     'yvasquez@xtrememining.cl',
     'jlopez@xtrememining.cl',
     'rroman@xtrememining.cl',
     'jvillarroel@xtrememining.cl',
+
     'crag78@gmail.com',
     'cristianpichonhernandez28@gmail.com',
     'jbenitez@xtremehormigones.cl',
@@ -95,6 +95,7 @@ async register(event?: Event) {
     'gneculeman@xtrememining.cl',
     'nfuentes@xtrememining.cl',
     'jarrano@xtrememining.cl',
+    'tallercm@xtremeservicios.cl'
 
   ].map(c => c.trim().toLowerCase());
 

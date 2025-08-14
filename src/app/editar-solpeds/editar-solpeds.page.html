@@ -162,6 +162,7 @@
   <!-- HISTORIAL DE SOLPEDS -->
   <div *ngIf="segmentoSeleccionado === 'historial'">
    <ion-card *ngIf="mostrarFiltros" class="filtro-card">
+
   <ion-card-header>
     <ion-card-title style="font-size: 18px;" color="primary">🔍 Filtros de búsqueda</ion-card-title>
   </ion-card-header>
@@ -271,7 +272,23 @@
     </ion-grid>
   </ion-card-content>
 </ion-card>
+<ion-segment [(ngModel)]="empresaSegmento" (ionChange)="filtrarPorSegmentoEmpresa()" mode="md" class="segmento-empresa">
+  <ion-segment-button value="todas">
+    <ion-label>Todas</ion-label>
+  </ion-segment-button>
+  <ion-segment-button value="Xtreme Mining">
+    <ion-label>⛏ Mining</ion-label>
+  </ion-segment-button>
+  <ion-segment-button value="Xtreme Servicio">
+    <ion-label>🛠 Servicios</ion-label>
+  </ion-segment-button>
+  <ion-segment-button value="Xtreme Hormigones">
+    <ion-label>🧱 Hormigones</ion-label>
+  </ion-segment-button>
+</ion-segment>
+
 <ng-container *ngFor="let grupo of solpesAgrupadas | keyvalue: ordenarEmpresaGrupo">
+
   <!-- Encabezado por empresa -->
 <ion-card class="ion-padding" style="border: 1px solid var(--ion-color-step-150, #dcdcdc); border-radius: 8px; background: var(--ion-background-color);">
   <ion-card-header>

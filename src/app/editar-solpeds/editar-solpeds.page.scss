@@ -312,3 +312,10 @@ ion-content {
   transition: transform 0.3s ease;
 }
 
+.segmento-empresa {
+  margin-bottom: 15px;
+  ion-segment-button {
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+}

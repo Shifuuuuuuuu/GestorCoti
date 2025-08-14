@@ -159,7 +159,7 @@ async verResumenSolped(oc: any) {
     const ocsRelacionadas = ocsSnap?.docs.map(doc => doc.data()) || [];
 
     // 🔎 Extraer los items y agrupar por ID de item
-    const mapaEstados: Record<string, Set<string>> = {}; // ejemplo: { "ITEM123": Set { "parcial", "completo" } }
+    const mapaEstados: Record<string, Set<string>> = {};
 
     ocsRelacionadas.forEach((ocData: any) => {
       (ocData.items || []).forEach((item: any) => {
@@ -171,13 +171,11 @@ async verResumenSolped(oc: any) {
       });
     });
 
-    // ✅ Evaluar el estado de cada ítem en base a los valores encontrados
     const items = (solpedData.items || []).map((item: any) => {
       const key = item.item?.toString();
       const estados = mapaEstados[key] || new Set();
 
       let estadoCotizacion = 'ninguno';
-
       if (estados.has('completo')) {
         estadoCotizacion = 'completo';
       } else if (estados.has('parcial')) {
@@ -190,7 +188,7 @@ async verResumenSolped(oc: any) {
       };
     });
 
-    // 📦 Guardar el resumen para mostrar
+    // ✅ Guardar resumen y empresa directamente
     oc.detalleSolped = {
       numero_solpe: solpedData.numero_solpe || 'N/A',
       empresa: solpedData.empresa || 'N/A',
@@ -200,6 +198,9 @@ async verResumenSolped(oc: any) {
       items,
       imagenAdjunta: solpedData.imagen_url || null
     };
+
+    // 🔧 Asignar empresa directamente a la OC para validación posterior
+    oc.empresa = solpedData.empresa || 'N/A';
 
   } catch (error) {
     console.error('❌ Error al cargar la SOLPED:', error);
@@ -383,11 +384,37 @@ async aprobarOC(oc: any) {
   const usuario = await this.obtenerNombreUsuario();
   const fecha = new Date().toISOString();
   const monto = oc.precioTotalConIVA || 0;
-  const empresa = (oc.empresa || '').trim();
 
-  let estatusFinal = 'Aprobado'; // por defecto
+  let empresa = (oc.empresa || '').trim();
 
-  // 🧠 Lógica diferenciada por empresa
+  // ✅ Si la empresa no está aún en la OC, obtenerla desde la SOLPED
+  if (!empresa && oc.solpedId) {
+    try {
+      const solpedSnap = await this.firestore.collection('solpes').doc(oc.solpedId).get().toPromise();
+      const solpedData = solpedSnap?.data() as any;
+
+      if (solpedData?.empresa) {
+        empresa = solpedData.empresa.trim();
+        oc.empresa = empresa; // actualizar en la OC local para uso futuro
+      } else {
+        this.mostrarToast('La SOLPED asociada no tiene empresa definida.', 'warning');
+        return;
+      }
+    } catch (error) {
+      console.error('❌ Error obteniendo empresa desde SOLPED:', error);
+      this.mostrarToast('Error al obtener empresa desde SOLPED.', 'danger');
+      return;
+    }
+  }
+
+  if (!empresa) {
+    this.mostrarToast(`Empresa no reconocida para aprobación.`, 'warning');
+    return;
+  }
+
+  let estatusFinal = 'Aprobado';
+
+  // 🧠 Lógica por empresa
   if (empresa === 'Xtreme Mining') {
     switch (usuario) {
       case 'Guillermo Manzor':
@@ -395,24 +422,18 @@ async aprobarOC(oc: any) {
       case 'Ricardo Santibañez':
         estatusFinal = monto >= 1000000 ? 'Revisión Mining' : 'Aprobado';
         break;
-
       case 'Patricio Muñoz':
         estatusFinal = monto <= 2000000 ? 'Aprobado' : 'Escalado César Palma';
         break;
-
       case 'Cesar Palma':
         estatusFinal = monto > 2000000 ? 'Aprobado' : 'Pendiente';
         break;
-
-      // También pueden validar Mining:
       case 'Juan Cubillos':
         estatusFinal = monto <= 5000000 ? 'Aprobado' : 'Casi Aprobado';
         break;
-
       case 'Alejandro Candia':
         estatusFinal = 'Aprobado';
         break;
-
       default:
         this.mostrarToast('Usuario no autorizado para validar OCs de Xtreme Mining.', 'warning');
         return;
@@ -423,15 +444,12 @@ async aprobarOC(oc: any) {
       case 'Guillermo Manzor':
         estatusFinal = monto <= 1000000 ? 'Aprobado' : 'Preaprobado';
         break;
-
       case 'Juan Cubillos':
         estatusFinal = monto <= 5000000 ? 'Aprobado' : 'Casi Aprobado';
         break;
-
       case 'Alejandro Candia':
         estatusFinal = 'Aprobado';
         break;
-
       default:
         this.mostrarToast('Usuario no autorizado para validar OCs de Xtreme Servicio.', 'warning');
         return;
@@ -441,7 +459,7 @@ async aprobarOC(oc: any) {
     return;
   }
 
-  // 📜 Guardar en historial
+  // 📜 Guardar historial
   const nuevoHistorial = [...(oc.historial || []), {
     usuario,
     estatus: estatusFinal,
@@ -455,7 +473,7 @@ async aprobarOC(oc: any) {
   };
 
   if (oc.numero_solped) datosActualizados.numero_solped = oc.numero_solped;
-  if (oc.empresa) datosActualizados.empresa = oc.empresa;
+  if (empresa) datosActualizados.empresa = empresa;
 
   await this.firestore.collection('ordenes_oc').doc(oc.docId).update(datosActualizados);
 
@@ -489,11 +507,11 @@ async aprobarOC(oc: any) {
     }
   }
 
-  // 🧹 Eliminar OC aprobada del listado actual
+  // 🧹 Quitar del array de la vista
   this.ocs = this.ocs.filter(item => item.docId !== oc.docId);
-
   this.mostrarToast(`OC aprobada por ${usuario} con estatus: ${estatusFinal}`, 'success');
 }
+
 
 
 

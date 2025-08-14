@@ -52,6 +52,7 @@ export class EditarSolpedPage implements OnInit {
   userUid: string = '';
   agrupadasPorEmpresa: { [empresa: string]: any[] } = {};
   solpesAgrupadas: { [empresa: string]: any[] } = {};
+  empresaSegmento: string = 'todas';
   constructor(
     private firestore: AngularFirestore,
     private menu: MenuController,
@@ -392,6 +393,14 @@ private async obtenerNombreUsuario(): Promise<string> {
       console.error('Error recuperando usuarios:', error);
     });
   }
+  filtrarPorSegmentoEmpresa() {
+  if (this.empresaSegmento === 'todas') {
+    this.solpesFiltradas = [...this.solpesOriginal];
+  } else {
+    this.solpesFiltradas = this.solpesOriginal.filter(solpe => solpe.empresa === this.empresaSegmento);
+  }
+  this.solpesAgrupadas = this.agruparPorEmpresa(this.solpesFiltradas);
+}
 filtrarSolpes() {
   const normalize = (str: string) => str?.toLowerCase().trim();
 

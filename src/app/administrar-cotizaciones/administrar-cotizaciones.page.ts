@@ -43,11 +43,11 @@ export class AdministrarCotizacionesPage implements OnInit {
 
 
   estadosDisponibles: string[] = [
+    'Revisio Guillermo',
     'Preaprobado',
     'Aprobado',
+    'Casi Aprobado',
     'Rechazado',
-    'OC enviada a proveedor',
-    'Por Importación'
   ];
   listaContratos: string[] = [
   'CONTRATO 27483 SUM. HORMIGON CHUCHICAMATA',
